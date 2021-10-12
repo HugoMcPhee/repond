@@ -51,12 +51,6 @@ can 'check' get clearer?
 can check have single or arrays for every property, or would that widen all types?
 */
 
-// type ItemName<T_State extends Record<any, any> , K_Type extends any> = ExtendsString<
-//   KeysOfUnion<T_State[K_Type]>
-// >;
-
-// G_ItemName[ItemType] is the replacement for ItemName<ItemType> , G means get
-
 export function _createConcepts<
   T_AllInfo extends {
     [T_ItemType: string]: {
@@ -66,36 +60,7 @@ export function _createConcepts<
     };
   },
   T_ItemType extends keyof T_AllInfo,
-  T_FlowNamesParam extends Readonly<string[]>,
-  DefaultStates extends { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] },
-  DefaultRefs extends { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] },
-  G_StartStatesItemName extends {
-    [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<
-      string,
-      any
-    >
-      ? keyof T_AllInfo[K_Type]["startStates"]
-      : string;
-  },
-  G_ItemName extends {
-    [K_Type in T_ItemType]: ExtendsString<KeysOfUnion<T_State[K_Type]>>;
-  },
-  G_PropertyName extends {
-    [K_Type in T_ItemType]: KeysOfUnion<T_State[K_Type][G_ItemName[K_Type]]>;
-  },
-  T_State extends {
-    [K_Type in T_ItemType]: Record<
-      G_StartStatesItemName[K_Type],
-      ReturnType<T_AllInfo[K_Type]["state"]>
-    >;
-  },
-  T_Refs extends {
-    [K_Type in T_ItemType]: Record<
-      G_StartStatesItemName[K_Type],
-      ReturnType<DefaultRefs[K_Type]>
-    >;
-  },
-  T_FlowName extends T_FlowNamesParam[number] | "default"
+  T_FlowNamesParam extends Readonly<string[]>
 >(
   allInfo: T_AllInfo,
   extraOptions?: {
@@ -105,16 +70,14 @@ export function _createConcepts<
 ) {
   const { dontSetMeta } = extraOptions ?? {};
   const itemTypes = Object.keys(allInfo) as unknown as Readonly<T_ItemType[]>;
-  // type T_FlowName = T_FlowNamesParam[number] | "default";
+  type T_FlowName = T_FlowNamesParam[number] | "default";
 
   const flowNamesUntyped = extraOptions?.flowNames
     ? [...extraOptions.flowNames]
     : ["default"];
   if (!flowNamesUntyped.includes("default")) flowNamesUntyped.push("default");
 
-  const flowNames: Readonly<T_FlowName[]> = [
-    ...flowNamesUntyped,
-  ] as unknown as Readonly<T_FlowName[]>;
+  const flowNames: Readonly<T_FlowName[]> = [...flowNamesUntyped];
 
   if (!dontSetMeta) {
     meta.flowNames = flowNames;
@@ -122,28 +85,34 @@ export function _createConcepts<
     meta.currentFlowName = flowNames[meta.currentFlowIndex];
   }
 
-  // type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
-  // type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
+  type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
+  type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
+  type Get_DefaultRefs<K_Type extends keyof T_AllInfo> =
+    T_AllInfo[K_Type]["refs"];
 
-  // type StartStatesItemName<K_Type extends keyof T_AllInfo> =
-  //   T_AllInfo[K_Type]["startStates"] extends Record<string, any>
-  //     ? keyof T_AllInfo[K_Type]["startStates"]
-  //     : string;
+  type StartStatesItemName<K_Type extends keyof T_AllInfo> =
+    T_AllInfo[K_Type]["startStates"] extends Record<string, any>
+      ? keyof T_AllInfo[K_Type]["startStates"]
+      : string;
 
-  // type T_State = {
-  //   [K_Type in T_ItemType]: Record<
-  //     StartStatesItemName<K_Type>,
-  //     ReturnType<T_AllInfo[K_Type]["state"]>
-  //   >;
-  // };
+  type T_State = {
+    [K_Type in T_ItemType]: Record<
+      StartStatesItemName<K_Type>,
+      ReturnType<T_AllInfo[K_Type]["state"]>
+    >;
+  };
 
-  // type T_Refs = {
-  //   [K_Type in T_ItemType]: Record<
-  //     StartStatesItemName<K_Type>,
-  //     ReturnType<DefaultRefs[K_Type]>
-  //   >;
-  // };
+  type T_Refs = {
+    [K_Type in T_ItemType]: Record<
+      StartStatesItemName<K_Type>,
+      ReturnType<Get_DefaultRefs<K_Type>>
+    >;
+  };
 
+  type Get_T_Refs<K_Type extends T_ItemType> = Record<
+    StartStatesItemName<K_Type>,
+    ReturnType<Get_DefaultRefs<K_Type>>
+  >;
   const defaultStates: DefaultStates = itemTypes.reduce((prev: any, key) => {
     prev[key] = allInfo[key].state;
     return prev;
@@ -155,7 +124,7 @@ export function _createConcepts<
 
   const initialState: T_State = itemTypes.reduce((prev: any, key) => {
     prev[key] =
-      allInfo[key].startStates || ({} as G_StartStatesItemName[typeof key]);
+      allInfo[key].startStates || ({} as StartStatesItemName<typeof key>);
     return prev;
   }, {});
 
@@ -184,48 +153,45 @@ export function _createConcepts<
   // types
   // --------------------------------------------------------------------------
 
-  // type ItemName<K_Type extends T_ItemType> = ExtendsString<
-  //   KeysOfUnion<T_State[K_Type]>
-  // >;
+  type ItemName<K_Type extends T_ItemType> = ExtendsString<
+    KeysOfUnion<T_State[K_Type]>
+  >;
 
-  // type PropertyName<K_Type extends T_ItemType> = KeysOfUnion<
-  //   T_State[K_Type][G_ItemName[K_Type]]
-  // >;
+  type PropertyName<K_Type extends T_ItemType> = KeysOfUnion<
+    T_State[K_Type][ItemName<K_Type>]
+  >;
 
   type AllProperties = {
-    [K_Type in T_ItemType]: G_PropertyName[K_Type];
+    [K_Type in T_ItemType]: PropertyName<K_Type>;
   }[T_ItemType];
 
   // ----------------------------
   // Diff Info
 
   type DiffInfo_PropertiesChanged = {
-    [K_Type in T_ItemType]: Record<
-      G_ItemName[K_Type],
-      G_PropertyName[K_Type][]
-    > & {
-      all__: G_PropertyName[K_Type][];
+    [K_Type in T_ItemType]: Record<ItemName<K_Type>, PropertyName<K_Type>[]> & {
+      all__: PropertyName<K_Type>[];
     };
   } & {
     all__: AllProperties[];
   };
   type DiffInfo_PropertiesChangedBool = {
     [K_Type in T_ItemType]: Record<
-      G_ItemName[K_Type],
-      { [K_PropName in G_PropertyName[K_Type]]: boolean }
-    > & { all__: { [K_PropName in G_PropertyName[K_Type]]: boolean } };
+      ItemName<K_Type>,
+      { [K_PropName in PropertyName<K_Type>]: boolean }
+    > & { all__: { [K_PropName in PropertyName<K_Type>]: boolean } };
   } & {
     all__: { [K_PropName in AllProperties]: boolean };
   };
 
   type DiffInfo_ItemsChanged = Record<
     T_ItemType | "all__",
-    G_ItemName[T_ItemType][]
+    ItemName<T_ItemType>[]
   >;
 
   type DiffInfo_ItemsChangedBool = Record<
     T_ItemType | "all__",
-    Record<G_ItemName[T_ItemType], boolean>
+    Record<ItemName<T_ItemType>, boolean>
   >;
 
   type DiffInfo = {
@@ -246,14 +212,14 @@ export function _createConcepts<
 
   type Listener_ACheck_OneItemType<K_Type extends T_ItemType> = {
     types?: K_Type;
-    names?: G_ItemName[K_Type][];
-    props?: G_PropertyName[K_Type];
+    names?: ItemName<K_Type>[];
+    props?: PropertyName<K_Type>;
     addedOrRemoved?: boolean;
   };
 
   type Listener_ACheck_MultipleItemTypes = {
     types?: (keyof T_State)[];
-    names?: G_ItemName[T_ItemType][];
+    names?: ItemName<T_ItemType>[];
     props?: AllProperties[];
     addedOrRemoved?: boolean;
   };
@@ -323,22 +289,25 @@ export function _createConcepts<
   //
 
   type UseStoreItemParams<K_Type extends T_ItemType> = {
-    itemName: G_ItemName[K_Type];
-    prevItemState: T_State[K_Type][G_ItemName[K_Type]];
-    itemState: T_State[K_Type][G_ItemName[K_Type]];
-    itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
+    itemName: ItemName<K_Type>;
+    prevItemState: T_State[K_Type][ItemName<K_Type>];
+    itemState: T_State[K_Type][ItemName<K_Type>];
+    // itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
+    itemRefs: T_Refs[K_Type][ItemName<K_Type>];
     // frameDuration: number;
   };
 
   type ItemEffectCallbackParams<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
-    itemName: G_ItemName[K_Type];
-    newValue: T_State[K_Type][G_ItemName[K_Type]][K_PropertyName];
-    previousValue: T_State[K_Type][G_ItemName[K_Type]][K_PropertyName];
-    itemState: T_State[K_Type][G_ItemName[K_Type]];
-    itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
+    itemName: ItemName<K_Type>;
+    newValue: T_State[K_Type][ItemName<K_Type>][K_PropertyName];
+    previousValue: T_State[K_Type][ItemName<K_Type>][K_PropertyName];
+    itemState: T_State[K_Type][ItemName<K_Type>];
+    // itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
+    // itemRefs: T_Refs[K_Type][ItemName<K_Type>];
+    itemRefs: Get_T_Refs<K_Type>[ItemName<K_Type>];
     frameDuration: number;
   };
 
@@ -346,29 +315,29 @@ export function _createConcepts<
 
   type OneItem_ACheck_SingleProperty<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
     prop?: K_PropertyName;
     type: K_Type;
-    name: G_ItemName[K_Type];
+    name: ItemName<K_Type>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
   };
 
   type OneItem_ACheck_MultiProperties<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
     prop?: K_PropertyName[];
     type: K_Type; // maybe ideally optional (and handle adding listener with any item type)
-    name: G_ItemName[K_Type];
+    name: ItemName<K_Type>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
   };
 
   type OneItem_Check<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > =
     | OneItem_ACheck_SingleProperty<K_Type, K_PropertyName>
     | OneItem_ACheck_MultiProperties<K_Type, K_PropertyName>;
@@ -379,41 +348,41 @@ export function _createConcepts<
   // for itemEffectCallback
   type ItemEffectRule_Check_SingleProperty<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
     prop?: K_PropertyName;
     type: K_Type;
-    name?: G_ItemName[K_Type][] | G_ItemName[K_Type];
+    name?: ItemName<K_Type>[] | ItemName<K_Type>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
   };
 
   type ItemEffectRule_Check_MultiProperties<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
     prop?: K_PropertyName[];
     type: K_Type; // maybe ideally optional (and handle adding listener with any item type)
-    name?: G_ItemName[K_Type][] | G_ItemName[K_Type];
+    name?: ItemName<K_Type>[] | ItemName<K_Type>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
   };
 
   type ItemEffectRule_Check<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > =
     | ItemEffectRule_Check_SingleProperty<K_Type, K_PropertyName>
     | ItemEffectRule_Check_MultiProperties<K_Type, K_PropertyName>;
 
   type ItemEffectCallback<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = (loopedInfo: ItemEffectCallbackParams<K_Type, K_PropertyName>) => void;
 
   type ItemEffect_RuleOptions<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = {
     check: ItemEffectRule_Check<K_Type, K_PropertyName>;
     // can use function to check value, ideally it uses the type of the selected property
@@ -428,8 +397,8 @@ export function _createConcepts<
 
   type EffectRule_ACheck_OneItemType<K_Type extends T_ItemType> = {
     type?: K_Type;
-    name?: G_ItemName[K_Type] | G_ItemName[K_Type][];
-    prop?: G_PropertyName[K_Type][];
+    name?: ItemName<K_Type> | ItemName<K_Type>[];
+    prop?: PropertyName<K_Type>[];
     addedOrRemoved?: boolean;
     becomes?: undefined;
   };
@@ -445,7 +414,7 @@ export function _createConcepts<
   */
   type EffectRule_ACheck_MultipleItemTypes = {
     type?: T_ItemType[];
-    name?: G_ItemName[T_ItemType] | G_ItemName[T_ItemType][];
+    name?: ItemName<T_ItemType> | ItemName<T_ItemType>[];
     prop?: AllProperties[];
     addedOrRemoved?: boolean;
     becomes?: undefined;
@@ -476,7 +445,7 @@ export function _createConcepts<
 
   type FlexibleRuleOptions<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   > = XOR<
     Effect_RuleOptions<K_Type>,
     ItemEffect_RuleOptions<K_Type, K_PropertyName>
@@ -514,7 +483,7 @@ export function _createConcepts<
     becomes,
   }: {
     theItemType?: K_Type | K_Type[];
-    theItemName?: G_ItemName[K_Type][];
+    theItemName?: ItemName<K_Type>[];
     thePropertyNames: AllProperties[];
     whatToDo: (options: any) => // options: IfPropertyChangedWhatToDoParams<
     //   T_State,
@@ -714,7 +683,7 @@ export function _createConcepts<
   // --------------------------------------------------------------------
   function getItem<
     K_Type extends T_ItemType,
-    T_ItemName extends G_ItemName[K_Type]
+    T_ItemName extends ItemName<K_Type>
   >(type: K_Type, name: T_ItemName) {
     return [
       (getState() as any)[type][name],
@@ -746,7 +715,7 @@ export function _createConcepts<
 
   function startItemEffect<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   >({
     check,
     onItemEffect,
@@ -824,7 +793,7 @@ export function _createConcepts<
 
   function useStoreItemEffect<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type],
+    K_PropertyName extends PropertyName<K_Type>,
     T_ReturnType
   >(
     onItemEffect: (
@@ -845,7 +814,7 @@ export function _createConcepts<
 
   function useStoreItem<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type],
+    K_PropertyName extends PropertyName<K_Type>,
     T_ReturnType,
     T_TheParameters = UseStoreItemParams<K_Type>
   >(
@@ -885,10 +854,10 @@ export function _createConcepts<
   );
   */
   function useStoreItemPropsEffect<K_Type extends T_ItemType>(
-    checkItem: { type: K_Type; name: G_ItemName[K_Type]; flow?: T_FlowName },
+    checkItem: { type: K_Type; name: ItemName<K_Type>; flow?: T_FlowName },
     onPropChanges: Partial<
       {
-        [K_PropertyName in G_PropertyName[K_Type]]: ItemEffectCallback<
+        [K_PropertyName in PropertyName<K_Type>]: ItemEffectCallback<
           K_Type,
           K_PropertyName
         >;
@@ -931,8 +900,8 @@ export function _createConcepts<
   type AddItemOptions<K_Type extends T_ItemType> = {
     type: K_Type;
     name: string;
-    state?: Partial<T_State[K_Type][G_ItemName[K_Type]]>;
-    refs?: Partial<T_Refs[K_Type][G_ItemName[K_Type]]>;
+    state?: Partial<T_State[K_Type][ItemName<K_Type>]>;
+    refs?: Partial<T_Refs[K_Type][ItemName<K_Type>]>;
   };
   function addItem<K_Type extends T_ItemType>(
     addItemOptions: AddItemOptions<K_Type>,
@@ -958,7 +927,7 @@ export function _createConcepts<
   // --------------------------------------------------------------------
   type MakeRule_Rule = FlexibleRuleOptions<
     T_ItemType,
-    G_PropertyName[T_ItemType]
+    PropertyName<T_ItemType>
   >;
 
   function makeEffect<K_Type extends T_ItemType>(
@@ -969,26 +938,45 @@ export function _createConcepts<
 
   function makeItemEffect<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type]
+    K_PropertyName extends PropertyName<K_Type>
   >(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) {
     return options;
   }
 
-  function makeRules<K_RuleName extends string>(
-    rulesToAdd: (
-      addItemEffect: typeof makeItemEffect,
-      addEffect: typeof makeEffect
+  // NOTE could make options generic and return that
+  // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
+  type MakeEffect = <K_Type extends T_ItemType>(
+    options: Effect_RuleOptions<K_Type>
+  ) => Effect_RuleOptions<K_Type>;
+
+  // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
+  type MakeItemEffect = <
+    K_Type extends T_ItemType,
+    K_PropertyName extends PropertyName<K_Type>
+  >(
+    options: ItemEffect_RuleOptions<K_Type, K_PropertyName>
+  ) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
+
+  function makeRules<
+    K_RuleName extends string,
+    K_RulesToAdd extends (
+      addItemEffect: MakeItemEffect,
+      addEffect: MakeEffect
       // ) => Record<K_RuleName, MakeRule_Rule >
     ) => Record<K_RuleName, any>
-  ) {
+  >(rulesToAdd: K_RulesToAdd) {
     type RuleName = keyof ReturnType<typeof rulesToAdd>;
-    const editedRulesToAdd = rulesToAdd(makeItemEffect, makeEffect);
+    const editedRulesToAdd = rulesToAdd(
+      makeItemEffect as MakeItemEffect,
+      makeEffect as MakeEffect
+    );
     const ruleNames: RuleName[] = Object.keys(editedRulesToAdd) as RuleName[];
     const ruleNamePrefix = toSafeListenerName("makeRules");
 
     // edit the names for each rule
     forEach(ruleNames, (ruleName) => {
-      const loopedRule = editedRulesToAdd[ruleName];
+      const loopedRule =
+        editedRulesToAdd[ruleName as keyof typeof editedRulesToAdd];
       if (loopedRule) {
         loopedRule.name = ruleNamePrefix + ruleName;
       }
@@ -996,7 +984,8 @@ export function _createConcepts<
 
     // maybe startRule so it can be {startRule} =
     function start(ruleName: RuleName) {
-      const theRule = editedRulesToAdd[ruleName];
+      const theRule =
+        editedRulesToAdd[ruleName as keyof typeof editedRulesToAdd];
       if (!theRule) return;
 
       if (theRule.onEffect !== undefined) {
@@ -1005,14 +994,14 @@ export function _createConcepts<
         startItemEffect(
           theRule as ItemEffect_RuleOptions<
             T_ItemType,
-            G_PropertyName[T_ItemType]
+            PropertyName<T_ItemType>
           >
         );
       }
     }
 
     function stop(ruleName: RuleName) {
-      if (editedRulesToAdd[ruleName]) {
+      if (editedRulesToAdd[ruleName as keyof typeof editedRulesToAdd]) {
         stopEffect(ruleNamePrefix + ruleName);
       }
     }
@@ -1045,7 +1034,7 @@ export function _createConcepts<
   }
   function makeDynamicItemEffectInlineFunction<
     K_Type extends T_ItemType,
-    K_PropertyName extends G_PropertyName[K_Type],
+    K_PropertyName extends PropertyName<K_Type>,
     T_Options extends any
   >(
     theRule: (
@@ -1055,20 +1044,42 @@ export function _createConcepts<
     return theRule;
   }
 
+  type MakeDynamicEffectInlineFunction = <
+    K_Type extends T_ItemType,
+    T_Options extends any
+  >(
+    theRule: (options: T_Options) => Effect_RuleOptions<K_Type>
+  ) => (options: T_Options) => Effect_RuleOptions<K_Type>;
+
+  type MakeDynamicItemEffectInlineFunction = <
+    K_Type extends T_ItemType,
+    K_PropertyName extends PropertyName<K_Type>,
+    T_Options extends any
+  >(
+    theRule: (
+      options: T_Options
+    ) => ItemEffect_RuleOptions<K_Type, K_PropertyName>
+  ) => (options: T_Options) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
+
   function makeDynamicRules<
     K_RuleName extends string,
     T_MakeRule_Function extends (...args: any) => MakeRule_Rule,
+    K_RulesToAdd_Param extends (
+      addItemEffect: MakeDynamicItemEffectInlineFunction,
+      addEffect: MakeDynamicEffectInlineFunction
+    ) => T_RulesToAdd,
     T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
   >(
-    rulesToAdd: (
-      addItemEffect: typeof makeDynamicItemEffectInlineFunction,
-      addEffect: typeof makeDynamicEffectInlineFunction
-    ) => T_RulesToAdd
+    rulesToAdd: K_RulesToAdd_Param &
+      ((
+        addItemEffect: MakeDynamicItemEffectInlineFunction,
+        addEffect: MakeDynamicEffectInlineFunction
+      ) => T_RulesToAdd)
   ) {
     type RuleName = keyof ReturnType<typeof rulesToAdd>;
     const allRules = rulesToAdd(
-      makeDynamicItemEffectInlineFunction,
-      makeDynamicEffectInlineFunction
+      makeDynamicItemEffectInlineFunction as MakeDynamicItemEffectInlineFunction,
+      makeDynamicEffectInlineFunction as MakeDynamicEffectInlineFunction
     );
 
     const ruleNames = Object.keys(allRules) as RuleName[];
@@ -1106,7 +1117,7 @@ export function _createConcepts<
           startItemEffect(
             editedRuleObject as ItemEffect_RuleOptions<
               T_ItemType,
-              G_PropertyName[T_ItemType]
+              PropertyName<T_ItemType>
             >
           );
         }
@@ -1163,7 +1174,7 @@ export function _createConcepts<
   // Patches and Diffs
   // ---------------------------------------------------
 
-  type ItemNamesByType = { [K_Type in T_ItemType]: G_ItemName[K_Type][] };
+  type ItemNamesByType = { [K_Type in T_ItemType]: ItemName<K_Type>[] };
 
   type StatesPatch = {
     changed: GetPartialState<T_State>;
@@ -1348,10 +1359,10 @@ export function _createConcepts<
           if (patchChangesForItemName) {
             const propsChangedForType = tempDiffInfo.propsChanged[itemType];
             forEach(
-              propsChangedForType[itemName as any],
+              propsChangedForType[itemName as keyof typeof propsChangedForType],
               (propertyName) => {
-                patchChangesForItemName[propertyName as keyof typeof patchChangesForItemName] =
-                  newState?.[itemType]?.[itemName]?.[propertyName as any];
+                patchChangesForItemName[propertyName] =
+                  newState?.[itemType]?.[itemName]?.[propertyName];
               }
             );
           }
@@ -1372,7 +1383,7 @@ export function _createConcepts<
 
         const newItemTypeState = newState[itemType];
 
-        let propertyNamesForItemType = [] as G_PropertyName[typeof itemType][];
+        let propertyNamesForItemType = [] as PropertyName<typeof itemType>[];
         let propertyNamesHaveBeenFound = false;
         forEach(itemNamesAddedForType ?? [], (itemName) => {
           const defaultItemState = defaultStates[itemType](itemName);
@@ -1381,7 +1392,7 @@ export function _createConcepts<
           if (!propertyNamesHaveBeenFound) {
             propertyNamesForItemType = Object.keys(
               defaultItemState
-            ) as G_PropertyName[typeof itemType][];
+            ) as PropertyName<typeof itemType>[];
             propertyNamesHaveBeenFound = true;
           }
 
@@ -1448,7 +1459,7 @@ export function _createConcepts<
 
         const prevItemTypeState = prevState[itemType];
 
-        let propertyNamesForItemType = [] as G_PropertyName[typeof itemType][];
+        let propertyNamesForItemType = [] as PropertyName<typeof itemType>[];
         let propertyNamesHaveBeenFound = false;
         forEach(itemNamesRemovedForType ?? [], (itemName) => {
           const defaultItemState = defaultStates[itemType](itemName);
@@ -1457,7 +1468,7 @@ export function _createConcepts<
           if (!propertyNamesHaveBeenFound) {
             propertyNamesForItemType = Object.keys(
               defaultItemState
-            ) as G_PropertyName[typeof itemType][];
+            ) as PropertyName<typeof itemType>[];
             propertyNamesHaveBeenFound = true;
           }
 
@@ -1548,7 +1559,7 @@ export function _createConcepts<
       const hasAddedItems = itemsAddedPrev?.length || itemsAddedNew?.length;
 
       if (hasAddedItems) {
-        combinedPatch.added[itemType as any] = getUniqueArrayItems([
+        combinedPatch.added[itemType] = getUniqueArrayItems([
           ...(itemsAddedPrev ?? ([] as ItemNamesByType[typeof itemType])),
           ...(itemsAddedNew ?? ([] as ItemNamesByType[typeof itemType])),
         ]);
@@ -1562,7 +1573,7 @@ export function _createConcepts<
         (itemsRemovedNew && itemsRemovedNew.length > 0);
 
       if (hasRemovedItems) {
-        combinedPatch.removed[itemType as any] = getUniqueArrayItems([
+        combinedPatch.removed[itemType] = getUniqueArrayItems([
           ...(itemsRemovedPrev ?? ([] as ItemNamesByType[typeof itemType])),
           ...(itemsRemovedNew ?? ([] as ItemNamesByType[typeof itemType])),
         ]);
@@ -1610,7 +1621,7 @@ export function _createConcepts<
         const allChangedItemNames = Object.keys({
           ...(itemsChangedPrev ?? {}),
           ...(itemsChangedNew ?? {}),
-        }) as G_ItemName[typeof itemType][];
+        }) as ItemName<typeof itemType>[];
 
         if (!combinedPatch.changed[itemType]) {
           combinedPatch.changed[itemType] = {};
@@ -1662,13 +1673,13 @@ export function _createConcepts<
     forEach(itemTypes, (itemType) => {
       const propertyNames = Object.keys(
         defaultStates[itemType]("anItemName")
-      ) as G_PropertyName[typeof itemType][];
+      ) as PropertyName<typeof itemType>[];
 
       const changedForType = minimalPatch.changed[itemType];
       if (changedForType) {
-        const changedItemNames = Object.keys(changedForType ?? {}) as G_ItemName[
+        const changedItemNames = Object.keys(changedForType ?? {}) as ItemName<
           typeof itemType
-        ][];
+        >[];
         forEach(changedItemNames, (itemName) => {
           const changedForItem = changedForType[itemName];
           const itemState = currentStates?.[itemType]?.[itemName];
@@ -1718,7 +1729,7 @@ export function _createConcepts<
       }
       // Loop through added in patchToRemove, if it’s in newPatch , remove it
       // Keep track of noLongerAddedItems { itemType: []
-      const noLongerAddedItems: G_ItemName[T_ItemType][] = [];
+      const noLongerAddedItems: ItemName<T_ItemType>[] = [];
       if (newPatch.added[itemType]) {
         newPatch.added[itemType] = newPatch.added[itemType]!.filter(
           (itemName) => {
@@ -1738,7 +1749,7 @@ export function _createConcepts<
       if (removedPatchChangedForType && newPatchChangedForType) {
         const changedItemNames = Object.keys(
           removedPatchChangedForType ?? {}
-        ) as G_ItemName[typeof itemType][];
+        ) as ItemName<typeof itemType>[];
         forEach(changedItemNames, (itemName) => {
           const removedPatchChangedForItem =
             removedPatchChangedForType[itemName];
