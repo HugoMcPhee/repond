@@ -1,14 +1,13 @@
 {
   "name": "concepto",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "item state and subscribers",
-  "main": "index.tsx",
-  "types": "index.tsx",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "scripts": {},
-  "//scripts": {
+  "scripts": {
     "build": "npx tsc",
     "prepare": "npm run build"
   },
