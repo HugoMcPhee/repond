@@ -60,7 +60,25 @@ export function _createConcepts<
     };
   },
   T_ItemType extends keyof T_AllInfo,
-  T_FlowNamesParam extends Readonly<string[]>
+  T_FlowNamesParam extends Readonly<string[]>,
+  DefaultStates extends { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] },
+  DefaultRefs extends { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] },
+  T_State extends {
+    [K_Type in T_ItemType]: Record<
+      T_AllInfo[K_Type]["startStates"] extends Record<string, any>
+        ? keyof T_AllInfo[K_Type]["startStates"]
+        : string,
+      ReturnType<T_AllInfo[K_Type]["state"]>
+    >;
+  },
+  T_Refs extends {
+    [K_Type in T_ItemType]: Record<
+      T_AllInfo[K_Type]["startStates"] extends Record<string, any>
+        ? keyof T_AllInfo[K_Type]["startStates"]
+        : string,
+      ReturnType<DefaultRefs[K_Type]>
+    >;
+  }
 >(
   allInfo: T_AllInfo,
   extraOptions?: {
@@ -85,27 +103,27 @@ export function _createConcepts<
     meta.currentFlowName = flowNames[meta.currentFlowIndex];
   }
 
-  type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
-  type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
+  // type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
+  // type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
 
   type StartStatesItemName<K_Type extends keyof T_AllInfo> =
     T_AllInfo[K_Type]["startStates"] extends Record<string, any>
       ? keyof T_AllInfo[K_Type]["startStates"]
       : string;
 
-  type T_State = {
-    [K_Type in T_ItemType]: Record<
-      StartStatesItemName<K_Type>,
-      ReturnType<T_AllInfo[K_Type]["state"]>
-    >;
-  };
+  // type T_State = {
+  //   [K_Type in T_ItemType]: Record<
+  //     StartStatesItemName<K_Type>,
+  //     ReturnType<T_AllInfo[K_Type]["state"]>
+  //   >;
+  // };
 
-  type T_Refs = {
-    [K_Type in T_ItemType]: Record<
-      StartStatesItemName<K_Type>,
-      ReturnType<DefaultRefs[K_Type]>
-    >;
-  };
+  // type T_Refs = {
+  //   [K_Type in T_ItemType]: Record<
+  //     StartStatesItemName<K_Type>,
+  //     ReturnType<DefaultRefs[K_Type]>
+  //   >;
+  // };
 
   const defaultStates: DefaultStates = itemTypes.reduce((prev: any, key) => {
     prev[key] = allInfo[key].state;
@@ -1308,10 +1326,10 @@ export function _createConcepts<
           if (patchChangesForItemName) {
             const propsChangedForType = tempDiffInfo.propsChanged[itemType];
             forEach(
-              propsChangedForType[itemName as keyof typeof propsChangedForType],
+              propsChangedForType[itemName as any],
               (propertyName) => {
-                patchChangesForItemName[propertyName] =
-                  newState?.[itemType]?.[itemName]?.[propertyName];
+                patchChangesForItemName[propertyName as any] =
+                  newState?.[itemType]?.[itemName]?.[propertyName as any];
               }
             );
           }
