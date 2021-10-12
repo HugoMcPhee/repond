@@ -1,19 +1,20 @@
 {
   "name": "concepto",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "description": "item state and subscribers",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.tsx",
+  "types": "index.tsx",
   "files": [
     "dist"
   ],
-  "scripts": {
+  "scripts": {},
+  "//scripts": {
     "build": "npx tsc",
     "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HugoMcPhee/shutils.git"
+    "url": "git+https://github.com/HugoMcPhee/conepto.git"
   },
   "keywords": [],
   "author": "Hugo McPhee",

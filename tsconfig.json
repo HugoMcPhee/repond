@@ -5,11 +5,17 @@
     "target": "ES2019",
     "module": "ESNext",
     "outDir": "dist",
-    "lib": ["DOM", "ESNext"],
+    "lib": ["DOM", "dom.iterable", "ESNext"],
     "jsx": "react",
     "sourceMap": false,
     "rootDir": "src",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "isolatedModules": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
