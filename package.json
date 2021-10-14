@@ -1,6 +1,6 @@
 {
   "name": "concepto",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "item state and subscribers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
