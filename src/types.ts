@@ -28,9 +28,8 @@ export type ChangeToCheck<
 export type DeepReadonly<T> =
   // tslint:disable-next-line: ban-types
   T extends AnyFunction | Primitive
-    ? T
-    : // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    T extends ReadonlyArray<infer R>
+    ? T // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    : T extends ReadonlyArray<infer R>
     ? T
     : T extends ReadonlyMap<infer K, infer V>
     ? IDRMap<K, V>
