@@ -1533,61 +1533,24 @@ export function _createConcepts<
   // ) => (options: T_Options) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
 
   function makeDynamicRules<
-    // K_RuleName extends string,
-    T_Options extends Record<any, any>,
-    T_RulesToAddRules extends {
-      [K_RuleName: string]: (
-        // ...args: T_Options
-        params: T_Options
-      ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>;
-    },
-    K_RuleName extends keyof T_RulesToAddRules & string
-    // T_MakeRule_Function extends (
-    //   // ...args: T_Options
-    //   params: T_Options
-    // ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>,
-    // K_RulesToAdd_Param extends (
-    //   addItemEffect: MakeDynamicItemEffectInlineFunction,
-    //   addEffect: MakeDynamicEffectInlineFunction
-    // ) => Record<
-    //   K_RuleName,
-    //   (
-    //     // ...args: T_Options
-    //     params: T_Options
-    //   ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>
-    // >
-    // T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
-    // T_ARuleFunction extends ,
-    // T_RulesToAddRules extends Record<K_RuleName, T_ARuleFunction>,
-    // T_RulesToAddParam extends (
-    //   addItemEffect: MakeDynamicItemEffectInlineFunction,
-    //   addEffect: MakeDynamicEffectInlineFunction
-    // ) => T_RulesToAddRules
+    K_RuleName extends string,
+    T_MakeRule_Function extends (
+      ...args: any
+    ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>,
+    T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
   >(
     rulesToAdd: (
       addItemEffect: MakeDynamicItemEffectInlineFunction,
       addEffect: MakeDynamicEffectInlineFunction
-    ) => T_RulesToAddRules
-
-    // &
-    //   ((
-    //     addItemEffect: MakeDynamicItemEffectInlineFunction,
-    //     addEffect: MakeDynamicEffectInlineFunction
-    //   ) => T_RulesToAdd)
-  ): {
-    start: (ruleName: K_RuleName, options: T_Options) => void;
-    stop: (ruleName: K_RuleName, options: T_Options) => void;
-    startAll: (options: T_Options) => void;
-    stopAll: (options: T_Options) => void;
-    ruleNames: K_RuleName[];
-  } {
-    // type RuleName = keyof ReturnType<typeof rulesToAdd>;
+    ) => T_RulesToAdd
+  ) {
+    type RuleName = keyof ReturnType<typeof rulesToAdd>;
     const allRules = rulesToAdd(
-      makeDynamicItemEffectInlineFunction as any,
-      makeDynamicEffectInlineFunction as any
+      makeDynamicItemEffectInlineFunction,
+      makeDynamicEffectInlineFunction
     );
 
-    const ruleNames = Object.keys(allRules) as any[];
+    const ruleNames = Object.keys(allRules) as RuleName[];
 
     const ruleNamePrefix = `${ruleNames
       .map((loopedName) => (loopedName as string).charAt(0))
@@ -1604,13 +1567,12 @@ export function _createConcepts<
       )}`;
     }
 
-    function start(
-      ruleName: K_RuleName,
+    function start<K_ChosenRuleName extends keyof T_RulesToAdd & K_RuleName>(
+      ruleName: K_ChosenRuleName,
       // @ts-ignore
-      // options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]
-      options: T_Options
+      options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]
     ) {
-      const theRuleFunction = allRules[ruleName as any];
+      const theRuleFunction = allRules[ruleName];
       if (theRuleFunction && typeof theRuleFunction === "function") {
         const editedRuleObject = theRuleFunction(options);
         if (!editedRuleObject.name) {
@@ -1618,27 +1580,19 @@ export function _createConcepts<
         }
 
         if (editedRuleObject.onEffect !== undefined) {
-          startEffect(
-            editedRuleObject as Effect_RuleOptions<
-              T_ItemType,
-              T_ItemType,
-              T_State,
-              T_FlowName
-            >
-          );
+          startEffect(editedRuleObject as any);
         } else {
           startItemEffect(editedRuleObject as any);
         }
       }
     }
 
-    function stop(
-      ruleName: K_RuleName,
+    function stop<K_ChosenRuleName extends keyof T_RulesToAdd & K_RuleName>(
+      ruleName: K_ChosenRuleName,
       // @ts-ignore
-      // options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]
-      options: T_Options
+      options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]
     ) {
-      const theRuleFunction = allRules[ruleName as any];
+      const theRuleFunction = allRules[ruleName];
       if (theRuleFunction && typeof theRuleFunction === "function") {
         const foundOrMadeRuleName =
           theRuleFunction(options)?.name || getWholeRuleName(ruleName, options);
@@ -1652,10 +1606,9 @@ export function _createConcepts<
     // ideally it can set startAll type as never if any of the options are different
     function startAll(
       // @ts-ignore
-      // options: Parameters<T_RulesToAdd[K_RuleName]>[0]
-      options: T_Options
+      options: Parameters<T_RulesToAdd[RuleName]>[0]
     ) {
-      forEach(ruleNames, (ruleName: K_RuleName) => {
+      forEach(ruleNames, (ruleName: RuleName) => {
         // @ts-ignore
         start(ruleName, options);
       });
@@ -1663,10 +1616,9 @@ export function _createConcepts<
 
     function stopAll(
       // @ts-ignore
-      // options: Parameters<T_RulesToAdd[K_RuleName]>[0]
-      options: T_Options
+      options: Parameters<T_RulesToAdd[RuleName]>[0]
     ) {
-      forEach(ruleNames, (ruleName: K_RuleName) => {
+      forEach(ruleNames, (ruleName: RuleName) => {
         // @ts-ignore
         stop(ruleName, options);
       });
