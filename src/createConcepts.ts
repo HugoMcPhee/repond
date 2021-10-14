@@ -1313,7 +1313,7 @@ export function _createConcepts<
   type MakeEffect = <K_Type extends T_ItemType>(
     options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>;
-  ) => void;
+  ) => any;
 
   // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
   type MakeItemEffect = <
@@ -1336,7 +1336,7 @@ export function _createConcepts<
     //   T_Refs,
     //   T_FlowName
     // >;
-  ) => void;
+  ) => any;
 
   type MakeDynamicEffectInlineFunction = <
     K_Type extends T_ItemType,
@@ -1348,7 +1348,7 @@ export function _createConcepts<
   ) => (
     options: T_Options
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>;
-  ) => void;
+  ) => any;
 
   type MakeDynamicItemEffectInlineFunction = <
     K_Type extends T_ItemType,
@@ -1375,7 +1375,7 @@ export function _createConcepts<
     //   T_Refs,
     //   T_FlowName
     // >;
-  ) => void;
+  ) => any;
 
   function makeEffect<K_Type extends T_ItemType>(
     options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
