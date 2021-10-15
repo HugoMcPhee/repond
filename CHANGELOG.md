@@ -1,3 +1,7 @@
+v0.5.7
+
+- renamed concep
+
 v0.5.4
 
 - temporarily removed patch and diff functions so typescript doesn't get the "the inferred type of this node exceed the maximum length" error for \_createConcepts
