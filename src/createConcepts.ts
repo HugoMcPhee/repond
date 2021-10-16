@@ -518,8 +518,8 @@ type ListenerAfterNormalising<
 type UseStoreItemParams<
   K_Type extends T_ItemType,
   T_ItemType extends string | number | symbol,
-  T_Refs extends Record<any, any>,
-  T_State extends Record<any, any>
+  T_State extends Record<any, any>,
+  T_Refs extends Record<any, any>
 > = {
   itemName: ItemName<K_Type, T_ItemType, T_State>;
   prevItemState: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>];
