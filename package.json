@@ -1,6 +1,6 @@
 {
   "name": "concep",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "item state and subscribers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,6 +8,9 @@
     "dist"
   ],
   "scripts": {
+    "build": "npx tsc"
+  },
+  "// scripts": {
     "build": "npx tsc",
     "prepare": "npm run build"
   },

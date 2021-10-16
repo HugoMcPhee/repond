@@ -1,3 +1,8 @@
+v0.5.9
+
+- type fixes
+- adds already built package
+
 v0.5.7
 
 - renamed concep
