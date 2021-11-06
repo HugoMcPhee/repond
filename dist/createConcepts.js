@@ -212,7 +212,7 @@ export function _createConcepts(allInfo, extraOptions) {
     const getState = () => meta.currentState;
     const setState = (newState, callback) => _setState(newState, callback);
     function onNextTick(callback) {
-        meta.callforwardsQue.push(callback);
+        meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
     }
     const getPreviousState = () => meta.previousState;
     const getRefs = () => meta.currentRefs;

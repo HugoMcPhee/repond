@@ -139,42 +139,6 @@ function runSetOfThinkListeners(flowName) {
     runDeriveListeners(flowName);
     if (!meta.recordedDeriveChanges.somethingChanged)
         return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
-    runDeriveListeners(flowName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
-        return;
     console.warn("running think listeners a lot :S", Object.keys(meta.recordedDeriveChanges.itemTypesBool), Object.keys(meta.recordedDeriveChanges.itemPropertiesBool));
 }
 function runDrawListenersShortcut(flowName) {
@@ -304,17 +268,17 @@ function runSetOfFlowsLoopShortcut() {
 }
 export function _updateConcepto(animationFrameTime) {
     updateFrameTimes(animationFrameTime);
-    runAllCallfowards();
     setPhase("runningUpdates");
     // save previous state, ,
     // this won't this disreguard all the state stuff from the callbacks?
     // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
     meta.copyStates(meta.currentState, meta.previousState);
     runSetOfFlowsLoopShortcut();
-    setPhase("waitingForFirstUpdate");
     resetRecordedDrawChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
+    setPhase("waitingForFirstUpdate");
     runAllCallbacks();
     removeRemovedItemRefs();
+    // runAllCallfowards(); // Moved callforwarsd to end of frame to help frame pacing issue on android? have also moved callforwarsd to inside callbacks
     // if theres nothing running on next frame
     meta.nextFrameIsFirst = meta.setStatesQue.length === 0;
 }

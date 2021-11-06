@@ -66,7 +66,9 @@ const conceptoMeta = {
     propNamesByItemType: {},
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
-    copyStates: (currentObject, saveToObject) => { },
+    copyStates: (currentObject, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
+    allRecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
+    ) => { },
     mergeStates: (newStates, saveToObject, recordedChanges, allRecordedChanges) => { },
     getStatesDiff: (currentObject, previousObject, diffInfo, recordedChanges, checkAllChanges) => { },
     // react specific?

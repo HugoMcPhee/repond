@@ -56,10 +56,16 @@ export function _addItem({ type, name, state, refs, }, callback) {
             ...(refs || {}),
         };
         meta.recordedSubscribeChanges.itemTypesBool[type] = true;
-        meta.recordedSubscribeChanges.itemNamesBool[name] = true;
+        if (!meta.recordedSubscribeChanges.itemNamesBool) {
+            meta.recordedSubscribeChanges.itemNamesBool[type] = {};
+        }
+        meta.recordedSubscribeChanges.itemNamesBool[type][name] = true;
         meta.recordedSubscribeChanges.somethingChanged = true;
         meta.recordedDeriveChanges.itemTypesBool[type] = true;
-        meta.recordedDeriveChanges.itemNamesBool[name] = true;
+        if (!meta.recordedDeriveChanges.itemNamesBool[type]) {
+            meta.recordedDeriveChanges.itemNamesBool[type] = {};
+        }
+        meta.recordedDeriveChanges.itemNamesBool[type][name] = true;
         meta.recordedDeriveChanges.somethingChanged = true;
     }, callback);
 }
