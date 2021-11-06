@@ -4,10 +4,16 @@ export declare type RecordedChanges = {
         [type: string]: boolean;
     };
     itemNamesBool: {
-        [itemName: string]: boolean;
+        [type: string]: {
+            [itemName: string]: boolean;
+        };
     };
     itemPropertiesBool: {
-        [itemName: string]: boolean;
+        [type: string]: {
+            [itemName: string]: {
+                [itemProp: string]: boolean;
+            };
+        };
     };
     somethingChanged: boolean;
 };
@@ -117,7 +123,7 @@ declare const conceptoMeta: {
             [itemPropertyName: string]: any;
         };
     };
-    copyStates: (currentObject: any, saveToObject: any) => void;
+    copyStates: (currentObject: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
     mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
     getStatesDiff: (currentObject: any, previousObject: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
     autoListenerNameCounter: number;

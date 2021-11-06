@@ -156,30 +156,7 @@ function runSetOfThinkListeners(flowName: string) {
   if (!meta.recordedDeriveChanges.somethingChanged) return;
   runDeriveListeners(flowName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
-  if (!meta.recordedDeriveChanges.somethingChanged) return;
+
   console.warn(
     "running think listeners a lot :S",
     Object.keys(meta.recordedDeriveChanges.itemTypesBool),
@@ -285,7 +262,7 @@ function runSetOfFlowsLoopShortcut() {
 
 export function _updateConcepto(animationFrameTime: number) {
   updateFrameTimes(animationFrameTime);
-  runAllCallfowards();
+
   setPhase("runningUpdates");
   // save previous state, ,
   // this won't this disreguard all the state stuff from the callbacks?
@@ -294,12 +271,14 @@ export function _updateConcepto(animationFrameTime: number) {
 
   runSetOfFlowsLoopShortcut();
 
-  setPhase("waitingForFirstUpdate");
-
   resetRecordedDrawChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
 
+  setPhase("waitingForFirstUpdate");
   runAllCallbacks();
   removeRemovedItemRefs();
+
+  // runAllCallfowards(); // Moved callforwarsd to end of frame to help frame pacing issue on android? have also moved callforwarsd to inside callbacks
+
   // if theres nothing running on next frame
   meta.nextFrameIsFirst = meta.setStatesQue.length === 0;
 }

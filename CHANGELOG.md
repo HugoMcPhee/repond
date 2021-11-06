@@ -1,3 +1,14 @@
+TODO
+
+- support nullable types with strictNullchecks
+
+v0.6.0
+
+- changed mergeStates and getStatesDiff to use loops instead of function strings , small perforamnce boost
+- kept copyStates as a function string becuase it's faster
+- changed callForwards to be combined with callbacks, so onNextTick runs the the end of the current frame, instead of the start of the next frame
+- getStatesDiff now checks for more specific changes, like checking [itemType][name][propertyName] together instead of [propertyName]
+
 v0.5.9
 
 - type fixes

@@ -1,9 +1,15 @@
 import { ChangeToCheck, ListenerType } from "./types";
 
 export type RecordedChanges = {
+  // itemTypesBool: { [type: string]: boolean };
+  // itemNamesBool: { [itemName: string]: boolean };
+  // itemPropertiesBool: { [itemName: string]: boolean };
+  //
   itemTypesBool: { [type: string]: boolean };
-  itemNamesBool: { [itemName: string]: boolean };
-  itemPropertiesBool: { [itemName: string]: boolean };
+  itemNamesBool: { [type: string]: { [itemName: string]: boolean } };
+  itemPropertiesBool: {
+    [type: string]: { [itemName: string]: { [itemProp: string]: boolean } };
+  };
   somethingChanged: boolean;
 };
 
@@ -146,12 +152,16 @@ const conceptoMeta = {
     ) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
-    [itemTypeName: string]: (
-      itemName?: string
-    ) => //   itemName?: string
+    [itemTypeName: string]: (itemName?: string) => //   itemName?: string
     { [itemPropertyName: string]: any };
   },
-  copyStates: (currentObject: any, saveToObject: any) => {},
+  copyStates: (
+    currentObject: any,
+    saveToObject: any,
+
+    recordedChanges?: RecordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
+    allRecordedChanges?: RecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
+  ) => {},
   mergeStates: (
     newStates: any,
     saveToObject: any,
@@ -168,7 +178,7 @@ const conceptoMeta = {
   // react specific?
   autoListenerNameCounter: 1,
   //
-  flowNames: (["default"] as const) as Readonly<string[]>,
+  flowNames: ["default"] as const as Readonly<string[]>,
   currentFlowName: "default" as Readonly<string>,
   currentFlowIndex: 0,
 };
