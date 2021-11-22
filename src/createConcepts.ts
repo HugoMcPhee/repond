@@ -6,7 +6,7 @@ import meta, {
 import { getConceptoStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction from "./getStatesDiff";
-import { breakableForEach, forEach } from "shutils/dist/loops";
+import { breakableForEach, forEach } from "chootils/dist/loops";
 
 import {
   _addItem,
@@ -36,7 +36,7 @@ import {
   addItemToUniqueArray,
   removeItemFromArray,
   getUniqueArrayItems,
-} from "shutils/dist/arrays";
+} from "chootils/dist/arrays";
 
 // ChangeToCheck
 /*

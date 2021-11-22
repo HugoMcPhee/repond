@@ -2,7 +2,7 @@ const tempDefaultExport = "deault";
 export default tempDefaultExport;
 
 // import { XOR } from "./types";
-// import { forEach } from "shutils/dist/loops";
+// import { forEach } from "chootils/dist/loops";
 //
 // type NameOptionsBySpecies = {
 //   dog: { poodle: true; chiwawa: true };

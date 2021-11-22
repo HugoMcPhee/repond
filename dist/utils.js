@@ -1,4 +1,4 @@
-import { forEach } from "shutils/dist/loops";
+import { forEach } from "chootils/dist/loops";
 import meta from "./meta";
 export function cloneObjectWithJson(theObject) {
     return JSON.parse(JSON.stringify(theObject));

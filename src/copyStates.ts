@@ -1,5 +1,5 @@
 import meta, { RecordedChanges } from "./meta";
-import { forEach } from "shutils/dist/loops";
+import { forEach } from "chootils/dist/loops";
 
 function addIfEmpty(propertyString: string, initialValue: string) {
   return `if (!${propertyString}) {

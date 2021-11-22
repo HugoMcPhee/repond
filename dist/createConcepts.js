@@ -2,11 +2,11 @@ import meta, { toSafeListenerName, initialRecordedChanges, } from "./meta";
 import { getConceptoStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction from "./getStatesDiff";
-import { breakableForEach, forEach } from "shutils/dist/loops";
+import { breakableForEach, forEach } from "chootils/dist/loops";
 import { _addItem, _removeItem, _setState, runWhenStartingConceptoListeners, runWhenStoppingConceptoListeners, } from "./setting";
 import { makeRefsStructureFromConceptoState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
 import { useLayoutEffect, useState, useCallback, useEffect } from "react";
-import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "shutils/dist/arrays";
+import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 /*
 
 , T_ItemType, T_State

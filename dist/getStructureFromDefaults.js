@@ -1,4 +1,4 @@
-import { forEach } from "shutils/dist/loops";
+import { forEach } from "chootils/dist/loops";
 import meta from "./meta";
 const validItemNameByType = {};
 export function getConceptoStructureFromDefaults() {

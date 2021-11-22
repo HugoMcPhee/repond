@@ -2,6 +2,11 @@ TODO
 
 - support nullable types with strictNullchecks
 
+v0.6.1
+
+- replaces shutils with renamed chootils
+- publishing to npm
+
 v0.6.0
 
 - changed mergeStates and getStatesDiff to use loops instead of function strings , small perforamnce boost
