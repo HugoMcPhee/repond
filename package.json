@@ -20,7 +20,7 @@
   },
   "keywords": [],
   "author": "Hugo McPhee",
-  "license": "",
+  "license": "MIT",
   "devDependencies": {
     "@types/react": "^17.0.28",
     "react": "^17.0.2",
