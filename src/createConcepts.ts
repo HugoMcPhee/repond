@@ -1084,9 +1084,8 @@ export function _createConcepts<
     T_FlowName
   >) {
     let listenerName = name || "unnamedEffect" + Math.random();
-    if (!name) {
-      console.log("used random name");
-    }
+    // if (!name) console.log("used random name");
+
     const editedItemTypes = toSafeArray(check.type);
     let editedPropertyNames = toSafeArray(check.prop);
     let editedItemNames = toSafeArray(check.name);

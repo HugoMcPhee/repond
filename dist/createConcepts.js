@@ -371,9 +371,7 @@ export function _createConcepts(allInfo, extraOptions) {
     }
     function startItemEffect({ check, onItemEffect, whenToRun, name, flow, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
-        if (!name) {
-            console.log("used random name");
-        }
+        // if (!name) console.log("used random name");
         const editedItemTypes = toSafeArray(check.type);
         let editedPropertyNames = toSafeArray(check.prop);
         let editedItemNames = toSafeArray(check.name);

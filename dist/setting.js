@@ -56,7 +56,7 @@ export function _addItem({ type, name, state, refs, }, callback) {
             ...(refs || {}),
         };
         meta.recordedSubscribeChanges.itemTypesBool[type] = true;
-        if (!meta.recordedSubscribeChanges.itemNamesBool) {
+        if (!meta.recordedSubscribeChanges.itemNamesBool[type]) {
             meta.recordedSubscribeChanges.itemNamesBool[type] = {};
         }
         meta.recordedSubscribeChanges.itemNamesBool[type][name] = true;

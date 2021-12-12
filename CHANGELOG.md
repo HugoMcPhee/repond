@@ -2,6 +2,11 @@ TODO
 
 - support nullable types with strictNullchecks
 
+v0.6.2
+
+- fixes addItem not working from an undefiend object error
+- removes "used random name" log for listenres
+
 v0.6.1
 
 - replaces shutils with renamed chootils
