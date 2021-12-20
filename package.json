@@ -1,7 +1,7 @@
 {
-  "name": "concep",
-  "version": "0.6.2",
-  "description": "item state and subscribers",
+  "name": "pietem",
+  "version": "0.6.3",
+  "description": "realtime state management focused on items and reactions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -16,9 +16,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HugoMcPhee/conep.git"
+    "url": "git+https://github.com/HugoMcPhee/pietem.git"
   },
-  "keywords": [],
+  "keywords": [
+    "state",
+    "items",
+    "entities",
+    "react",
+    "listener",
+    "event"
+  ],
   "author": "Hugo McPhee",
   "license": "MIT",
   "devDependencies": {

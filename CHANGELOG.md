@@ -2,6 +2,10 @@ TODO
 
 - support nullable types with strictNullchecks
 
+v0.6.3
+
+- renamed pietem
+
 v0.6.2
 
 - fixes addItem not working from an undefiend object error
