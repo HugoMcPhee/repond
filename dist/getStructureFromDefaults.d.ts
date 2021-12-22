@@ -1,1 +1,1 @@
-export declare function getConceptoStructureFromDefaults(): void;
+export declare function getPietemStructureFromDefaults(): void;

@@ -101,7 +101,7 @@ export function makeCopyStatesFunction_both_prev(
     "currentObject",
     "saveToObject",
     "recordedChanges", // for the currently running listener type, think or draw
-    "allRecordedChanges", // collected for a whole (frame or flow?) used when doing "subscribe" (for a flow?)
+    "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
 
     copierFunctionString
   ) as any;
@@ -146,7 +146,7 @@ export function makeCopyStatesFunction() {
     "currentObject",
     "saveToObject",
     "recordedChanges", // for the currently running listener type, think or draw
-    "allRecordedChanges", // collected for a whole (frame or flow?) used when doing "subscribe" (for a flow?)
+    "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
 
     copierFunctionString
   ) as any;
@@ -244,8 +244,9 @@ export default function makeCopyStatesFunction_both_nonstring(
                 if (
                   !allRecordedChanges.itemPropertiesBool[itemType][itemName]
                 ) {
-                  allRecordedChanges.itemPropertiesBool[itemType][itemName] =
-                    {};
+                  allRecordedChanges.itemPropertiesBool[itemType][
+                    itemName
+                  ] = {};
                 }
                 allRecordedChanges.itemPropertiesBool[itemType][itemName][
                   itemProp

@@ -2,6 +2,15 @@ TODO
 
 - support nullable types with strictNullchecks
 
+v0.7.0
+
+- - lots of name updates -
+- updated rule property names
+- updated names to use 'pietem'
+- changed "becomes" prop to support checking new value directly
+- renamed flows to steps, and whenToRun/listenerType to phase
+- renamed createConcepts to createStoreHelpers
+
 v0.6.3
 
 - renamed pietem

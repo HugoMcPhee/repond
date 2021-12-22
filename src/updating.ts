@@ -1,7 +1,7 @@
-import meta, { RecordedChanges, ConceptoPhase } from "./meta";
+import meta, { RecordedChanges, PietemPhase } from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkListeners from "./checkListeners";
-import { ListenerType } from "./types";
+import { Phase } from "./types";
 
 /*
 
@@ -23,7 +23,7 @@ function updateDiffInfo(recordedChanges: RecordedChanges) {
   );
 }
 
-function setPhase(phaseName: ConceptoPhase) {
+function setPhase(phaseName: PietemPhase) {
   meta.currentPhase = phaseName;
 }
 
@@ -61,8 +61,8 @@ function runAddAndRemove() {
   meta.addAndRemoveItemsQue = [];
 }
 
-function runListeners(listenerType: ListenerType, flowName: string) {
-  const listenerNamesToRun = checkListeners(listenerType, flowName);
+function runListeners(phase: Phase, stepName: string) {
+  const listenerNamesToRun = checkListeners(phase, stepName);
   forEach(listenerNamesToRun, (name) => {
     if (meta.allListeners[name])
       meta.allListeners[name].whatToDo(meta.diffInfo, meta.latestFrameDuration);
@@ -111,14 +111,14 @@ function resetRecordedDeriveChanges() {
 }
 
 // ohhhhhhhhhhhh waiiiiiiiittttttttt , hm
-// the flows should all react to any changes made from previous flows
+// the steps should all react to any changes made from previous steps
 //
 
 // let timeLogged = Date.now();
 
-function runDeriveListeners(flowName: string) {
+function runDeriveListeners(stepName: string) {
   resetRecordedDeriveChanges(); // NOTE recently added to prevent think/derive changes being remembered each time it thinks again
-  runListeners("derive", flowName); //  a running think-listener can add more to the setStates que (or others)
+  runListeners("derive", stepName); //  a running think-listener can add more to the setStates que (or others)
   runAddListeners(); // add rules / effects
   runAddAndRemove(); // add and remove items
   runSetStates(); // run the qued setStates
@@ -135,26 +135,26 @@ function removeRemovedItemRefs() {
   });
 }
 
-function runSetOfThinkListeners(flowName: string) {
+function runSetOfThinkListeners(stepName: string) {
   meta.currentPhase = "runningDeriveListeners";
 
-  // recordedDeriveChanges are reset everytime a flow thinks?
+  // recordedDeriveChanges are reset everytime a step thinks?
   // resetRecordedDeriveChanges();
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
-  runDeriveListeners(flowName);
+  runDeriveListeners(stepName);
   if (!meta.recordedDeriveChanges.somethingChanged) return;
 
   console.warn(
@@ -164,103 +164,103 @@ function runSetOfThinkListeners(flowName: string) {
   );
 }
 
-function runDrawListenersShortcut(flowName: string) {
+function runDrawListenersShortcut(stepName: string) {
   meta.currentPhase = "runningSubscribeListeners"; // hm not checked anywhere, but checking phase !== "runningDerivers" is
   updateDiffInfo(meta.recordedSubscribeChanges); // the diff for all the combined derriver changes
-  runListeners("subscribe", flowName); //  Then it runs the subscribers based on the diff
+  runListeners("subscribe", stepName); //  Then it runs the subscribers based on the diff
 }
 
-function runAFlow(flowName: string) {
-  runSetOfThinkListeners(flowName);
-  runDrawListenersShortcut(flowName);
-  // HERE? save the current state for that flow, so it can be used as the prevState for this flow next frame?
+function runAStep(stepName: string) {
+  runSetOfThinkListeners(stepName);
+  runDrawListenersShortcut(stepName);
+  // HERE? save the current state for that step, so it can be used as the prevState for this step next frame?
 }
 
-function runAFlowLoop() {
-  runAFlow(meta.currentFlowName);
-  meta.currentFlowIndex += 1;
-  meta.currentFlowName = meta.flowNames[meta.currentFlowIndex];
+function runAStepLoop() {
+  runAStep(meta.currentStepName);
+  meta.currentStepIndex += 1;
+  meta.currentStepName = meta.stepNames[meta.currentStepIndex];
 }
 
-function runSetOfFlowsLoopShortcut() {
-  meta.currentFlowIndex = 0;
-  meta.currentFlowName = meta.flowNames[meta.currentFlowIndex];
+function runSetOfStepsLoopShortcut() {
+  meta.currentStepIndex = 0;
+  meta.currentStepName = meta.stepNames[meta.currentStepIndex];
 
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
-  runAFlowLoop();
-  if (!meta.flowNames[meta.currentFlowIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
+  runAStepLoop();
+  if (!meta.stepNames[meta.currentStepIndex]) return;
 
-  console.warn("tried to run a 30th flow", meta.flowNames.length);
+  console.warn("tried to run a 30th step", meta.stepNames.length);
 }
 
-export function _updateConcepto(animationFrameTime: number) {
+export function _updatePietem(animationFrameTime: number) {
   updateFrameTimes(animationFrameTime);
 
   setPhase("runningUpdates");
@@ -269,7 +269,7 @@ export function _updateConcepto(animationFrameTime: number) {
   // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
   meta.copyStates(meta.currentState, meta.previousState);
 
-  runSetOfFlowsLoopShortcut();
+  runSetOfStepsLoopShortcut();
 
   resetRecordedDrawChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
 

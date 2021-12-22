@@ -21,7 +21,7 @@ export function asArray<T_Item>(theValue: T_Item | T_Item[] | undefined) {
 }
 
 //  For createConcepts
-export function makeRefsStructureFromConceptoState() {
+export function makeRefsStructureFromPietemState() {
   forEach(meta.itemTypeNames, (typeName: string) => {
     // if no initialRefs were provided add defaults here?
     // need to store initalRefs? worldStateMeta.customInitialRefs

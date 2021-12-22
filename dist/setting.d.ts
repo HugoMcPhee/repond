@@ -1,5 +1,5 @@
-export declare function runWhenStartingConceptoListeners(whatToRun: any): void;
-export declare function runWhenStoppingConceptoListeners(whatToRun: any): void;
+export declare function runWhenStartingPietemListeners(whatToRun: any): void;
+export declare function runWhenStoppingPietemListeners(whatToRun: any): void;
 export declare function _setState(newState: any, callback?: any): void;
 export declare function _removeItem({ type: itemType, name: itemName }: {
     type: string;

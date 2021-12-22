@@ -3,7 +3,7 @@ import meta from "./meta";
 
 const validItemNameByType = {} as Record<string, string>;
 
-export function getConceptoStructureFromDefaults() {
+export function getPietemStructureFromDefaults() {
   /*
   for meta
   Gets itemTypeNames and defaultStateByItemType

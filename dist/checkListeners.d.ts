@@ -1,2 +1,2 @@
-import { ListenerType } from "./types";
-export default function checkListeners(listenerType?: ListenerType, flowName?: string): string[];
+import { Phase } from "./types";
+export default function checkListeners(phase?: Phase, stepName?: string): string[];

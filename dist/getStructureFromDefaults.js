@@ -1,7 +1,7 @@
 import { forEach } from "chootils/dist/loops";
 import meta from "./meta";
 const validItemNameByType = {};
-export function getConceptoStructureFromDefaults() {
+export function getPietemStructureFromDefaults() {
     /*
     for meta
     Gets itemTypeNames and defaultStateByItemType

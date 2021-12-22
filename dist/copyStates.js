@@ -91,7 +91,7 @@ export function makeCopyStatesFunction_both_prev(copyType = "copy") {
     // return eval(copierFunctionString);
     // eslint-disable-next-line no-new-func
     return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener type, think or draw
-    "allRecordedChanges", // collected for a whole (frame or flow?) used when doing "subscribe" (for a flow?)
+    "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
     copierFunctionString);
 }
 export function makeCopyStatesFunction() {
@@ -126,7 +126,7 @@ export function makeCopyStatesFunction() {
     // return eval(copierFunctionString);
     // eslint-disable-next-line no-new-func
     return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener type, think or draw
-    "allRecordedChanges", // collected for a whole (frame or flow?) used when doing "subscribe" (for a flow?)
+    "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
     copierFunctionString);
 }
 export default function makeCopyStatesFunction_both_nonstring(copyType = "copy") {
@@ -201,8 +201,7 @@ export default function makeCopyStatesFunction_both_nonstring(copyType = "copy")
                                     allRecordedChanges.itemPropertiesBool[itemType] = {};
                                 }
                                 if (!allRecordedChanges.itemPropertiesBool[itemType][itemName]) {
-                                    allRecordedChanges.itemPropertiesBool[itemType][itemName] =
-                                        {};
+                                    allRecordedChanges.itemPropertiesBool[itemType][itemName] = {};
                                 }
                                 allRecordedChanges.itemPropertiesBool[itemType][itemName][itemProp] = true;
                                 allRecordedChanges.somethingChanged = true;

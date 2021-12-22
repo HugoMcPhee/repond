@@ -1,4 +1,4 @@
-import { ChangeToCheck, ListenerType } from "./types";
+import { ChangeToCheck, Phase } from "./types";
 
 export type RecordedChanges = {
   // itemTypesBool: { [type: string]: boolean };
@@ -41,16 +41,16 @@ export type UntypedListenerBeforeNormalize = {
   name: string;
   changesToCheck: ChangeToCheck<any, any>[] | ChangeToCheck<any, any>;
   whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  listenerType?: ListenerType;
-  flow?: string;
+  phase?: Phase;
+  step?: string;
 };
 
 export type UntypedListener = {
   name: string;
   changesToCheck: ChangeToCheck<any, any>[];
   whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  listenerType?: ListenerType;
-  flow?: string;
+  phase?: Phase;
+  step?: string;
 };
 
 type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<
@@ -89,7 +89,7 @@ type UntypedDiffInfo = {
 
 type AFunction = (...args: any[]) => void;
 
-export type ConceptoPhase =
+export type PietemPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
   | "runningUpdates"
@@ -100,23 +100,23 @@ export type ConceptoPhase =
 /*
 
 store all the think and draw changes lik enormal?
-but then, if setState is run when a flow has already run, add it to the
+but then, if setState is run when a step has already run, add it to the
 
 */
 
-const conceptoMeta = {
-  // any changes that happened after a flow ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
-  // recordedChangesByFlow: {
+const pietemMeta = {
+  // any changes that happened after a step ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
+  // recordedChangesByStep: {
   //   default: initialRecordedChangesSet(),
   // } as Record<string, ReturnType<typeof initialRecordedChangesSet>>,
-  // prevStatesByFlow: {
+  // prevStatesByStep: {
   //   default: {},
   // } as Record<string, any>,
   //
   // this gets reset at the start of a frame, and kept added to throughout the frame
   recordedSubscribeChanges: initialRecordedChanges(),
-  // this gets reset for each flow
-  recordedDeriveChanges: initialRecordedChanges(), // resets every time a flows think listeners run, only records changes made while thinking?
+  // this gets reset for each step
+  recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps think listeners run, only records changes made while thinking?
   nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
   latestFrameId: 0,
   previousFrameTime: 0,
@@ -129,7 +129,7 @@ const conceptoMeta = {
   initialState: {} as any,
   // refs
   currentRefs: {} as any,
-  currentPhase: "waitingForFirstUpdate" as ConceptoPhase,
+  currentPhase: "waitingForFirstUpdate" as PietemPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
   startListenersQue: [] as AFunction[],
@@ -138,9 +138,9 @@ const conceptoMeta = {
   callbacksQue: [] as AFunction[],
   //
   allListeners: {} as Record<string, UntypedListener>,
-  listenerNamesByTypeByFlow: { derive: {}, subscribe: {} } as Record<
-    ListenerType,
-    Record<string, string[]> //  listenerType : flowName : listenerNames[]  // think: checkInput: ['whenKeyboardPressed']
+  listenerNamesByPhaseByStep: { derive: {}, subscribe: {} } as Record<
+    Phase,
+    Record<string, string[]> //  phase : stepName : listenerNames[]  // think: checkInput: ['whenKeyboardPressed']
   >,
   //
   itemTypeNames: [] as string[],
@@ -152,7 +152,9 @@ const conceptoMeta = {
     ) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
-    [itemTypeName: string]: (itemName?: string) => //   itemName?: string
+    [itemTypeName: string]: (
+      itemName?: string
+    ) => //   itemName?: string
     { [itemPropertyName: string]: any };
   },
   copyStates: (
@@ -178,17 +180,17 @@ const conceptoMeta = {
   // react specific?
   autoListenerNameCounter: 1,
   //
-  flowNames: ["default"] as const as Readonly<string[]>,
-  currentFlowName: "default" as Readonly<string>,
-  currentFlowIndex: 0,
+  stepNames: (["default"] as const) as Readonly<string[]>,
+  currentStepName: "default" as Readonly<string>,
+  currentStepIndex: 0,
 };
 
-export type ConceptoMeta = typeof conceptoMeta;
+export type PietemMeta = typeof pietemMeta;
 
-export default conceptoMeta;
+export default pietemMeta;
 
 export function toSafeListenerName(prefix?: string): string {
-  const theId = conceptoMeta.autoListenerNameCounter;
-  conceptoMeta.autoListenerNameCounter += 1;
+  const theId = pietemMeta.autoListenerNameCounter;
+  pietemMeta.autoListenerNameCounter += 1;
   return (prefix || "autoListener") + "_" + theId;
 }

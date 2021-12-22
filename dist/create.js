@@ -1,10 +1,10 @@
 import meta, { toSafeListenerName, initialRecordedChanges, } from "./meta";
-import { getConceptoStructureFromDefaults } from "./getStructureFromDefaults";
+import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
-import { _addItem, _removeItem, _setState, runWhenStartingConceptoListeners, runWhenStoppingConceptoListeners, } from "./setting";
-import { makeRefsStructureFromConceptoState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
+import { _addItem, _removeItem, _setState, runWhenStartingPietemListeners, runWhenStoppingPietemListeners, } from "./setting";
+import { makeRefsStructureFromPietemState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
 import { useLayoutEffect, useState, useCallback, useEffect } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 /*
@@ -15,22 +15,22 @@ import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from 
 T_ItemType extends string | number | symbol,
 T_State extends Record<any, any>,
 T_Refs extends Record<any, any>,
-T_FlowName extends string,
+T_StepName extends string,
 
 */
-export function _createConcepts(allInfo, extraOptions) {
+export function _createStoreHelpers(allInfo, extraOptions) {
     const { dontSetMeta } = extraOptions !== null && extraOptions !== void 0 ? extraOptions : {};
     const itemTypes = Object.keys(allInfo);
-    const flowNamesUntyped = (extraOptions === null || extraOptions === void 0 ? void 0 : extraOptions.flowNames)
-        ? [...extraOptions.flowNames]
+    const stepNamesUntyped = (extraOptions === null || extraOptions === void 0 ? void 0 : extraOptions.stepNames)
+        ? [...extraOptions.stepNames]
         : ["default"];
-    if (!flowNamesUntyped.includes("default"))
-        flowNamesUntyped.push("default");
-    const flowNames = [...flowNamesUntyped];
+    if (!stepNamesUntyped.includes("default"))
+        stepNamesUntyped.push("default");
+    const stepNames = [...stepNamesUntyped];
     if (!dontSetMeta) {
-        meta.flowNames = flowNames;
-        meta.currentFlowIndex = 0;
-        meta.currentFlowName = flowNames[meta.currentFlowIndex];
+        meta.stepNames = stepNames;
+        meta.currentStepIndex = 0;
+        meta.currentStepName = stepNames[meta.currentStepIndex];
     }
     // type Get_T_Refs<K_Type extends T_ItemType> = Record<
     //   StartStatesItemName<K_Type>,
@@ -50,7 +50,7 @@ export function _createConcepts(allInfo, extraOptions) {
         return prev;
     }, {});
     // ------------------------------------------------
-    // Setup Concepto
+    // Setup Pietem
     // ------------------------------------------------
     if (!dontSetMeta) {
         const currentState = cloneObjectWithJson(initialState);
@@ -61,151 +61,12 @@ export function _createConcepts(allInfo, extraOptions) {
         meta.previousState = previousState;
         meta.defaultStateByItemType = defaultStates;
         meta.defaultRefsByItemType = defaultRefs;
-        getConceptoStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-        makeRefsStructureFromConceptoState(); // sets currenConceptoRefs based on itemNames from concepto state
+        getPietemStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
+        makeRefsStructureFromPietemState(); // sets currenPietemRefs based on itemNames from pietem state
         meta.copyStates = makeCopyStatesFunction();
         meta.getStatesDiff = makeGetStatesDiffFunction();
         meta.mergeStates = makeCopyStatesFunction("merge");
     }
-    // --------------------------------------------------------------------------
-    // types
-    // --------------------------------------------------------------------------
-    // type ItemName<K_Type extends T_ItemType> = ExtendsString<
-    //   KeysOfUnion<T_State[K_Type]>
-    // >;
-    //
-    // type PropertyName<K_Type extends T_ItemType> = KeysOfUnion<
-    //   T_State[K_Type][ItemName<K_Type>]
-    // >;
-    //
-    // type AllProperties = {
-    //   [K_Type in T_ItemType]: PropertyName<K_Type>;
-    // }[T_ItemType];
-    // ----------------------------
-    // Diff Info
-    //
-    // type DiffInfo_PropertiesChanged = {
-    //   [K_Type in T_ItemType]: Record<ItemName<K_Type>, PropertyName<K_Type>[]> & {
-    //     all__: PropertyName<K_Type>[];
-    //   };
-    // } & {
-    //   all__: AllProperties[];
-    // };
-    // type DiffInfo_PropertiesChangedBool = {
-    //   [K_Type in T_ItemType]: Record<
-    //     ItemName<K_Type>,
-    //     { [K_PropName in PropertyName<K_Type>]: boolean }
-    //   > & { all__: { [K_PropName in PropertyName<K_Type>]: boolean } };
-    // } & {
-    //   all__: { [K_PropName in AllProperties]: boolean };
-    // };
-    //
-    // type DiffInfo_ItemsChanged = Record<
-    //   T_ItemType | "all__",
-    //   ItemName<T_ItemType>[]
-    // >;
-    //
-    // type DiffInfo_ItemsChangedBool = Record<
-    //   T_ItemType | "all__",
-    //   Record<ItemName<T_ItemType>, boolean>
-    // >;
-    //
-    // type DiffInfo = {
-    //   itemTypesChanged: T_ItemType[];
-    //   itemsChanged: DiffInfo_ItemsChanged;
-    //   propsChanged: DiffInfo_PropertiesChanged;
-    //   itemsAdded: DiffInfo_ItemsChanged;
-    //   itemsRemoved: DiffInfo_ItemsChanged;
-    //   itemTypesChangedBool: Record<T_ItemType | "all__", boolean>;
-    //   itemsChangedBool: DiffInfo_ItemsChangedBool;
-    //   propsChangedBool: DiffInfo_PropertiesChangedBool;
-    //   itemsAddedBool: DiffInfo_ItemsChangedBool;
-    //   itemsRemovedBool: DiffInfo_ItemsChangedBool;
-    // };
-    //
-    // // ----------------------------
-    // //  Listener types
-    //
-    // type Listener_ACheck_OneItemType<K_Type extends T_ItemType> = {
-    //   types?: K_Type;
-    //   names?: ItemName<K_Type>[];
-    //   props?: PropertyName<K_Type>;
-    //   addedOrRemoved?: boolean;
-    // };
-    //
-    // type Listener_ACheck_MultipleItemTypes = {
-    //   types?: (keyof T_State)[];
-    //   names?: ItemName<T_ItemType>[];
-    //   props?: AllProperties[];
-    //   addedOrRemoved?: boolean;
-    // };
-    //
-    // // NOTE: the type works, but autocomplete doesn't work ATM when
-    // // trying to make properties/addedOrRemoved exclusive
-    // // type TestChangeToCheckUnionWithProperties<T, K> = XOR<
-    // //   Omit<TestChangeToCheckMultipleItemTypes<T>, "addedOrRemoved">,
-    // //   Omit<TestChangeToCheckOneItemType<T, K>, "addedOrRemoved">
-    // // >;
-    // // type TestChangeToCheckUnionWithoutProperties<T, K> = XOR<
-    // //   Omit<TestChangeToCheckMultipleItemTypes<T>, "properties">,
-    // //   Omit<TestChangeToCheckOneItemType<T, K>, "properties">
-    // // >;
-    //
-    // // type TestChangeToCheckUnion<T, K> = XOR<
-    // //   TestChangeToCheckUnionWithProperties<T, K>,
-    // //   TestChangeToCheckUnionWithoutProperties<T, K>
-    // // >;
-    // type Listener_ACheck<K_Type extends T_ItemType> =
-    //   | Listener_ACheck_OneItemType<K_Type>
-    //   | Listener_ACheck_MultipleItemTypes;
-    // type Listener_Check<K_Type extends T_ItemType> =
-    //   | Listener_ACheck<K_Type>[]
-    //   | Listener_ACheck<K_Type>;
-    //
-    // type AddItemOptionsUntyped<
-    //   T_State extends Record<any, any>,
-    //   T_Refs extends Record<any, any>,
-    //   T_TypeName
-    // > = {
-    //   type: string;
-    //   name: string;
-    //   state?: Partial<
-    //     NonNullable<T_State[T_TypeName]>[keyof T_State[keyof T_State]]
-    //   >;
-    //   refs?: Partial<NonNullable<T_Refs[T_TypeName]>[keyof T_Refs[keyof T_Refs]]>;
-    // };
-    //
-    // // -----------------
-    // // Listeners B
-    //
-    // type Listener<K_Type extends T_ItemType> = {
-    //   name: string;
-    //   changesToCheck: Listener_Check<K_Type>;
-    //   whatToDo: (diffInfo: DiffInfo, frameDuration: number) => void;
-    //   listenerType?: ListenerType;
-    //   flow?: T_FlowName;
-    // };
-    //
-    // // After normalizing
-    // type ListenerAfterNormalising<K_Type extends T_ItemType> = {
-    //   name: string;
-    //   changesToCheck: Listener_ACheck<K_Type>[];
-    //   whatToDo: (diffInfo: DiffInfo, frameDuration: number) => void;
-    //   listenerType?: ListenerType;
-    //   flow?: string;
-    // };
-    //
-    // // -----------------
-    // //
-    //
-    // type UseStoreItemParams<K_Type extends T_ItemType> = {
-    //   itemName: ItemName<K_Type>;
-    //   prevItemState: T_State[K_Type][ItemName<K_Type>];
-    //   itemState: T_State[K_Type][ItemName<K_Type>];
-    //   // itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
-    //   itemRefs: T_Refs[K_Type][ItemName<K_Type>];
-    //   // frameDuration: number;
-    // };
     // -----------------------------------------------------------------
     // main functions
     // -----------------------------------------------------------------
@@ -246,19 +107,14 @@ export function _createConcepts(allInfo, extraOptions) {
                         if (!diffInfo.propsChangedBool[theItemType][itemNameThatChanged][thePropertyName])
                             return;
                         const newValue = itemsState[itemNameThatChanged][thePropertyName];
-                        // start the movment animation
                         let canRunWhatToDo = false;
-                        if (typeof becomes === "function") {
+                        if (becomes === undefined)
+                            canRunWhatToDo = true;
+                        else if (typeof becomes === "function") {
                             canRunWhatToDo = becomes(newValue, prevItemsState[itemNameThatChanged][thePropertyName]);
                         }
-                        else {
-                            if (typeof becomes === "string" &&
-                                ((becomes === "true" && newValue === true) ||
-                                    (becomes === "false" && newValue === false) ||
-                                    becomes === "different")) {
-                                canRunWhatToDo = true;
-                            }
-                        }
+                        else if (becomes === newValue)
+                            canRunWhatToDo = true;
                         if (!canRunWhatToDo)
                             return;
                         whatToDo({
@@ -277,7 +133,7 @@ export function _createConcepts(allInfo, extraOptions) {
             });
         };
     }
-    // converts a concepto effect to a normalised 'listener', where the names are an array instead of one
+    // converts a pietem effect to a normalised 'listener', where the names are an array instead of one
     function anyChangeRuleACheckToListenerACheck(checkProperty) {
         return {
             names: toSafeArray(checkProperty.name),
@@ -293,14 +149,14 @@ export function _createConcepts(allInfo, extraOptions) {
         }
         return anyChangeRuleACheckToListenerACheck(checkProperty);
     }
-    // converts a concepto effect to a listener
+    // converts a pietem effect to a listener
     function convertEffectToListener(anyChangeRule) {
         return {
             changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
-            listenerType: anyChangeRule.whenToRun === "subscribe" ? "subscribe" : "derive",
+            phase: anyChangeRule.phase === "subscribe" ? "subscribe" : "derive",
             name: anyChangeRule.name,
             whatToDo: anyChangeRule.onEffect,
-            flow: anyChangeRule.flow,
+            step: anyChangeRule.step,
         };
     }
     // --------------------------------------------------------------------
@@ -315,35 +171,35 @@ export function _createConcepts(allInfo, extraOptions) {
             addedOrRemoved: loopeChangeToCheck.addedOrRemoved,
         }));
     }
-    function _startConceptoListener(newListener) {
-        const listenerType = newListener.listenerType || "derive";
+    function _startPietemListener(newListener) {
+        const phase = newListener.phase || "derive";
         const editedListener = {
             name: newListener.name,
             changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
             whatToDo: newListener.whatToDo,
         };
-        if (listenerType === "subscribe") {
-            editedListener.listenerType = listenerType;
+        if (phase === "subscribe") {
+            editedListener.phase = phase;
         }
-        if (newListener.flow) {
-            editedListener.flow = newListener.flow;
+        if (newListener.step) {
+            editedListener.step = newListener.step;
         }
-        runWhenStartingConceptoListeners(() => {
-            // add the new listener to all listeners and update listenerNamesByTypeByFlow
+        runWhenStartingPietemListeners(() => {
+            // add the new listener to all listeners and update listenerNamesByTypeByStep
             var _a, _b, _c;
             meta.allListeners[editedListener.name] = editedListener;
-            meta.listenerNamesByTypeByFlow[listenerType][(_a = editedListener.flow) !== null && _a !== void 0 ? _a : "default"] = addItemToUniqueArray((_c = meta.listenerNamesByTypeByFlow[listenerType][(_b = editedListener.flow) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
+            meta.listenerNamesByPhaseByStep[phase][(_a = editedListener.step) !== null && _a !== void 0 ? _a : "default"] = addItemToUniqueArray((_c = meta.listenerNamesByPhaseByStep[phase][(_b = editedListener.step) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
         });
     }
-    function _stopConceptoListener(listenerName) {
-        runWhenStoppingConceptoListeners(() => {
+    function _stopPietemListener(listenerName) {
+        runWhenStoppingPietemListeners(() => {
             var _a, _b, _c;
             const theListener = meta.allListeners[listenerName];
             if (!theListener)
                 return;
-            const listenerType = (_a = theListener.listenerType) !== null && _a !== void 0 ? _a : "derive";
-            const flow = (_b = theListener.flow) !== null && _b !== void 0 ? _b : "default";
-            meta.listenerNamesByTypeByFlow[listenerType][flow] = removeItemFromArray((_c = meta.listenerNamesByTypeByFlow[listenerType][flow]) !== null && _c !== void 0 ? _c : [], theListener.name);
+            const phase = (_a = theListener.phase) !== null && _a !== void 0 ? _a : "derive";
+            const step = (_b = theListener.step) !== null && _b !== void 0 ? _b : "default";
+            meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray((_c = meta.listenerNamesByPhaseByStep[phase][step]) !== null && _c !== void 0 ? _c : [], theListener.name);
             delete meta.allListeners[listenerName];
         });
     }
@@ -364,12 +220,12 @@ export function _createConcepts(allInfo, extraOptions) {
             check: theEffect.check,
             name: listenerName,
             onEffect: theEffect.onEffect,
-            whenToRun: theEffect.whenToRun,
-            flow: theEffect.flow,
+            phase: theEffect.phase,
+            step: theEffect.step,
         };
-        return _startConceptoListener(convertEffectToListener(editedEffect));
+        return _startPietemListener(convertEffectToListener(editedEffect));
     }
-    function startItemEffect({ check, onItemEffect, whenToRun, name, flow, }) {
+    function startItemEffect({ check, onItemEffect, phase, name, step, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
         // if (!name) console.log("used random name");
         const editedItemTypes = toSafeArray(check.type);
@@ -385,26 +241,26 @@ export function _createConcepts(allInfo, extraOptions) {
             theItemName: editedItemNames,
             thePropertyNames: editedPropertyNames !== null && editedPropertyNames !== void 0 ? editedPropertyNames : [],
             whatToDo: onItemEffect,
-            becomes: check.becomes || "different",
+            becomes: check.becomes,
         });
         startEffect({
-            whenToRun,
+            phase,
             name: listenerName,
             check: editedChangesToCheck,
             onEffect,
-            flow,
+            step,
         });
         return listenerName;
     }
     function stopEffect(listenerName) {
-        _stopConceptoListener(listenerName);
+        _stopPietemListener(listenerName);
     }
     function useStore(whatToReturn, check, hookDeps = []) {
         const [, setTick] = useState(0);
         const rerender = useCallback(() => setTick((tick) => tick + 1), []);
         useEffect(() => {
             const name = toSafeListenerName("reactComponent");
-            startEffect({ whenToRun: "subscribe", name, check, onEffect: rerender });
+            startEffect({ phase: "subscribe", name, check, onEffect: rerender });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -413,7 +269,7 @@ export function _createConcepts(allInfo, extraOptions) {
     function useStoreEffect(onEffect, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-            startEffect({ name, whenToRun: "subscribe", check, onEffect });
+            startEffect({ name, phase: "subscribe", check, onEffect });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -421,7 +277,7 @@ export function _createConcepts(allInfo, extraOptions) {
     function useStoreItemEffect(onItemEffect, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreItemEffect_" + JSON.stringify(check));
-            startItemEffect({ name, whenToRun: "subscribe", check, onItemEffect });
+            startItemEffect({ name, phase: "subscribe", check, onItemEffect });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -439,7 +295,7 @@ export function _createConcepts(allInfo, extraOptions) {
             const name = toSafeListenerName("useStoreItem"); // note could add JSON.stringify(check) for useful listener name
             startItemEffect({
                 name,
-                whenToRun: "subscribe",
+                phase: "subscribe",
                 check,
                 onItemEffect: (theParameters) => setReturnedState(theParameters),
             });
@@ -469,8 +325,8 @@ export function _createConcepts(allInfo, extraOptions) {
                         name: checkItem.name,
                         prop: loopedPropKey,
                     },
-                    whenToRun: "subscribe",
-                    flow: checkItem.flow,
+                    phase: "subscribe",
+                    step: checkItem.step,
                 });
             });
             return () => {
@@ -677,9 +533,9 @@ export function _createConcepts(allInfo, extraOptions) {
     function applyPatch(patch) {
         forEach(itemTypes, (itemType) => {
             var _a, _b;
-            // Loop through removed items, and run removeConceptoItem()
+            // Loop through removed items, and run removePietemItem()
             forEach((_a = patch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => removeItem({ type: itemType, name: itemName }));
-            // Loop through added items and run addConceptoItem()
+            // Loop through added items and run addPietemItem()
             forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => addItem({ type: itemType, name: itemName }));
         });
         // run setState(patch.changed)

@@ -37,7 +37,7 @@ export declare type GetPartialState<T_State> = {
     };
 };
 export declare type ExtendsString<T> = T extends string ? T : never;
-export declare type ConceptoCallback = (frameDuration: number, frameTime: number) => any;
-export declare type SetConceptoState<T_State> = (newState: GetPartialState<T_State> | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>), callback?: ConceptoCallback) => void;
-export declare type ListenerType = "subscribe" | "derive";
+export declare type PietemCallback = (frameDuration: number, frameTime: number) => any;
+export declare type SetPietemState<T_State> = (newState: GetPartialState<T_State> | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>), callback?: PietemCallback) => void;
+export declare type Phase = "subscribe" | "derive";
 export {};

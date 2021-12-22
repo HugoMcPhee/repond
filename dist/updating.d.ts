@@ -1,1 +1,1 @@
-export declare function _updateConcepto(animationFrameTime: number): void;
+export declare function _updatePietem(animationFrameTime: number): void;

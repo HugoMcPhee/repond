@@ -1,8 +1,8 @@
-import { _createConcepts as createConcepts } from "./createConcepts";
+import { _createStoreHelpers as createStoreHelpers } from "./create";
 export declare type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
     [itemName: string]: ReturnType<T_defaultStateFunctionType>;
 };
-export declare type ConceptsHelperTypes<T_GetState extends () => {
+export declare type StoreHelperTypes<T_GetState extends () => {
     [key: string]: {
         [key: string]: any;
     };
@@ -21,4 +21,4 @@ export declare function makeInitialState({ itemPrefix, itemAmount, defaultState,
     itemAmount: number;
     defaultState: () => any;
 }): any;
-export { createConcepts };
+export { createStoreHelpers };

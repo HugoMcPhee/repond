@@ -61,7 +61,7 @@ interface ReadonlySetDeep<ItemType>
 //
 
 // ----------------------------
-// stuff from createConcepts
+// stuff from createStoreHelpers
 
 // type Without<T, K> = Pick<T, Exclude<keyof T, K>>;
 type WithoutB<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
@@ -96,16 +96,13 @@ export type ExtendsString<T> = T extends string ? T : never;
 
 // ------------------------------------
 
-export type ConceptoCallback = (
-  frameDuration: number,
-  frameTime: number
-) => any;
+export type PietemCallback = (frameDuration: number, frameTime: number) => any;
 
-export type SetConceptoState<T_State> = (
-  newState:
+export type SetPietemState<T_State> = (
+  newState: 
     | GetPartialState<T_State>
     | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>),
-  callback?: ConceptoCallback
+  callback?: PietemCallback
 ) => void;
 
-export type ListenerType = "subscribe" | "derive";
+export type Phase = "subscribe" | "derive";

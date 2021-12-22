@@ -1,5 +1,5 @@
 // import meta from "./meta";
-import { _createConcepts as createConcepts } from "./createConcepts";
+import { _createStoreHelpers as createStoreHelpers } from "./create";
 // for generating items with names
 export function makeInitialState({ itemPrefix, itemAmount, defaultState, }) {
     const newInitialState = {};
@@ -10,4 +10,4 @@ export function makeInitialState({ itemPrefix, itemAmount, defaultState, }) {
     }
     return newInitialState;
 }
-export { createConcepts };
+export { createStoreHelpers };

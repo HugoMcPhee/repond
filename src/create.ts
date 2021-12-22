@@ -3,7 +3,7 @@ import meta, {
   UntypedListener,
   initialRecordedChanges,
 } from "./meta";
-import { getConceptoStructureFromDefaults } from "./getStructureFromDefaults";
+import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
@@ -12,21 +12,21 @@ import {
   _addItem,
   _removeItem,
   _setState,
-  runWhenStartingConceptoListeners,
-  runWhenStoppingConceptoListeners,
+  runWhenStartingPietemListeners,
+  runWhenStoppingPietemListeners,
 } from "./setting";
 import {
   KeysOfUnion,
   DeepReadonly,
-  SetConceptoState,
+  SetPietemState,
   XOR,
-  ListenerType,
+  Phase,
   ExtendsString,
   GetPartialState,
-  ConceptoCallback,
+  PietemCallback,
 } from "./types";
 import {
-  makeRefsStructureFromConceptoState,
+  makeRefsStructureFromPietemState,
   cloneObjectWithJson,
   asArray,
   toSafeArray,
@@ -160,9 +160,10 @@ type ItemEffectCallbackParams<
 };
 
 type ACheck_Becomes =
-  | "different"
-  | "true"
-  | "false"
+  | undefined
+  | "string"
+  | number
+  | boolean
   | ((theValue: any, prevValue: any) => boolean);
 
 // for useStoreItem
@@ -277,7 +278,7 @@ type ItemEffect_RuleOptions<
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
   T_Refs extends Record<any, any>,
-  T_FlowName extends string
+  T_StepName extends string
 > = {
   check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>;
   // can use function to check value, ideally it uses the type of the selected property
@@ -288,13 +289,13 @@ type ItemEffect_RuleOptions<
     T_State,
     T_Refs
   >;
-  whenToRun?: "derive" | "subscribe";
+  phase?: "derive" | "subscribe";
   name?: string;
-  flow?: T_FlowName;
+  step?: T_StepName;
 };
 
 // -----------------
-// AnyChangeRule ( like a slightly different and typed concepto listener )
+// AnyChangeRule ( like a slightly different and typed pietem listener )
 
 type EffectRule_ACheck_OneItemType<
   K_Type extends T_ItemType,
@@ -357,21 +358,21 @@ type Effect_RuleOptions<
   K_Type extends T_ItemType,
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
-  T_FlowName extends string
+  T_StepName extends string
 > = {
   name?: string; // ruleName NOTE used to be required (probably still for dangerouslyAddingRule ? (adding single rules without making rules first))
   check: EffectRule_Check<K_Type, T_ItemType, T_State>;
   onEffect: EffectCallback<T_ItemType, T_State>;
-  whenToRun?: "derive" | "subscribe";
-  flow?: T_FlowName;
+  phase?: "derive" | "subscribe";
+  step?: T_StepName;
 };
 
 type Effect_RuleOptions_NameRequired<
   K_Type extends T_ItemType,
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
-  T_FlowName extends string
-> = Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName> & {
+  T_StepName extends string
+> = Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName> & {
   name: string;
 };
 
@@ -381,16 +382,16 @@ type FlexibleRuleOptions<
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
   T_Refs extends Record<any, any>,
-  T_FlowName extends string
+  T_StepName extends string
 > = XOR<
-  Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>,
+  Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>,
   ItemEffect_RuleOptions<
     K_Type,
     K_PropertyName,
     T_ItemType,
     T_State,
     T_Refs,
-    T_FlowName
+    T_StepName
   >
 >;
 
@@ -398,14 +399,14 @@ type MakeRule_Rule<
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
   T_Refs extends Record<any, any>,
-  T_FlowName extends string
+  T_StepName extends string
 > = FlexibleRuleOptions<
   T_ItemType,
   PropertyName<T_ItemType, T_ItemType, T_State>,
   T_ItemType,
   T_State,
   T_Refs,
-  T_FlowName
+  T_StepName
 >;
 
 // ----------------------------
@@ -484,7 +485,7 @@ type Listener<
   K_Type extends T_ItemType,
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
-  T_FlowName extends string
+  T_StepName extends string
 > = {
   name: string;
   changesToCheck: Listener_Check<K_Type, T_ItemType, T_State>;
@@ -492,8 +493,8 @@ type Listener<
     diffInfo: DiffInfo<T_ItemType, T_State>,
     frameDuration: number
   ) => void;
-  listenerType?: ListenerType;
-  flow?: T_FlowName;
+  phase?: Phase;
+  step?: T_StepName;
 };
 
 // After normalizing
@@ -508,8 +509,8 @@ type ListenerAfterNormalising<
     diffInfo: DiffInfo<T_ItemType, T_State>,
     frameDuration: number
   ) => void;
-  listenerType?: ListenerType;
-  flow?: string;
+  phase?: Phase;
+  step?: string;
 };
 
 // -----------------
@@ -537,11 +538,11 @@ type UseStoreItemParams<
 T_ItemType extends string | number | symbol,
 T_State extends Record<any, any>,
 T_Refs extends Record<any, any>,
-T_FlowName extends string,
+T_StepName extends string,
 
 */
 
-export function _createConcepts<
+export function _createStoreHelpers<
   T_AllInfo extends {
     [T_ItemType: string]: {
       state: (itemName: any) => any;
@@ -551,29 +552,29 @@ export function _createConcepts<
   },
   T_ItemType extends keyof T_AllInfo,
   // T_ItemType extends keyof T_AllInfo,
-  T_FlowNamesParam extends Readonly<string[]>
+  T_StepNamesParam extends Readonly<string[]>
 >(
   allInfo: T_AllInfo,
   extraOptions?: {
-    flowNames: T_FlowNamesParam;
-    dontSetMeta?: boolean; // when only wanting to use _createConcepts for the types
+    stepNames: T_StepNamesParam;
+    dontSetMeta?: boolean; // when only wanting to use _createStoreHelpers for the types
   }
 ) {
   const { dontSetMeta } = extraOptions ?? {};
   const itemTypes = (Object.keys(allInfo) as unknown) as Readonly<T_ItemType[]>;
-  type T_FlowName = T_FlowNamesParam[number] | "default";
+  type T_StepName = T_StepNamesParam[number] | "default";
 
-  const flowNamesUntyped = extraOptions?.flowNames
-    ? [...extraOptions.flowNames]
+  const stepNamesUntyped = extraOptions?.stepNames
+    ? [...extraOptions.stepNames]
     : ["default"];
-  if (!flowNamesUntyped.includes("default")) flowNamesUntyped.push("default");
+  if (!stepNamesUntyped.includes("default")) stepNamesUntyped.push("default");
 
-  const flowNames: Readonly<T_FlowName[]> = [...flowNamesUntyped];
+  const stepNames: Readonly<T_StepName[]> = [...stepNamesUntyped];
 
   if (!dontSetMeta) {
-    meta.flowNames = flowNames;
-    meta.currentFlowIndex = 0;
-    meta.currentFlowName = flowNames[meta.currentFlowIndex];
+    meta.stepNames = stepNames;
+    meta.currentStepIndex = 0;
+    meta.currentStepName = stepNames[meta.currentStepIndex];
   }
 
   type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
@@ -622,7 +623,7 @@ export function _createConcepts<
   }, {});
 
   // ------------------------------------------------
-  // Setup Concepto
+  // Setup Pietem
   // ------------------------------------------------
 
   if (!dontSetMeta) {
@@ -635,154 +636,13 @@ export function _createConcepts<
     meta.defaultStateByItemType = defaultStates as any;
     meta.defaultRefsByItemType = defaultRefs as any;
 
-    getConceptoStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-    makeRefsStructureFromConceptoState(); // sets currenConceptoRefs based on itemNames from concepto state
+    getPietemStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
+    makeRefsStructureFromPietemState(); // sets currenPietemRefs based on itemNames from pietem state
 
     meta.copyStates = makeCopyStatesFunction();
     meta.getStatesDiff = makeGetStatesDiffFunction();
     meta.mergeStates = makeCopyStatesFunction("merge");
   }
-  // --------------------------------------------------------------------------
-  // types
-  // --------------------------------------------------------------------------
-
-  // type ItemName<K_Type extends T_ItemType> = ExtendsString<
-  //   KeysOfUnion<T_State[K_Type]>
-  // >;
-  //
-  // type PropertyName<K_Type extends T_ItemType> = KeysOfUnion<
-  //   T_State[K_Type][ItemName<K_Type>]
-  // >;
-  //
-  // type AllProperties = {
-  //   [K_Type in T_ItemType]: PropertyName<K_Type>;
-  // }[T_ItemType];
-
-  // ----------------------------
-  // Diff Info
-  //
-  // type DiffInfo_PropertiesChanged = {
-  //   [K_Type in T_ItemType]: Record<ItemName<K_Type>, PropertyName<K_Type>[]> & {
-  //     all__: PropertyName<K_Type>[];
-  //   };
-  // } & {
-  //   all__: AllProperties[];
-  // };
-  // type DiffInfo_PropertiesChangedBool = {
-  //   [K_Type in T_ItemType]: Record<
-  //     ItemName<K_Type>,
-  //     { [K_PropName in PropertyName<K_Type>]: boolean }
-  //   > & { all__: { [K_PropName in PropertyName<K_Type>]: boolean } };
-  // } & {
-  //   all__: { [K_PropName in AllProperties]: boolean };
-  // };
-  //
-  // type DiffInfo_ItemsChanged = Record<
-  //   T_ItemType | "all__",
-  //   ItemName<T_ItemType>[]
-  // >;
-  //
-  // type DiffInfo_ItemsChangedBool = Record<
-  //   T_ItemType | "all__",
-  //   Record<ItemName<T_ItemType>, boolean>
-  // >;
-  //
-  // type DiffInfo = {
-  //   itemTypesChanged: T_ItemType[];
-  //   itemsChanged: DiffInfo_ItemsChanged;
-  //   propsChanged: DiffInfo_PropertiesChanged;
-  //   itemsAdded: DiffInfo_ItemsChanged;
-  //   itemsRemoved: DiffInfo_ItemsChanged;
-  //   itemTypesChangedBool: Record<T_ItemType | "all__", boolean>;
-  //   itemsChangedBool: DiffInfo_ItemsChangedBool;
-  //   propsChangedBool: DiffInfo_PropertiesChangedBool;
-  //   itemsAddedBool: DiffInfo_ItemsChangedBool;
-  //   itemsRemovedBool: DiffInfo_ItemsChangedBool;
-  // };
-  //
-  // // ----------------------------
-  // //  Listener types
-  //
-  // type Listener_ACheck_OneItemType<K_Type extends T_ItemType> = {
-  //   types?: K_Type;
-  //   names?: ItemName<K_Type>[];
-  //   props?: PropertyName<K_Type>;
-  //   addedOrRemoved?: boolean;
-  // };
-  //
-  // type Listener_ACheck_MultipleItemTypes = {
-  //   types?: (keyof T_State)[];
-  //   names?: ItemName<T_ItemType>[];
-  //   props?: AllProperties[];
-  //   addedOrRemoved?: boolean;
-  // };
-  //
-  // // NOTE: the type works, but autocomplete doesn't work ATM when
-  // // trying to make properties/addedOrRemoved exclusive
-  // // type TestChangeToCheckUnionWithProperties<T, K> = XOR<
-  // //   Omit<TestChangeToCheckMultipleItemTypes<T>, "addedOrRemoved">,
-  // //   Omit<TestChangeToCheckOneItemType<T, K>, "addedOrRemoved">
-  // // >;
-  // // type TestChangeToCheckUnionWithoutProperties<T, K> = XOR<
-  // //   Omit<TestChangeToCheckMultipleItemTypes<T>, "properties">,
-  // //   Omit<TestChangeToCheckOneItemType<T, K>, "properties">
-  // // >;
-  //
-  // // type TestChangeToCheckUnion<T, K> = XOR<
-  // //   TestChangeToCheckUnionWithProperties<T, K>,
-  // //   TestChangeToCheckUnionWithoutProperties<T, K>
-  // // >;
-  // type Listener_ACheck<K_Type extends T_ItemType> =
-  //   | Listener_ACheck_OneItemType<K_Type>
-  //   | Listener_ACheck_MultipleItemTypes;
-  // type Listener_Check<K_Type extends T_ItemType> =
-  //   | Listener_ACheck<K_Type>[]
-  //   | Listener_ACheck<K_Type>;
-  //
-  // type AddItemOptionsUntyped<
-  //   T_State extends Record<any, any>,
-  //   T_Refs extends Record<any, any>,
-  //   T_TypeName
-  // > = {
-  //   type: string;
-  //   name: string;
-  //   state?: Partial<
-  //     NonNullable<T_State[T_TypeName]>[keyof T_State[keyof T_State]]
-  //   >;
-  //   refs?: Partial<NonNullable<T_Refs[T_TypeName]>[keyof T_Refs[keyof T_Refs]]>;
-  // };
-  //
-  // // -----------------
-  // // Listeners B
-  //
-  // type Listener<K_Type extends T_ItemType> = {
-  //   name: string;
-  //   changesToCheck: Listener_Check<K_Type>;
-  //   whatToDo: (diffInfo: DiffInfo, frameDuration: number) => void;
-  //   listenerType?: ListenerType;
-  //   flow?: T_FlowName;
-  // };
-  //
-  // // After normalizing
-  // type ListenerAfterNormalising<K_Type extends T_ItemType> = {
-  //   name: string;
-  //   changesToCheck: Listener_ACheck<K_Type>[];
-  //   whatToDo: (diffInfo: DiffInfo, frameDuration: number) => void;
-  //   listenerType?: ListenerType;
-  //   flow?: string;
-  // };
-  //
-  // // -----------------
-  // //
-  //
-  // type UseStoreItemParams<K_Type extends T_ItemType> = {
-  //   itemName: ItemName<K_Type>;
-  //   prevItemState: T_State[K_Type][ItemName<K_Type>];
-  //   itemState: T_State[K_Type][ItemName<K_Type>];
-  //   // itemRefs: T_Refs[K_Type][keyof T_Refs[K_Type]];
-  //   itemRefs: T_Refs[K_Type][ItemName<K_Type>];
-  //   // frameDuration: number;
-  // };
 
   // -----------------------------------------------------------------
   // main functions
@@ -791,10 +651,10 @@ export function _createConcepts<
   const getState = (): DeepReadonly<T_State> =>
     meta.currentState as DeepReadonly<T_State>;
 
-  const setState: SetConceptoState<T_State> = (newState, callback) =>
+  const setState: SetPietemState<T_State> = (newState, callback) =>
     _setState(newState, callback);
 
-  function onNextTick(callback: ConceptoCallback) {
+  function onNextTick(callback: PietemCallback) {
     meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
   }
 
@@ -867,24 +727,15 @@ export function _createConcepts<
 
             const newValue = itemsState[itemNameThatChanged][thePropertyName];
 
-            // start the movment animation
             let canRunWhatToDo = false;
 
-            if (typeof becomes === "function") {
+            if (becomes === undefined) canRunWhatToDo = true;
+            else if (typeof becomes === "function") {
               canRunWhatToDo = becomes(
                 newValue,
                 prevItemsState[itemNameThatChanged][thePropertyName]
               );
-            } else {
-              if (
-                typeof becomes === "string" &&
-                ((becomes === "true" && newValue === true) ||
-                  (becomes === "false" && newValue === false) ||
-                  becomes === "different")
-              ) {
-                canRunWhatToDo = true;
-              }
-            }
+            } else if (becomes === newValue) canRunWhatToDo = true;
 
             if (!canRunWhatToDo) return;
 
@@ -907,7 +758,7 @@ export function _createConcepts<
     };
   }
 
-  // converts a concepto effect to a normalised 'listener', where the names are an array instead of one
+  // converts a pietem effect to a normalised 'listener', where the names are an array instead of one
   function anyChangeRuleACheckToListenerACheck<K_Type extends T_ItemType>(
     checkProperty: EffectRule_ACheck<K_Type, T_ItemType, T_State>
   ) {
@@ -935,24 +786,23 @@ export function _createConcepts<
     return anyChangeRuleACheckToListenerACheck(checkProperty);
   }
 
-  // converts a concepto effect to a listener
+  // converts a pietem effect to a listener
   function convertEffectToListener<
     T_AnyChangeRule extends Effect_RuleOptions_NameRequired<
       any,
       T_ItemType,
       T_State,
-      T_FlowName
+      T_StepName
     >
   >(
     anyChangeRule: T_AnyChangeRule
-  ): Listener<T_ItemType, T_ItemType, T_State, T_FlowName> {
+  ): Listener<T_ItemType, T_ItemType, T_State, T_StepName> {
     return {
       changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
-      listenerType:
-        anyChangeRule.whenToRun === "subscribe" ? "subscribe" : "derive",
+      phase: anyChangeRule.phase === "subscribe" ? "subscribe" : "derive",
       name: anyChangeRule.name,
       whatToDo: anyChangeRule.onEffect,
-      flow: anyChangeRule.flow,
+      step: anyChangeRule.step,
     };
   }
 
@@ -976,10 +826,10 @@ export function _createConcepts<
     );
   }
 
-  function _startConceptoListener<K_Type extends T_ItemType>(
-    newListener: Listener<K_Type, T_ItemType, T_State, T_FlowName>
+  function _startPietemListener<K_Type extends T_ItemType>(
+    newListener: Listener<K_Type, T_ItemType, T_State, T_StepName>
   ) {
-    const listenerType = newListener.listenerType || "derive";
+    const phase = newListener.phase || "derive";
 
     const editedListener: ListenerAfterNormalising<
       K_Type,
@@ -990,40 +840,40 @@ export function _createConcepts<
       changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
       whatToDo: newListener.whatToDo,
     };
-    if (listenerType === "subscribe") {
-      editedListener.listenerType = listenerType;
+    if (phase === "subscribe") {
+      editedListener.phase = phase;
     }
-    if (newListener.flow) {
-      editedListener.flow = newListener.flow;
+    if (newListener.step) {
+      editedListener.step = newListener.step;
     }
 
-    runWhenStartingConceptoListeners(() => {
-      // add the new listener to all listeners and update listenerNamesByTypeByFlow
+    runWhenStartingPietemListeners(() => {
+      // add the new listener to all listeners and update listenerNamesByTypeByStep
 
       meta.allListeners[
         editedListener.name
       ] = (editedListener as unknown) as UntypedListener;
 
-      meta.listenerNamesByTypeByFlow[listenerType][
-        editedListener.flow ?? "default"
+      meta.listenerNamesByPhaseByStep[phase][
+        editedListener.step ?? "default"
       ] = addItemToUniqueArray(
-        meta.listenerNamesByTypeByFlow[listenerType][
-          editedListener.flow ?? "default"
+        meta.listenerNamesByPhaseByStep[phase][
+          editedListener.step ?? "default"
         ] ?? [],
         editedListener.name
       );
     });
   }
 
-  function _stopConceptoListener(listenerName: string) {
-    runWhenStoppingConceptoListeners(() => {
+  function _stopPietemListener(listenerName: string) {
+    runWhenStoppingPietemListeners(() => {
       const theListener = meta.allListeners[listenerName];
       if (!theListener) return;
-      const listenerType = theListener.listenerType ?? "derive";
-      const flow = theListener.flow ?? "default";
+      const phase = theListener.phase ?? "derive";
+      const step = theListener.step ?? "default";
 
-      meta.listenerNamesByTypeByFlow[listenerType][flow] = removeItemFromArray(
-        meta.listenerNamesByTypeByFlow[listenerType][flow] ?? [],
+      meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray(
+        meta.listenerNamesByPhaseByStep[phase][step] ?? [],
         theListener.name
       );
 
@@ -1050,7 +900,7 @@ export function _createConcepts<
   }
 
   function startEffect<K_Type extends T_ItemType>(
-    theEffect: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
+    theEffect: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ) {
     let listenerName = theEffect.name || toSafeListenerName("effect");
 
@@ -1059,11 +909,11 @@ export function _createConcepts<
       check: theEffect.check,
       name: listenerName,
       onEffect: theEffect.onEffect,
-      whenToRun: theEffect.whenToRun,
-      flow: theEffect.flow,
+      phase: theEffect.phase,
+      step: theEffect.step,
     };
 
-    return _startConceptoListener(convertEffectToListener(editedEffect) as any);
+    return _startPietemListener(convertEffectToListener(editedEffect) as any);
   }
 
   function startItemEffect<
@@ -1072,16 +922,16 @@ export function _createConcepts<
   >({
     check,
     onItemEffect,
-    whenToRun,
+    phase,
     name,
-    flow,
+    step,
   }: ItemEffect_RuleOptions<
     K_Type,
     K_PropertyName,
     T_ItemType,
     T_State,
     T_Refs,
-    T_FlowName
+    T_StepName
   >) {
     let listenerName = name || "unnamedEffect" + Math.random();
     // if (!name) console.log("used random name");
@@ -1102,40 +952,40 @@ export function _createConcepts<
       thePropertyNames:
         editedPropertyNames ?? ([] as AllProperties<T_ItemType, T_State>[]),
       whatToDo: onItemEffect,
-      becomes: check.becomes || "different",
+      becomes: check.becomes,
     });
 
     startEffect({
-      whenToRun,
+      phase,
       name: listenerName,
       check: editedChangesToCheck as any,
       onEffect,
-      flow,
+      step,
     });
 
     return listenerName;
   }
 
   function stopEffect(listenerName: string) {
-    _stopConceptoListener(listenerName);
+    _stopPietemListener(listenerName);
   }
 
-  function useStore<K_Type extends T_ItemType, T_ReturnedConceptoProps>(
-    whatToReturn: (state: DeepReadonly<T_State>) => T_ReturnedConceptoProps,
+  function useStore<K_Type extends T_ItemType, T_ReturnedPietemProps>(
+    whatToReturn: (state: DeepReadonly<T_State>) => T_ReturnedPietemProps,
     check: EffectRule_Check<K_Type, T_ItemType, T_State>,
     hookDeps: any[] = []
-  ): T_ReturnedConceptoProps {
+  ): T_ReturnedPietemProps {
     const [, setTick] = useState(0);
     const rerender = useCallback(() => setTick((tick) => tick + 1), []);
 
     useEffect(() => {
       const name = toSafeListenerName("reactComponent");
-      startEffect({ whenToRun: "subscribe", name, check, onEffect: rerender });
+      startEffect({ phase: "subscribe", name, check, onEffect: rerender });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
 
-    return whatToReturn(meta.currentState) as T_ReturnedConceptoProps;
+    return whatToReturn(meta.currentState) as T_ReturnedPietemProps;
   }
 
   function useStoreEffect<K_Type extends T_ItemType>(
@@ -1145,7 +995,7 @@ export function _createConcepts<
   ) {
     useLayoutEffect(() => {
       const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-      startEffect({ name, whenToRun: "subscribe", check, onEffect });
+      startEffect({ name, phase: "subscribe", check, onEffect });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -1172,7 +1022,7 @@ export function _createConcepts<
       const name = toSafeListenerName(
         "useStoreItemEffect_" + JSON.stringify(check)
       );
-      startItemEffect({ name, whenToRun: "subscribe", check, onItemEffect });
+      startItemEffect({ name, phase: "subscribe", check, onItemEffect });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -1202,7 +1052,7 @@ export function _createConcepts<
 
       startItemEffect({
         name,
-        whenToRun: "subscribe",
+        phase: "subscribe",
         check,
         onItemEffect: (theParameters) => setReturnedState(theParameters as any),
       });
@@ -1223,7 +1073,7 @@ export function _createConcepts<
     checkItem: {
       type: K_Type;
       name: ItemName<K_Type, T_ItemType, T_State>;
-      flow?: T_FlowName;
+      step?: T_StepName;
     },
     onPropChanges: Partial<
       {
@@ -1259,8 +1109,8 @@ export function _createConcepts<
             name: checkItem.name,
             prop: loopedPropKey,
           },
-          whenToRun: "subscribe",
-          flow: checkItem.flow,
+          phase: "subscribe",
+          step: checkItem.step,
         });
       });
 
@@ -1310,8 +1160,8 @@ export function _createConcepts<
   // NOTE could make options generic and return that
   // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
   type MakeEffect = <K_Type extends T_ItemType>(
-    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
-    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>;
+    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
+    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
 
   // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
@@ -1325,7 +1175,7 @@ export function _createConcepts<
       T_ItemType,
       T_State,
       T_Refs,
-      T_FlowName
+      T_StepName
     >
     // ) => ItemEffect_RuleOptions<
     //   K_Type,
@@ -1333,7 +1183,7 @@ export function _createConcepts<
     //   T_ItemType,
     //   T_State,
     //   T_Refs,
-    //   T_FlowName
+    //   T_StepName
     // >;
   ) => any;
 
@@ -1343,10 +1193,10 @@ export function _createConcepts<
   >(
     theRule: (
       options: T_Options
-    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
+    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ) => (
     options: T_Options
-    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>;
+    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
 
   type MakeDynamicItemEffectInlineFunction = <
@@ -1362,7 +1212,7 @@ export function _createConcepts<
       T_ItemType,
       T_State,
       T_Refs,
-      T_FlowName
+      T_StepName
     >
   ) => (
     options: T_Options
@@ -1372,12 +1222,12 @@ export function _createConcepts<
     //   T_ItemType,
     //   T_State,
     //   T_Refs,
-    //   T_FlowName
+    //   T_StepName
     // >;
   ) => any;
 
   function makeEffect<K_Type extends T_ItemType>(
-    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
+    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ) {
     return options;
   }
@@ -1392,7 +1242,7 @@ export function _createConcepts<
       T_ItemType,
       T_State,
       T_Refs,
-      T_FlowName
+      T_StepName
     >
   ) {
     return options;
@@ -1420,7 +1270,7 @@ export function _createConcepts<
       // ) => Record<K_RuleName, MakeRule_Rule >
     ) => Record<
       K_RuleName,
-      MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>
+      MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>
     >
   >(
     rulesToAdd: K_RulesToAdd
@@ -1491,7 +1341,7 @@ export function _createConcepts<
   >(
     theRule: (
       options: T_Options
-    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_FlowName>
+    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ) {
     return theRule;
   }
@@ -1508,7 +1358,7 @@ export function _createConcepts<
       T_ItemType,
       T_State,
       T_Refs,
-      T_FlowName
+      T_StepName
     >
   ) {
     return theRule;
@@ -1535,7 +1385,7 @@ export function _createConcepts<
     K_RuleName extends string,
     T_MakeRule_Function extends (
       ...args: any
-    ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_FlowName>,
+    ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>,
     T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
   >(
     rulesToAdd: (
@@ -1686,11 +1536,11 @@ export function _createConcepts<
 
   function applyPatch(patch: StatesPatch) {
     forEach(itemTypes, (itemType) => {
-      // Loop through removed items, and run removeConceptoItem()
+      // Loop through removed items, and run removePietemItem()
       forEach(patch.removed[itemType] ?? [], (itemName) =>
         removeItem({ type: itemType, name: itemName })
       );
-      // Loop through added items and run addConceptoItem()
+      // Loop through added items and run addPietemItem()
       forEach(patch.added[itemType] ?? [], (itemName) =>
         addItem({ type: itemType, name: itemName })
       );

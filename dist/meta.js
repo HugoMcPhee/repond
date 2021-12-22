@@ -23,21 +23,21 @@ export const initialDiffInfo = {
 /*
 
 store all the think and draw changes lik enormal?
-but then, if setState is run when a flow has already run, add it to the
+but then, if setState is run when a step has already run, add it to the
 
 */
-const conceptoMeta = {
-    // any changes that happened after a flow ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
-    // recordedChangesByFlow: {
+const pietemMeta = {
+    // any changes that happened after a step ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
+    // recordedChangesByStep: {
     //   default: initialRecordedChangesSet(),
     // } as Record<string, ReturnType<typeof initialRecordedChangesSet>>,
-    // prevStatesByFlow: {
+    // prevStatesByStep: {
     //   default: {},
     // } as Record<string, any>,
     //
     // this gets reset at the start of a frame, and kept added to throughout the frame
     recordedSubscribeChanges: initialRecordedChanges(),
-    // this gets reset for each flow
+    // this gets reset for each step
     recordedDeriveChanges: initialRecordedChanges(),
     nextFrameIsFirst: true,
     latestFrameId: 0,
@@ -60,7 +60,7 @@ const conceptoMeta = {
     callbacksQue: [],
     //
     allListeners: {},
-    listenerNamesByTypeByFlow: { derive: {}, subscribe: {} },
+    listenerNamesByPhaseByStep: { derive: {}, subscribe: {} },
     //
     itemTypeNames: [],
     propNamesByItemType: {},
@@ -74,13 +74,13 @@ const conceptoMeta = {
     // react specific?
     autoListenerNameCounter: 1,
     //
-    flowNames: ["default"],
-    currentFlowName: "default",
-    currentFlowIndex: 0,
+    stepNames: ["default"],
+    currentStepName: "default",
+    currentStepIndex: 0,
 };
-export default conceptoMeta;
+export default pietemMeta;
 export function toSafeListenerName(prefix) {
-    const theId = conceptoMeta.autoListenerNameCounter;
-    conceptoMeta.autoListenerNameCounter += 1;
+    const theId = pietemMeta.autoListenerNameCounter;
+    pietemMeta.autoListenerNameCounter += 1;
     return (prefix || "autoListener") + "_" + theId;
 }

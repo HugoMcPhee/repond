@@ -1,4 +1,4 @@
-import { ChangeToCheck, ListenerType } from "./types";
+import { ChangeToCheck, Phase } from "./types";
 export declare type RecordedChanges = {
     itemTypesBool: {
         [type: string]: boolean;
@@ -27,15 +27,15 @@ export declare type UntypedListenerBeforeNormalize = {
     name: string;
     changesToCheck: ChangeToCheck<any, any>[] | ChangeToCheck<any, any>;
     whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-    listenerType?: ListenerType;
-    flow?: string;
+    phase?: Phase;
+    step?: string;
 };
 export declare type UntypedListener = {
     name: string;
     changesToCheck: ChangeToCheck<any, any>[];
     whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-    listenerType?: ListenerType;
-    flow?: string;
+    phase?: Phase;
+    step?: string;
 };
 declare type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
 declare type DiffInfo_PropertiesChanged<T = any> = {
@@ -87,8 +87,8 @@ declare type UntypedDiffInfo = {
     };
 };
 declare type AFunction = (...args: any[]) => void;
-export declare type ConceptoPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
-declare const conceptoMeta: {
+export declare type PietemPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
+declare const pietemMeta: {
     recordedSubscribeChanges: RecordedChanges;
     recordedDeriveChanges: RecordedChanges;
     nextFrameIsFirst: boolean;
@@ -101,14 +101,14 @@ declare const conceptoMeta: {
     currentState: any;
     initialState: any;
     currentRefs: any;
-    currentPhase: ConceptoPhase;
+    currentPhase: PietemPhase;
     addAndRemoveItemsQue: AFunction[];
     startListenersQue: AFunction[];
     setStatesQue: AFunction[];
     callforwardsQue: AFunction[];
     callbacksQue: AFunction[];
     allListeners: Record<string, UntypedListener>;
-    listenerNamesByTypeByFlow: Record<ListenerType, Record<string, string[]>>;
+    listenerNamesByPhaseByStep: Record<Phase, Record<string, string[]>>;
     itemTypeNames: string[];
     propNamesByItemType: {
         [itemTypeName: string]: string[];
@@ -127,10 +127,10 @@ declare const conceptoMeta: {
     mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
     getStatesDiff: (currentObject: any, previousObject: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
     autoListenerNameCounter: number;
-    flowNames: readonly string[];
-    currentFlowName: string;
-    currentFlowIndex: number;
+    stepNames: readonly string[];
+    currentStepName: string;
+    currentStepIndex: number;
 };
-export declare type ConceptoMeta = typeof conceptoMeta;
-export default conceptoMeta;
+export declare type PietemMeta = typeof pietemMeta;
+export default pietemMeta;
 export declare function toSafeListenerName(prefix?: string): string;

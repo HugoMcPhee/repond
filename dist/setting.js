@@ -1,44 +1,44 @@
 import meta from "./meta";
-import { _updateConcepto } from "./updating";
+import { _updatePietem } from "./updating";
 function runNextFrameIfNeeded() {
     if (meta.currentPhase === "waitingForFirstUpdate") {
-        meta.latestFrameId = requestAnimationFrame(_updateConcepto);
+        meta.latestFrameId = requestAnimationFrame(_updatePietem);
         meta.currentPhase = "waitingForMoreUpdates";
     }
 }
 // only runs when calling  _setState
-function runWhenUpdatingConcepto(whatToRun, callback) {
+function runWhenUpdatingPietem(whatToRun, callback) {
     meta.setStatesQue.push(whatToRun);
     if (callback)
         meta.callbacksQue.push(callback);
     runNextFrameIfNeeded();
 }
-export function runWhenStartingConceptoListeners(whatToRun) {
+export function runWhenStartingPietemListeners(whatToRun) {
     meta.startListenersQue.push(whatToRun);
     runNextFrameIfNeeded();
 }
-export function runWhenStoppingConceptoListeners(whatToRun) {
+export function runWhenStoppingPietemListeners(whatToRun) {
     // stopping listeners runs instantly
     whatToRun();
 }
-function runWhenAddingAndRemovingConcepto(whatToRun, callback) {
+function runWhenAddingAndRemovingPietem(whatToRun, callback) {
     meta.addAndRemoveItemsQue.push(whatToRun);
     if (callback)
         meta.callbacksQue.push(callback);
     runNextFrameIfNeeded();
 }
 export function _setState(newState, callback) {
-    runWhenUpdatingConcepto(() => {
+    runWhenUpdatingPietem(() => {
         meta.mergeStates(typeof newState === "function" ? newState(meta.currentState) : newState, meta.currentState, meta.currentPhase === "runningDeriveListeners"
             ? meta.recordedDeriveChanges
             : meta.recordedSubscribeChanges, meta.recordedSubscribeChanges);
     }, callback);
 }
 export function _removeItem({ type: itemType, name: itemName }, callback) {
-    runWhenAddingAndRemovingConcepto(() => {
+    runWhenAddingAndRemovingPietem(() => {
         // removing itemName
         delete meta.currentState[itemType][itemName];
-        // delete meta.currentRefs[itemType][itemName]; // now done at the end of update concepto
+        // delete meta.currentRefs[itemType][itemName]; // now done at the end of update pietem
         meta.recordedSubscribeChanges.itemTypesBool[itemType] = true;
         meta.recordedSubscribeChanges.somethingChanged = true;
         meta.recordedDeriveChanges.itemTypesBool[itemType] = true;
@@ -46,7 +46,7 @@ export function _removeItem({ type: itemType, name: itemName }, callback) {
     }, callback);
 }
 export function _addItem({ type, name, state, refs, }, callback) {
-    runWhenAddingAndRemovingConcepto(() => {
+    runWhenAddingAndRemovingPietem(() => {
         meta.currentState[type][name] = {
             ...meta.defaultStateByItemType[type](name),
             ...(state || {}),

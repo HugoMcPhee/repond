@@ -1,15 +1,15 @@
 import { forEach, breakableForEach } from "chootils/dist/loops";
 import meta from "./meta";
-import { ChangeToCheck, ListenerType } from "./types";
+import { ChangeToCheck, Phase } from "./types";
 
 export default function checkListeners(
-  listenerType: ListenerType = "subscribe",
-  flowName: string = "default"
+  phase: Phase = "subscribe",
+  stepName: string = "default"
 ): string[] {
   const listenerNamesToUpdate: string[] = [];
 
   let foundListenerNames =
-    meta.listenerNamesByTypeByFlow[listenerType][flowName] ?? [];
+    meta.listenerNamesByPhaseByStep[phase][stepName] ?? [];
   let allListeners = meta.allListeners;
 
   forEach(foundListenerNames, (listenerName: string) => {
@@ -19,9 +19,9 @@ export default function checkListeners(
     breakableForEach(
       loopedCheckers,
       (loopedChecker: ChangeToCheck<any, any>) => {
-        // NOTE The diff info here could be unique for this flow!
-        // ( using the diff found from prevStatesByFlow[flowName] )
-        // NOTE the flow diffInfo should probably also be passed to the listeners when they run
+        // NOTE The diff info here could be unique for this step!
+        // ( using the diff found from prevStatesByStep[stepName] )
+        // NOTE the step diffInfo should probably also be passed to the listeners when they run
 
         if (checkIfCheckerChanged(loopedChecker, meta.diffInfo)) {
           listenerNamesToUpdate.push(loopedListener.name);
