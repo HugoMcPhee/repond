@@ -99,7 +99,7 @@ export type ExtendsString<T> = T extends string ? T : never;
 export type PietemCallback = (frameDuration: number, frameTime: number) => any;
 
 export type SetPietemState<T_State> = (
-  newState: 
+  newState:
     | GetPartialState<T_State>
     | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>),
   callback?: PietemCallback

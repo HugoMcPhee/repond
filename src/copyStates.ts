@@ -100,7 +100,7 @@ export function makeCopyStatesFunction_both_prev(
   return new Function(
     "currentObject",
     "saveToObject",
-    "recordedChanges", // for the currently running listener type, think or draw
+    "recordedChanges", // for the currently running listener phase
     "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
 
     copierFunctionString
@@ -145,7 +145,7 @@ export function makeCopyStatesFunction() {
   return new Function(
     "currentObject",
     "saveToObject",
-    "recordedChanges", // for the currently running listener type, think or draw
+    "recordedChanges", // for the currently running listener phase
     "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
 
     copierFunctionString

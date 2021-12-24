@@ -19,10 +19,6 @@ export const initialRecordedChanges: () => RecordedChanges = () => ({
   itemPropertiesBool: {},
   somethingChanged: false,
 });
-export const initialRecordedChangesSet = () => ({
-  think: initialRecordedChanges(),
-  draw: initialRecordedChanges(),
-});
 
 export const initialDiffInfo: UntypedDiffInfo = {
   itemTypesChanged: [],
@@ -37,19 +33,11 @@ export const initialDiffInfo: UntypedDiffInfo = {
   itemsRemovedBool: {},
 };
 
-export type UntypedListenerBeforeNormalize = {
-  name: string;
-  changesToCheck: ChangeToCheck<any, any>[] | ChangeToCheck<any, any>;
-  whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  phase?: Phase;
-  step?: string;
-};
-
 export type UntypedListener = {
   name: string;
   changesToCheck: ChangeToCheck<any, any>[];
   whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  phase?: Phase;
+  atStepEnd?: boolean;
   step?: string;
 };
 
@@ -89,34 +77,30 @@ type UntypedDiffInfo = {
 
 type AFunction = (...args: any[]) => void;
 
-export type PietemPhase =
+export type PietemMetaPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
   | "runningUpdates"
   | "runningDeriveListeners"
   | "runningSubscribeListeners"
-  | "runningCallbacks"; // might need more phases for the different types of callbacks
+  | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
 
 /*
 
-store all the think and draw changes lik enormal?
+store all the derive and subscribe changes like normal?
 but then, if setState is run when a step has already run, add it to the
 
 */
 
 const pietemMeta = {
-  // any changes that happened after a step ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
-  // recordedChangesByStep: {
-  //   default: initialRecordedChangesSet(),
-  // } as Record<string, ReturnType<typeof initialRecordedChangesSet>>,
   // prevStatesByStep: {
   //   default: {},
   // } as Record<string, any>,
   //
   // this gets reset at the start of a frame, and kept added to throughout the frame
   recordedSubscribeChanges: initialRecordedChanges(),
-  // this gets reset for each step
-  recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps think listeners run, only records changes made while thinking?
+  // this gets reset for each step (might not still be true)
+  recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
   nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
   latestFrameId: 0,
   previousFrameTime: 0,
@@ -129,7 +113,7 @@ const pietemMeta = {
   initialState: {} as any,
   // refs
   currentRefs: {} as any,
-  currentPhase: "waitingForFirstUpdate" as PietemPhase,
+  currentMetaPhase: "waitingForFirstUpdate" as PietemMetaPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
   startListenersQue: [] as AFunction[],
@@ -140,7 +124,7 @@ const pietemMeta = {
   allListeners: {} as Record<string, UntypedListener>,
   listenerNamesByPhaseByStep: { derive: {}, subscribe: {} } as Record<
     Phase,
-    Record<string, string[]> //  phase : stepName : listenerNames[]  // think: checkInput: ['whenKeyboardPressed']
+    Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
   //
   itemTypeNames: [] as string[],

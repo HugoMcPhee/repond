@@ -153,7 +153,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function convertEffectToListener(anyChangeRule) {
         return {
             changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
-            phase: anyChangeRule.phase === "subscribe" ? "subscribe" : "derive",
+            atStepEnd: !!anyChangeRule.atStepEnd,
             name: anyChangeRule.name,
             whatToDo: anyChangeRule.onEffect,
             step: anyChangeRule.step,
@@ -172,18 +172,17 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         }));
     }
     function _startPietemListener(newListener) {
-        const phase = newListener.phase || "derive";
+        const atStepEnd = !!newListener.atStepEnd;
+        const phase = atStepEnd ? "subscribe" : "derive";
         const editedListener = {
             name: newListener.name,
             changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
             whatToDo: newListener.whatToDo,
         };
-        if (phase === "subscribe") {
-            editedListener.phase = phase;
-        }
-        if (newListener.step) {
+        if (atStepEnd)
+            editedListener.atStepEnd = atStepEnd;
+        if (newListener.step)
             editedListener.step = newListener.step;
-        }
         runWhenStartingPietemListeners(() => {
             // add the new listener to all listeners and update listenerNamesByTypeByStep
             var _a, _b, _c;
@@ -193,13 +192,14 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     }
     function _stopPietemListener(listenerName) {
         runWhenStoppingPietemListeners(() => {
-            var _a, _b, _c;
+            var _a, _b;
             const theListener = meta.allListeners[listenerName];
             if (!theListener)
                 return;
-            const phase = (_a = theListener.phase) !== null && _a !== void 0 ? _a : "derive";
-            const step = (_b = theListener.step) !== null && _b !== void 0 ? _b : "default";
-            meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray((_c = meta.listenerNamesByPhaseByStep[phase][step]) !== null && _c !== void 0 ? _c : [], theListener.name);
+            const atStepEnd = !!theListener.atStepEnd;
+            const phase = atStepEnd ? "subscribe" : "derive";
+            const step = (_a = theListener.step) !== null && _a !== void 0 ? _a : "default";
+            meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray((_b = meta.listenerNamesByPhaseByStep[phase][step]) !== null && _b !== void 0 ? _b : [], theListener.name);
             delete meta.allListeners[listenerName];
         });
     }
@@ -220,12 +220,12 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             check: theEffect.check,
             name: listenerName,
             onEffect: theEffect.onEffect,
-            phase: theEffect.phase,
+            atStepEnd: theEffect.atStepEnd,
             step: theEffect.step,
         };
         return _startPietemListener(convertEffectToListener(editedEffect));
     }
-    function startItemEffect({ check, onItemEffect, phase, name, step, }) {
+    function startItemEffect({ check, onItemEffect, atStepEnd, name, step, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
         // if (!name) console.log("used random name");
         const editedItemTypes = toSafeArray(check.type);
@@ -244,7 +244,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             becomes: check.becomes,
         });
         startEffect({
-            phase,
+            atStepEnd,
             name: listenerName,
             check: editedChangesToCheck,
             onEffect,
@@ -260,7 +260,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         const rerender = useCallback(() => setTick((tick) => tick + 1), []);
         useEffect(() => {
             const name = toSafeListenerName("reactComponent");
-            startEffect({ phase: "subscribe", name, check, onEffect: rerender });
+            startEffect({ atStepEnd: true, name, check, onEffect: rerender });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -269,7 +269,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function useStoreEffect(onEffect, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-            startEffect({ name, phase: "subscribe", check, onEffect });
+            startEffect({ name, atStepEnd: true, check, onEffect });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -277,7 +277,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function useStoreItemEffect(onItemEffect, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreItemEffect_" + JSON.stringify(check));
-            startItemEffect({ name, phase: "subscribe", check, onItemEffect });
+            startItemEffect({ name, atStepEnd: true, check, onItemEffect });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -295,7 +295,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             const name = toSafeListenerName("useStoreItem"); // note could add JSON.stringify(check) for useful listener name
             startItemEffect({
                 name,
-                phase: "subscribe",
+                atStepEnd: true,
                 check,
                 onItemEffect: (theParameters) => setReturnedState(theParameters),
             });
@@ -325,7 +325,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                         name: checkItem.name,
                         prop: loopedPropKey,
                     },
-                    phase: "subscribe",
+                    atStepEnd: true,
                     step: checkItem.step,
                 });
             });
@@ -344,11 +344,11 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function removeItem(itemInfo) {
         _removeItem(itemInfo);
     }
-    function makeEffect(options) {
-        return options;
+    function makeEffect(onEffect, options) {
+        return { ...options, onEffect };
     }
-    function makeItemEffect(options) {
-        return options;
+    function makeItemEffect(onItemEffect, options) {
+        return { ...options, onItemEffect };
     }
     //
     // // NOTE could make options generic and return that
@@ -364,9 +364,16 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     // >(
     //   options: ItemEffect_RuleOptions<K_Type, K_PropertyName>
     // ) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
+    // type MakeRule_Utils = {
+    //   itemEffect: MakeItemEffect;
+    //   effect: MakeEffect;
+    // };
     function makeRules(rulesToAdd) {
         // type RuleName = keyof ReturnType<typeof rulesToAdd>;
-        const editedRulesToAdd = rulesToAdd(makeItemEffect, makeEffect);
+        const editedRulesToAdd = rulesToAdd({
+            itemEffect: makeItemEffect,
+            effect: makeEffect,
+        });
         const ruleNames = Object.keys(editedRulesToAdd);
         const ruleNamePrefix = toSafeListenerName("makeRules");
         // edit the names for each rule

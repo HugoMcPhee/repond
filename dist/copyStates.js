@@ -90,7 +90,7 @@ export function makeCopyStatesFunction_both_prev(copyType = "copy") {
     copierFunctionString += "";
     // return eval(copierFunctionString);
     // eslint-disable-next-line no-new-func
-    return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener type, think or draw
+    return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener phase
     "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
     copierFunctionString);
 }
@@ -125,7 +125,7 @@ export function makeCopyStatesFunction() {
     });
     // return eval(copierFunctionString);
     // eslint-disable-next-line no-new-func
-    return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener type, think or draw
+    return new Function("currentObject", "saveToObject", "recordedChanges", // for the currently running listener phase
     "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
     copierFunctionString);
 }

@@ -18,23 +18,12 @@ export declare type RecordedChanges = {
     somethingChanged: boolean;
 };
 export declare const initialRecordedChanges: () => RecordedChanges;
-export declare const initialRecordedChangesSet: () => {
-    think: RecordedChanges;
-    draw: RecordedChanges;
-};
 export declare const initialDiffInfo: UntypedDiffInfo;
-export declare type UntypedListenerBeforeNormalize = {
-    name: string;
-    changesToCheck: ChangeToCheck<any, any>[] | ChangeToCheck<any, any>;
-    whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-    phase?: Phase;
-    step?: string;
-};
 export declare type UntypedListener = {
     name: string;
     changesToCheck: ChangeToCheck<any, any>[];
     whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-    phase?: Phase;
+    atStepEnd?: boolean;
     step?: string;
 };
 declare type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
@@ -87,7 +76,7 @@ declare type UntypedDiffInfo = {
     };
 };
 declare type AFunction = (...args: any[]) => void;
-export declare type PietemPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
+export declare type PietemMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
 declare const pietemMeta: {
     recordedSubscribeChanges: RecordedChanges;
     recordedDeriveChanges: RecordedChanges;
@@ -101,7 +90,7 @@ declare const pietemMeta: {
     currentState: any;
     initialState: any;
     currentRefs: any;
-    currentPhase: PietemPhase;
+    currentMetaPhase: PietemMetaPhase;
     addAndRemoveItemsQue: AFunction[];
     startListenersQue: AFunction[];
     setStatesQue: AFunction[];

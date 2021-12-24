@@ -161,7 +161,7 @@ type ItemEffectCallbackParams<
 
 type ACheck_Becomes =
   | undefined
-  | "string"
+  | string
   | number
   | boolean
   | ((theValue: any, prevValue: any) => boolean);
@@ -289,7 +289,21 @@ type ItemEffect_RuleOptions<
     T_State,
     T_Refs
   >;
-  phase?: "derive" | "subscribe";
+  atStepEnd?: boolean;
+  name?: string;
+  step?: T_StepName;
+};
+
+type ItemEffect_RuleOptions__NoEffect<
+  K_Type extends T_ItemType,
+  K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
+  T_ItemType extends string | number | symbol,
+  T_State extends Record<any, any>,
+  T_Refs extends Record<any, any>,
+  T_StepName extends string
+> = {
+  check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>;
+  atStepEnd?: boolean;
   name?: string;
   step?: T_StepName;
 };
@@ -363,7 +377,19 @@ type Effect_RuleOptions<
   name?: string; // ruleName NOTE used to be required (probably still for dangerouslyAddingRule ? (adding single rules without making rules first))
   check: EffectRule_Check<K_Type, T_ItemType, T_State>;
   onEffect: EffectCallback<T_ItemType, T_State>;
-  phase?: "derive" | "subscribe";
+  atStepEnd?: boolean;
+  step?: T_StepName;
+};
+
+type Effect_RuleOptions__NoEffect<
+  K_Type extends T_ItemType,
+  T_ItemType extends string | number | symbol,
+  T_State extends Record<any, any>,
+  T_StepName extends string
+> = {
+  name?: string; // ruleName NOTE used to be required (probably still for dangerouslyAddingRule ? (adding single rules without making rules first))
+  check: EffectRule_Check<K_Type, T_ItemType, T_State>;
+  atStepEnd?: boolean;
   step?: T_StepName;
 };
 
@@ -493,7 +519,7 @@ type Listener<
     diffInfo: DiffInfo<T_ItemType, T_State>,
     frameDuration: number
   ) => void;
-  phase?: Phase;
+  atStepEnd?: boolean;
   step?: T_StepName;
 };
 
@@ -509,7 +535,7 @@ type ListenerAfterNormalising<
     diffInfo: DiffInfo<T_ItemType, T_State>,
     frameDuration: number
   ) => void;
-  phase?: Phase;
+  atStepEnd?: boolean;
   step?: string;
 };
 
@@ -799,7 +825,7 @@ export function _createStoreHelpers<
   ): Listener<T_ItemType, T_ItemType, T_State, T_StepName> {
     return {
       changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
-      phase: anyChangeRule.phase === "subscribe" ? "subscribe" : "derive",
+      atStepEnd: !!anyChangeRule.atStepEnd,
       name: anyChangeRule.name,
       whatToDo: anyChangeRule.onEffect,
       step: anyChangeRule.step,
@@ -829,7 +855,8 @@ export function _createStoreHelpers<
   function _startPietemListener<K_Type extends T_ItemType>(
     newListener: Listener<K_Type, T_ItemType, T_State, T_StepName>
   ) {
-    const phase = newListener.phase || "derive";
+    const atStepEnd = !!newListener.atStepEnd;
+    const phase: Phase = atStepEnd ? "subscribe" : "derive";
 
     const editedListener: ListenerAfterNormalising<
       K_Type,
@@ -840,12 +867,8 @@ export function _createStoreHelpers<
       changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
       whatToDo: newListener.whatToDo,
     };
-    if (phase === "subscribe") {
-      editedListener.phase = phase;
-    }
-    if (newListener.step) {
-      editedListener.step = newListener.step;
-    }
+    if (atStepEnd) editedListener.atStepEnd = atStepEnd;
+    if (newListener.step) editedListener.step = newListener.step;
 
     runWhenStartingPietemListeners(() => {
       // add the new listener to all listeners and update listenerNamesByTypeByStep
@@ -869,7 +892,8 @@ export function _createStoreHelpers<
     runWhenStoppingPietemListeners(() => {
       const theListener = meta.allListeners[listenerName];
       if (!theListener) return;
-      const phase = theListener.phase ?? "derive";
+      const atStepEnd = !!theListener.atStepEnd;
+      const phase: Phase = atStepEnd ? "subscribe" : "derive";
       const step = theListener.step ?? "default";
 
       meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray(
@@ -909,7 +933,7 @@ export function _createStoreHelpers<
       check: theEffect.check,
       name: listenerName,
       onEffect: theEffect.onEffect,
-      phase: theEffect.phase,
+      atStepEnd: theEffect.atStepEnd,
       step: theEffect.step,
     };
 
@@ -922,7 +946,7 @@ export function _createStoreHelpers<
   >({
     check,
     onItemEffect,
-    phase,
+    atStepEnd,
     name,
     step,
   }: ItemEffect_RuleOptions<
@@ -956,7 +980,7 @@ export function _createStoreHelpers<
     });
 
     startEffect({
-      phase,
+      atStepEnd,
       name: listenerName,
       check: editedChangesToCheck as any,
       onEffect,
@@ -980,7 +1004,7 @@ export function _createStoreHelpers<
 
     useEffect(() => {
       const name = toSafeListenerName("reactComponent");
-      startEffect({ phase: "subscribe", name, check, onEffect: rerender });
+      startEffect({ atStepEnd: true, name, check, onEffect: rerender });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -995,7 +1019,7 @@ export function _createStoreHelpers<
   ) {
     useLayoutEffect(() => {
       const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-      startEffect({ name, phase: "subscribe", check, onEffect });
+      startEffect({ name, atStepEnd: true, check, onEffect });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -1022,7 +1046,7 @@ export function _createStoreHelpers<
       const name = toSafeListenerName(
         "useStoreItemEffect_" + JSON.stringify(check)
       );
-      startItemEffect({ name, phase: "subscribe", check, onItemEffect });
+      startItemEffect({ name, atStepEnd: true, check, onItemEffect });
       return () => stopEffect(name);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -1052,7 +1076,7 @@ export function _createStoreHelpers<
 
       startItemEffect({
         name,
-        phase: "subscribe",
+        atStepEnd: true,
         check,
         onItemEffect: (theParameters) => setReturnedState(theParameters as any),
       });
@@ -1109,7 +1133,7 @@ export function _createStoreHelpers<
             name: checkItem.name,
             prop: loopedPropKey,
           },
-          phase: "subscribe",
+          atStepEnd: true,
           step: checkItem.step,
         });
       });
@@ -1163,6 +1187,16 @@ export function _createStoreHelpers<
     options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
+  type MakeEffect__SeperateParams = <K_Type extends T_ItemType>(
+    onEffect: EffectCallback<T_ItemType, T_State>,
+    options: Effect_RuleOptions__NoEffect<
+      K_Type,
+      T_ItemType,
+      T_State,
+      T_StepName
+    >
+    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
+  ) => any;
 
   // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
   type MakeItemEffect = <
@@ -1170,6 +1204,34 @@ export function _createStoreHelpers<
     K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
   >(
     options: ItemEffect_RuleOptions<
+      K_Type,
+      K_PropertyName,
+      T_ItemType,
+      T_State,
+      T_Refs,
+      T_StepName
+    >
+    // ) => ItemEffect_RuleOptions<
+    //   K_Type,
+    //   K_PropertyName,
+    //   T_ItemType,
+    //   T_State,
+    //   T_Refs,
+    //   T_StepName
+    // >;
+  ) => any;
+  type MakeItemEffect__SeperateParams = <
+    K_Type extends T_ItemType,
+    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
+  >(
+    onItemEffect: ItemEffectCallback<
+      K_Type,
+      K_PropertyName,
+      T_ItemType,
+      T_State,
+      T_Refs
+    >,
+    options: ItemEffect_RuleOptions__NoEffect<
       K_Type,
       K_PropertyName,
       T_ItemType,
@@ -1227,16 +1289,29 @@ export function _createStoreHelpers<
   ) => any;
 
   function makeEffect<K_Type extends T_ItemType>(
-    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
-  ) {
-    return options;
+    onEffect: EffectCallback<T_ItemType, T_State>,
+    options: Effect_RuleOptions__NoEffect<
+      K_Type,
+      T_ItemType,
+      T_State,
+      T_StepName
+    >
+  ): Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName> {
+    return { ...options, onEffect };
   }
 
   function makeItemEffect<
     K_Type extends T_ItemType,
     K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
   >(
-    options: ItemEffect_RuleOptions<
+    onItemEffect: ItemEffectCallback<
+      K_Type,
+      K_PropertyName,
+      T_ItemType,
+      T_State,
+      T_Refs
+    >,
+    options: ItemEffect_RuleOptions__NoEffect<
       K_Type,
       K_PropertyName,
       T_ItemType,
@@ -1244,8 +1319,15 @@ export function _createStoreHelpers<
       T_Refs,
       T_StepName
     >
-  ) {
-    return options;
+  ): ItemEffect_RuleOptions<
+    K_Type,
+    K_PropertyName,
+    T_ItemType,
+    T_State,
+    T_Refs,
+    T_StepName
+  > {
+    return { ...options, onItemEffect };
   }
   //
   // // NOTE could make options generic and return that
@@ -1262,16 +1344,18 @@ export function _createStoreHelpers<
   //   options: ItemEffect_RuleOptions<K_Type, K_PropertyName>
   // ) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
 
+  // type MakeRule_Utils = {
+  //   itemEffect: MakeItemEffect;
+  //   effect: MakeEffect;
+  // };
+
   function makeRules<
     K_RuleName extends string,
-    K_RulesToAdd extends (
-      addItemEffect: MakeItemEffect,
-      addEffect: MakeEffect
-      // ) => Record<K_RuleName, MakeRule_Rule >
-    ) => Record<
-      K_RuleName,
-      MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>
-    >
+    K_RulesToAdd extends (arg0: {
+      itemEffect: MakeItemEffect__SeperateParams;
+      effect: MakeEffect__SeperateParams;
+    }) => // ) => Record<K_RuleName, MakeRule_Rule >
+    Record<K_RuleName, MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>>
   >(
     rulesToAdd: K_RulesToAdd
   ): {
@@ -1282,10 +1366,10 @@ export function _createStoreHelpers<
     ruleNames: K_RuleName[];
   } {
     // type RuleName = keyof ReturnType<typeof rulesToAdd>;
-    const editedRulesToAdd = rulesToAdd(
-      makeItemEffect as any,
-      makeEffect as any
-    );
+    const editedRulesToAdd = rulesToAdd({
+      itemEffect: makeItemEffect as any,
+      effect: makeEffect as any,
+    });
     const ruleNames: K_RuleName[] = Object.keys(editedRulesToAdd) as any[];
     const ruleNamePrefix = toSafeListenerName("makeRules");
 
@@ -1389,8 +1473,8 @@ export function _createStoreHelpers<
     T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
   >(
     rulesToAdd: (
-      addItemEffect: MakeDynamicItemEffectInlineFunction,
-      addEffect: MakeDynamicEffectInlineFunction
+      itemEffect: MakeDynamicItemEffectInlineFunction,
+      effect: MakeDynamicEffectInlineFunction
     ) => T_RulesToAdd
   ) {
     type RuleName = keyof ReturnType<typeof rulesToAdd>;

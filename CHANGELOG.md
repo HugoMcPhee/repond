@@ -1,6 +1,16 @@
 TODO
 
 - support nullable types with strictNullchecks
+- type "becomes" to the property value
+
+v0.8.0
+
+- added a simpler syntax for adding rules,
+- phase changed to atStepEnd
+- rule effect functions are their own parameter like useEffect
+- e.g addEffect(callback, {check:{prop: "propName"}}
+- addItemEffect and addEffect renamed to itemEffect and effect, + provided as named properties in an object instead of two parameters
+- renamed some places from think/draw to derive/subscribe
 
 v0.7.0
 

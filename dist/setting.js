@@ -1,9 +1,9 @@
 import meta from "./meta";
 import { _updatePietem } from "./updating";
 function runNextFrameIfNeeded() {
-    if (meta.currentPhase === "waitingForFirstUpdate") {
+    if (meta.currentMetaPhase === "waitingForFirstUpdate") {
         meta.latestFrameId = requestAnimationFrame(_updatePietem);
-        meta.currentPhase = "waitingForMoreUpdates";
+        meta.currentMetaPhase = "waitingForMoreUpdates";
     }
 }
 // only runs when calling  _setState
@@ -29,7 +29,7 @@ function runWhenAddingAndRemovingPietem(whatToRun, callback) {
 }
 export function _setState(newState, callback) {
     runWhenUpdatingPietem(() => {
-        meta.mergeStates(typeof newState === "function" ? newState(meta.currentState) : newState, meta.currentState, meta.currentPhase === "runningDeriveListeners"
+        meta.mergeStates(typeof newState === "function" ? newState(meta.currentState) : newState, meta.currentState, meta.currentMetaPhase === "runningDeriveListeners"
             ? meta.recordedDeriveChanges
             : meta.recordedSubscribeChanges, meta.recordedSubscribeChanges);
     }, callback);

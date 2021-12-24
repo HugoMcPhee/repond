@@ -14,8 +14,8 @@ function updateDiffInfo(recordedChanges) {
     meta.getStatesDiff(meta.currentState, meta.previousState, meta.diffInfo, recordedChanges, false // checkAllChanges
     );
 }
-function setPhase(phaseName) {
-    meta.currentPhase = phaseName;
+function setMetaPhase(metaPhase) {
+    meta.currentMetaPhase = metaPhase;
 }
 function updateFrameTimes(animationFrameTime) {
     meta.previousFrameTime = meta.latestFrameTime;
@@ -84,7 +84,7 @@ function resetRecordedChanges(recordedChanges) {
     recordedChanges.itemPropertiesBool = {};
     recordedChanges.somethingChanged = false;
 }
-function resetRecordedDrawChanges() {
+function resetRecordedSubscribeChanges() {
     resetRecordedChanges(meta.recordedSubscribeChanges);
 }
 function resetRecordedDeriveChanges() {
@@ -95,8 +95,8 @@ function resetRecordedDeriveChanges() {
 //
 // let timeLogged = Date.now();
 function runDeriveListeners(stepName) {
-    resetRecordedDeriveChanges(); // NOTE recently added to prevent think/derive changes being remembered each time it thinks again
-    runListeners("derive", stepName); //  a running think-listener can add more to the setStates que (or others)
+    resetRecordedDeriveChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
+    runListeners("derive", stepName); //  a running derive-listener can add more to the setStates que (or others)
     runAddListeners(); // add rules / effects
     runAddAndRemove(); // add and remove items
     runSetStates(); // run the qued setStates
@@ -111,9 +111,9 @@ function removeRemovedItemRefs() {
         });
     });
 }
-function runSetOfThinkListeners(stepName) {
-    meta.currentPhase = "runningDeriveListeners";
-    // recordedDeriveChanges are reset everytime a step thinks?
+function runSetOfDeriveListeners(stepName) {
+    meta.currentMetaPhase = "runningDeriveListeners";
+    // recordedDeriveChanges are reset everytime a step derives?
     // resetRecordedDeriveChanges();
     runDeriveListeners(stepName);
     if (!meta.recordedDeriveChanges.somethingChanged)
@@ -139,16 +139,16 @@ function runSetOfThinkListeners(stepName) {
     runDeriveListeners(stepName);
     if (!meta.recordedDeriveChanges.somethingChanged)
         return;
-    console.warn("running think listeners a lot :S", Object.keys(meta.recordedDeriveChanges.itemTypesBool), Object.keys(meta.recordedDeriveChanges.itemPropertiesBool));
+    console.warn("running derive listeners a lot :S", Object.keys(meta.recordedDeriveChanges.itemTypesBool), Object.keys(meta.recordedDeriveChanges.itemPropertiesBool));
 }
-function runDrawListenersShortcut(stepName) {
-    meta.currentPhase = "runningSubscribeListeners"; // hm not checked anywhere, but checking phase !== "runningDerivers" is
+function runSubscribeListenersShortcut(stepName) {
+    meta.currentMetaPhase = "runningSubscribeListeners"; // hm not checked anywhere, but checking metaPhase !== "runningDerivers" is
     updateDiffInfo(meta.recordedSubscribeChanges); // the diff for all the combined derriver changes
     runListeners("subscribe", stepName); //  Then it runs the subscribers based on the diff
 }
 function runAStep(stepName) {
-    runSetOfThinkListeners(stepName);
-    runDrawListenersShortcut(stepName);
+    runSetOfDeriveListeners(stepName);
+    runSubscribeListenersShortcut(stepName);
     // HERE? save the current state for that step, so it can be used as the prevState for this step next frame?
 }
 function runAStepLoop() {
@@ -268,14 +268,14 @@ function runSetOfStepsLoopShortcut() {
 }
 export function _updatePietem(animationFrameTime) {
     updateFrameTimes(animationFrameTime);
-    setPhase("runningUpdates");
+    setMetaPhase("runningUpdates");
     // save previous state, ,
     // this won't this disreguard all the state stuff from the callbacks?
     // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
     meta.copyStates(meta.currentState, meta.previousState);
     runSetOfStepsLoopShortcut();
-    resetRecordedDrawChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
-    setPhase("waitingForFirstUpdate");
+    resetRecordedSubscribeChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
+    setMetaPhase("waitingForFirstUpdate");
     runAllCallbacks();
     removeRemovedItemRefs();
     // runAllCallfowards(); // Moved callforwarsd to end of frame to help frame pacing issue on android? have also moved callforwarsd to inside callbacks

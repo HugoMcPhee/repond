@@ -4,10 +4,6 @@ export const initialRecordedChanges = () => ({
     itemPropertiesBool: {},
     somethingChanged: false,
 });
-export const initialRecordedChangesSet = () => ({
-    think: initialRecordedChanges(),
-    draw: initialRecordedChanges(),
-});
 export const initialDiffInfo = {
     itemTypesChanged: [],
     itemsChanged: {},
@@ -22,22 +18,18 @@ export const initialDiffInfo = {
 };
 /*
 
-store all the think and draw changes lik enormal?
+store all the derive and subscribe changes like normal?
 but then, if setState is run when a step has already run, add it to the
 
 */
 const pietemMeta = {
-    // any changes that happened after a step ran, and before the callbacks ran (that would otherwise be msised by recordedDrawChanges and recordedThinkChanges)
-    // recordedChangesByStep: {
-    //   default: initialRecordedChangesSet(),
-    // } as Record<string, ReturnType<typeof initialRecordedChangesSet>>,
     // prevStatesByStep: {
     //   default: {},
     // } as Record<string, any>,
     //
     // this gets reset at the start of a frame, and kept added to throughout the frame
     recordedSubscribeChanges: initialRecordedChanges(),
-    // this gets reset for each step
+    // this gets reset for each step (might not still be true)
     recordedDeriveChanges: initialRecordedChanges(),
     nextFrameIsFirst: true,
     latestFrameId: 0,
@@ -51,7 +43,7 @@ const pietemMeta = {
     initialState: {},
     // refs
     currentRefs: {},
-    currentPhase: "waitingForFirstUpdate",
+    currentMetaPhase: "waitingForFirstUpdate",
     // functions
     addAndRemoveItemsQue: [],
     startListenersQue: [],
