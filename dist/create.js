@@ -155,7 +155,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
             atStepEnd: !!anyChangeRule.atStepEnd,
             name: anyChangeRule.name,
-            whatToDo: anyChangeRule.onEffect,
+            whatToDo: anyChangeRule.run,
             step: anyChangeRule.step,
         };
     }
@@ -219,13 +219,13 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         const editedEffect = {
             check: theEffect.check,
             name: listenerName,
-            onEffect: theEffect.onEffect,
+            run: theEffect.run,
             atStepEnd: theEffect.atStepEnd,
             step: theEffect.step,
         };
         return _startPietemListener(convertEffectToListener(editedEffect));
     }
-    function startItemEffect({ check, onItemEffect, atStepEnd, name, step, }) {
+    function startItemEffect({ check, run, atStepEnd, name, step, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
         // if (!name) console.log("used random name");
         const editedItemTypes = toSafeArray(check.type);
@@ -236,18 +236,18 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             prop: editedPropertyNames,
             name: editedItemNames,
         };
-        let onEffect = itemEffectCallbackToEffectCallback({
+        let runEffect = itemEffectCallbackToEffectCallback({
             theItemType: editedItemTypes,
             theItemName: editedItemNames,
             thePropertyNames: editedPropertyNames !== null && editedPropertyNames !== void 0 ? editedPropertyNames : [],
-            whatToDo: onItemEffect,
+            whatToDo: run,
             becomes: check.becomes,
         });
         startEffect({
             atStepEnd,
             name: listenerName,
             check: editedChangesToCheck,
-            onEffect,
+            run: runEffect,
             step,
         });
         return listenerName;
@@ -260,24 +260,24 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         const rerender = useCallback(() => setTick((tick) => tick + 1), []);
         useEffect(() => {
             const name = toSafeListenerName("reactComponent");
-            startEffect({ atStepEnd: true, name, check, onEffect: rerender });
+            startEffect({ atStepEnd: true, name, check, run: rerender });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
         return whatToReturn(meta.currentState);
     }
-    function useStoreEffect(onEffect, check, hookDeps = []) {
+    function useStoreEffect(run, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-            startEffect({ name, atStepEnd: true, check, onEffect });
+            startEffect({ name, atStepEnd: true, check, run });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
     }
-    function useStoreItemEffect(onItemEffect, check, hookDeps = []) {
+    function useStoreItemEffect(run, check, hookDeps = []) {
         useLayoutEffect(() => {
             const name = toSafeListenerName("useStoreItemEffect_" + JSON.stringify(check));
-            startItemEffect({ name, atStepEnd: true, check, onItemEffect });
+            startItemEffect({ name, atStepEnd: true, check, run });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, hookDeps);
@@ -297,7 +297,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 name,
                 atStepEnd: true,
                 check,
-                onItemEffect: (theParameters) => setReturnedState(theParameters),
+                run: (theParameters) => setReturnedState(theParameters),
             });
             return () => stopEffect(name);
             // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -318,7 +318,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 const name = namePrefix + loopedPropKey;
                 const itemEffectCallback = onPropChanges[loopedPropKey];
                 startItemEffect({
-                    onItemEffect: itemEffectCallback,
+                    run: itemEffectCallback,
                     name,
                     check: {
                         type: checkItem.type,
@@ -344,11 +344,11 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function removeItem(itemInfo) {
         _removeItem(itemInfo);
     }
-    function makeEffect(onEffect, options) {
-        return { ...options, onEffect };
+    function makeEffect(options) {
+        return options;
     }
-    function makeItemEffect(onItemEffect, options) {
-        return { ...options, onItemEffect };
+    function makeItemEffect(options) {
+        return options;
     }
     //
     // // NOTE could make options generic and return that
@@ -388,7 +388,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             const theRule = editedRulesToAdd[ruleName];
             if (!theRule)
                 return;
-            if (theRule.onEffect !== undefined) {
+            if (theRule.run !== undefined) {
                 startEffect(theRule);
             }
             else {
@@ -440,7 +440,10 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     //   ) => ItemEffect_RuleOptions<K_Type, K_PropertyName>
     // ) => (options: T_Options) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
     function makeDynamicRules(rulesToAdd) {
-        const allRules = rulesToAdd(makeDynamicItemEffectInlineFunction, makeDynamicEffectInlineFunction);
+        const allRules = rulesToAdd({
+            itemEffect: makeDynamicItemEffectInlineFunction,
+            effect: makeDynamicEffectInlineFunction,
+        });
         const ruleNames = Object.keys(allRules);
         const ruleNamePrefix = `${ruleNames
             .map((loopedName) => loopedName.charAt(0))
@@ -461,7 +464,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 if (!editedRuleObject.name) {
                     editedRuleObject.name = getWholeRuleName(ruleName, options);
                 }
-                if (editedRuleObject.onEffect !== undefined) {
+                if (editedRuleObject.run !== undefined) {
                     startEffect(editedRuleObject);
                 }
                 else {
