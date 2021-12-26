@@ -84,6 +84,7 @@ declare type ItemEffect_RuleOptions<K_Type extends T_ItemType, K_PropertyName ex
     atStepEnd?: boolean;
     name?: string;
     step?: T_StepName;
+    _isPerItem?: true;
 };
 declare type EffectRule_ACheck_OneItemType<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     type?: K_Type;
@@ -108,6 +109,7 @@ declare type Effect_RuleOptions<K_Type extends T_ItemType, T_ItemType extends st
     run: EffectCallback<T_ItemType, T_State>;
     atStepEnd?: boolean;
     step?: T_StepName;
+    _isPerItem?: false;
 };
 declare type FlexibleRuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = XOR<Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>, ItemEffect_RuleOptions<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs, T_StepName>>;
 declare type MakeRule_Rule<T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = FlexibleRuleOptions<T_ItemType, PropertyName<T_ItemType, T_ItemType, T_State>, T_ItemType, T_State, T_Refs, T_StepName>;

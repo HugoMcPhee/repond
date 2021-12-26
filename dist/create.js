@@ -345,10 +345,10 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         _removeItem(itemInfo);
     }
     function makeEffect(options) {
-        return options;
+        return { ...options, _isPerItem: false };
     }
     function makeItemEffect(options) {
-        return options;
+        return { ...options, _isPerItem: true };
     }
     //
     // // NOTE could make options generic and return that
@@ -388,11 +388,11 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             const theRule = editedRulesToAdd[ruleName];
             if (!theRule)
                 return;
-            if (theRule.run !== undefined) {
-                startEffect(theRule);
+            if (theRule._isPerItem) {
+                startItemEffect(theRule);
             }
             else {
-                startItemEffect(theRule);
+                startEffect(theRule);
             }
         }
         function stop(ruleName) {
@@ -417,10 +417,12 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     // -----------------
     // make rules dynamic
     function makeDynamicEffectInlineFunction(theRule) {
-        return theRule;
+        // return theRule;
+        return (options) => ({ ...theRule(options), _isPerItem: false });
     }
     function makeDynamicItemEffectInlineFunction(theRule) {
-        return theRule;
+        // return theRule;
+        return (options) => ({ ...theRule(options), _isPerItem: true });
     }
     //
     // type MakeDynamicEffectInlineFunction = <
@@ -464,11 +466,11 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 if (!editedRuleObject.name) {
                     editedRuleObject.name = getWholeRuleName(ruleName, options);
                 }
-                if (editedRuleObject.run !== undefined) {
-                    startEffect(editedRuleObject);
+                if (editedRuleObject._isPerItem !== undefined) {
+                    startItemEffect(editedRuleObject);
                 }
                 else {
-                    startItemEffect(editedRuleObject);
+                    startEffect(editedRuleObject);
                 }
             }
         }

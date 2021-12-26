@@ -3,7 +3,7 @@ TODO
 - support nullable types with strictNullchecks
 - type "becomes" to the property value
 
-v0.8.1
+v0.8.2
 
 - reverted callback functions in makeRules to be part of one object, so dynamic rules use the same options object (because dynamic rules return an object, so it can't return two parameters)
 - before: effect(callback, {check:{prop: "propName"}}

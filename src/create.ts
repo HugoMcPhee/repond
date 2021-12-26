@@ -286,6 +286,7 @@ type ItemEffect_RuleOptions<
   atStepEnd?: boolean;
   name?: string;
   step?: T_StepName;
+  _isPerItem?: true;
 };
 
 type ItemEffect_RuleOptions__NoEffect<
@@ -373,6 +374,7 @@ type Effect_RuleOptions<
   run: EffectCallback<T_ItemType, T_State>;
   atStepEnd?: boolean;
   step?: T_StepName;
+  _isPerItem?: false;
 };
 
 type Effect_RuleOptions__NoEffect<
@@ -1285,7 +1287,7 @@ export function _createStoreHelpers<
   function makeEffect<K_Type extends T_ItemType>(
     options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ): Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName> {
-    return options;
+    return { ...options, _isPerItem: false };
   }
 
   function makeItemEffect<
@@ -1308,7 +1310,7 @@ export function _createStoreHelpers<
     T_Refs,
     T_StepName
   > {
-    return options;
+    return { ...options, _isPerItem: true };
   }
   //
   // // NOTE could make options generic and return that
@@ -1363,14 +1365,15 @@ export function _createStoreHelpers<
     });
 
     // maybe startRule so it can be {startRule} =
+
     function start(ruleName: K_RuleName) {
       const theRule = editedRulesToAdd[ruleName as any];
       if (!theRule) return;
 
-      if (theRule.run !== undefined) {
-        startEffect(theRule as any);
-      } else {
+      if (theRule._isPerItem) {
         startItemEffect(theRule as any);
+      } else {
+        startEffect(theRule as any);
       }
     }
 
@@ -1408,7 +1411,8 @@ export function _createStoreHelpers<
       options: T_Options
     ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
   ) {
-    return theRule;
+    // return theRule;
+    return (options: T_Options) => ({ ...theRule(options), _isPerItem: false });
   }
   function makeDynamicItemEffectInlineFunction<
     K_Type extends T_ItemType,
@@ -1426,7 +1430,8 @@ export function _createStoreHelpers<
       T_StepName
     >
   ) {
-    return theRule;
+    // return theRule;
+    return (options: T_Options) => ({ ...theRule(options), _isPerItem: true });
   }
   //
   // type MakeDynamicEffectInlineFunction = <
@@ -1493,10 +1498,10 @@ export function _createStoreHelpers<
           editedRuleObject.name = getWholeRuleName(ruleName, options);
         }
 
-        if (editedRuleObject.run !== undefined) {
-          startEffect(editedRuleObject as any);
-        } else {
+        if (editedRuleObject._isPerItem !== undefined) {
           startItemEffect(editedRuleObject as any);
+        } else {
+          startEffect(editedRuleObject as any);
         }
       }
     }
