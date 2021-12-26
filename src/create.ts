@@ -289,7 +289,7 @@ type ItemEffect_RuleOptions<
   _isPerItem?: true;
 };
 
-type ItemEffect_RuleOptions__NoEffect<
+type ItemEffect_RuleOptions__NoMeta<
   K_Type extends T_ItemType,
   K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
   T_ItemType extends string | number | symbol,
@@ -298,6 +298,8 @@ type ItemEffect_RuleOptions__NoEffect<
   T_StepName extends string
 > = {
   check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>;
+  // can use function to check value, ideally it uses the type of the selected property
+  run: ItemEffectCallback<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs>;
   atStepEnd?: boolean;
   name?: string;
   step?: T_StepName;
@@ -377,7 +379,7 @@ type Effect_RuleOptions<
   _isPerItem?: false;
 };
 
-type Effect_RuleOptions__NoEffect<
+type Effect_RuleOptions__NoMeta<
   K_Type extends T_ItemType,
   T_ItemType extends string | number | symbol,
   T_State extends Record<any, any>,
@@ -385,6 +387,7 @@ type Effect_RuleOptions__NoEffect<
 > = {
   name?: string; // ruleName NOTE used to be required (probably still for dangerouslyAddingRule ? (adding single rules without making rules first))
   check: EffectRule_Check<K_Type, T_ItemType, T_State>;
+  run: EffectCallback<T_ItemType, T_State>;
   atStepEnd?: boolean;
   step?: T_StepName;
 };
@@ -920,7 +923,12 @@ export function _createStoreHelpers<
   }
 
   function startEffect<K_Type extends T_ItemType>(
-    theEffect: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
+    theEffect: Effect_RuleOptions__NoMeta<
+      K_Type,
+      T_ItemType,
+      T_State,
+      T_StepName
+    >
   ) {
     let listenerName = theEffect.name || toSafeListenerName("effect");
 
@@ -945,7 +953,7 @@ export function _createStoreHelpers<
     atStepEnd,
     name,
     step,
-  }: ItemEffect_RuleOptions<
+  }: ItemEffect_RuleOptions__NoMeta<
     K_Type,
     K_PropertyName,
     T_ItemType,
@@ -1180,17 +1188,7 @@ export function _createStoreHelpers<
   // NOTE could make options generic and return that
   // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
   type MakeEffect = <K_Type extends T_ItemType>(
-    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
-    // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
-  ) => any;
-  type MakeEffect__SeperateParams = <K_Type extends T_ItemType>(
-    run: EffectCallback<T_ItemType, T_State>,
-    options: Effect_RuleOptions__NoEffect<
-      K_Type,
-      T_ItemType,
-      T_State,
-      T_StepName
-    >
+    options: Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
 
@@ -1199,35 +1197,7 @@ export function _createStoreHelpers<
     K_Type extends T_ItemType,
     K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
   >(
-    options: ItemEffect_RuleOptions<
-      K_Type,
-      K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs,
-      T_StepName
-    >
-    // ) => ItemEffect_RuleOptions<
-    //   K_Type,
-    //   K_PropertyName,
-    //   T_ItemType,
-    //   T_State,
-    //   T_Refs,
-    //   T_StepName
-    // >;
-  ) => any;
-  type MakeItemEffect__SeperateParams = <
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
-  >(
-    run: ItemEffectCallback<
-      K_Type,
-      K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs
-    >,
-    options: ItemEffect_RuleOptions__NoEffect<
+    options: ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
       T_ItemType,
@@ -1251,7 +1221,7 @@ export function _createStoreHelpers<
   >(
     theRule: (
       options: T_Options
-    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
+    ) => Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
   ) => (
     options: T_Options
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
@@ -1264,7 +1234,7 @@ export function _createStoreHelpers<
   >(
     theRule: (
       options: T_Options
-    ) => ItemEffect_RuleOptions<
+    ) => ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
       T_ItemType,
@@ -1285,7 +1255,7 @@ export function _createStoreHelpers<
   ) => any;
 
   function makeEffect<K_Type extends T_ItemType>(
-    options: Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
+    options: Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
   ): Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName> {
     return { ...options, _isPerItem: false };
   }
@@ -1294,7 +1264,7 @@ export function _createStoreHelpers<
     K_Type extends T_ItemType,
     K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
   >(
-    options: ItemEffect_RuleOptions<
+    options: ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
       T_ItemType,
