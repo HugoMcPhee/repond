@@ -1,4 +1,4 @@
-import { KeysOfUnion, DeepReadonly, SetPietemState, XOR, ExtendsString, PietemCallback } from "./types";
+import { KeysOfUnion, DeepReadonly, SetPietemState, XOR, ExtendsString, GetPartialState, PietemCallback } from "./types";
 declare type ItemName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ExtendsString<KeysOfUnion<T_State[K_Type]>>;
 declare type PropertyName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = KeysOfUnion<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
 declare type AllProperties<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
@@ -191,5 +191,142 @@ export declare function _createStoreHelpers<T_AllInfo extends {
         type: T_ItemType;
         name: string;
     }) => void;
+    makeEmptyPatch: () => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    makeEmptyDiff: () => {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    applyPatch: (patch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => void;
+    applyPatchHere: (newStates: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, patch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => void;
+    getPatch: (prevState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    getPatchAndReversed: (prevState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }[];
+    getReversePatch: (partialState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newPatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    combineTwoPatches: (prevPatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }, newPatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    combinePatches: (patchesArray: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }[]) => {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    makeMinimalPatch: (currentStates: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, thePatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => void;
+    removePartialPatch: (thePatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }, patchToRemove: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => void;
+    getDiff: (prevState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    getDiffFromPatches: (forwardPatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }, reversePatch: {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    getPatchesFromDiff: (theDiff: {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => [{
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }, {
+        changed: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }];
+    combineTwoDiffs: (prevDiff: {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }, newDiff: {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }) => {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
+    combineDiffs: (diffsArray: {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    }[]) => {
+        changedNext: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
+        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
+    };
 };
 export {};

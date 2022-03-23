@@ -2,8 +2,13 @@ TODO
 
 - support nullable types with strictNullchecks
 - type "becomes" to the property value
+- maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
-v0.8.2
+v0.8.4
+
+- added patch functions back again types are still working
+
+v0.8.3
 
 - reverted callback functions in makeRules to be part of one object, so dynamic rules use the same options object (because dynamic rules return an object, so it can't return two parameters)
 - before: effect(callback, {check:{prop: "propName"}}
