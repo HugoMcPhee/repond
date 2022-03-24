@@ -548,7 +548,14 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             // Loop through removed items, and run removePietemItem()
             forEach((_a = patch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => removeItem({ type: itemType, name: itemName }));
             // Loop through added items and run addPietemItem()
-            forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => addItem({ type: itemType, name: itemName }));
+            forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => {
+                var _a, _b;
+                return addItem({
+                    type: itemType,
+                    name: itemName,
+                    state: (_b = (_a = patch.changed) === null || _a === void 0 ? void 0 : _a[itemType]) === null || _b === void 0 ? void 0 : _b[itemName],
+                });
+            });
         });
         // run setState(patch.changed)
         setState(patch.changed);
@@ -604,8 +611,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         const newPatch = makeEmptyPatch();
         const tempDiffInfo = makeEmptyDiffInfo();
         const tempManualUpdateChanges = initialRecordedChanges();
-        meta.getStatesDiff(prevState, // currentState
-        newState, // previousState
+        meta.getStatesDiff(newState, // currentState
+        prevState, // previousState
         tempDiffInfo, tempManualUpdateChanges, // manualUpdateChanges
         true // checkAllChanges
         );
@@ -673,7 +680,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                             const newPropertyValue = addedItemState === null || addedItemState === void 0 ? void 0 : addedItemState[propertyName];
                             if (defaultPropertyValue !== undefined &&
                                 newPropertyValue !== undefined) {
-                                let valuesAreTheSame = addedItemState[propertyName] === newPropertyValue;
+                                let valuesAreTheSame = defaultPropertyValue === newPropertyValue;
                                 if (typeof newPropertyValue === "object") {
                                     valuesAreTheSame =
                                         JSON.stringify(defaultPropertyValue) ===

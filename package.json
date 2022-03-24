@@ -1,7 +1,12 @@
 {
   "name": "pietem",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "realtime state management focused on items and reactions",
+  "___main": "src/index.ts",
+  "___types": "dist/index.d.ts",
+  "___files": [
+    "src"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

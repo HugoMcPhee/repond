@@ -1582,7 +1582,11 @@ export function _createStoreHelpers<
       );
       // Loop through added items and run addPietemItem()
       forEach(patch.added[itemType] ?? [], (itemName) =>
-        addItem({ type: itemType, name: itemName })
+        addItem({
+          type: itemType,
+          name: itemName,
+          state: patch.changed?.[itemType]?.[itemName],
+        })
       );
     });
     // run setState(patch.changed)
@@ -1671,14 +1675,13 @@ export function _createStoreHelpers<
     const tempDiffInfo = makeEmptyDiffInfo();
     const tempManualUpdateChanges = initialRecordedChanges();
     meta.getStatesDiff(
-      prevState, // currentState
-      newState, // previousState
+      newState, // currentState
+      prevState, // previousState
       tempDiffInfo,
       tempManualUpdateChanges, // manualUpdateChanges
       true // checkAllChanges
     );
     // Then can use tempDiffInfo to make the patch (with items removed etc)
-
     forEach(itemTypes, (itemType) => {
       // Add added and removed with itemsAdded and itemsRemoved
       if (
@@ -1765,7 +1768,7 @@ export function _createStoreHelpers<
                 newPropertyValue !== undefined
               ) {
                 let valuesAreTheSame =
-                  addedItemState[propertyName] === newPropertyValue;
+                  defaultPropertyValue === newPropertyValue;
 
                 if (typeof newPropertyValue === "object") {
                   valuesAreTheSame =
