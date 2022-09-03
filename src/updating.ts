@@ -42,7 +42,7 @@ function runSetStates() {
   forEach(meta.setStatesQue, (loopedUpdateFunction) => {
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   });
-  meta.setStatesQue.length = 0;
+  meta.setStatesQue = [];
 }
 
 function runAddListeners() {
@@ -51,14 +51,14 @@ function runAddListeners() {
   forEach(meta.startListenersQue, (loopedUpdateFunction) => {
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   });
-  meta.startListenersQue.length = 0;
+  meta.startListenersQue = [];
 }
 
 function runAddAndRemove() {
   forEach(meta.addAndRemoveItemsQue, (loopedUpdateFunction) => {
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   });
-  meta.addAndRemoveItemsQue.length = 0;
+  meta.addAndRemoveItemsQue = [];
 }
 
 function runListeners(phase: Phase, stepName: string) {
@@ -80,6 +80,7 @@ function runAllCallbacks() {
   if (meta.callbacksQue.length > 0) {
     copiedCallbacks = meta.callbacksQue.slice(0) || [];
     meta.callbacksQue.length = 0;
+    meta.callbacksQue = [];
   }
   runCallbacks(copiedCallbacks);
 }
@@ -89,6 +90,7 @@ function runAllCallfowards() {
   if (meta.callforwardsQue.length > 0) {
     copiedCallforwards = meta.callforwardsQue.slice(0) || [];
     meta.callforwardsQue.length = 0;
+    meta.callforwardsQue = [];
   }
   runCallbacks(copiedCallforwards);
 }
