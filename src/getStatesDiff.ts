@@ -18,17 +18,17 @@ export function makeGetStatesDiffFunction_prev() {
   let diffFunctionString = `
     let itemNames = [];
   let previousItemNames  = [];
-  diffInfo.propsChanged.all__ = [];
+  diffInfo.propsChanged.all__.length = 0;
   diffInfo.propsChangedBool.all__ = {};
-  diffInfo.itemsChanged.all__ = [];
+  diffInfo.itemsChanged.all__.length = 0;
   diffInfo.itemsChangedBool.all__ = {};
-  diffInfo.itemsAdded.all__ = [];
+  diffInfo.itemsAdded.all__.length = 0;
   diffInfo.itemsAddedBool.all__ = {};
-  diffInfo.itemsRemoved.all__ = [];
+  diffInfo.itemsRemoved.all__.length = 0;
   diffInfo.itemsRemovedBool.all__ = {};
   let itemTypeAddedToItemsTypesChanged = false;
   let propAddedToPropsChanged = false;
-  diffInfo.itemTypesChanged = [];
+  diffInfo.itemTypesChanged.length = 0;
   diffInfo.itemTypesChangedBool = {};
 
    `;
@@ -41,13 +41,13 @@ export function makeGetStatesDiffFunction_prev() {
 
     itemTypeAddedToItemsTypesChanged = false;
 
-    diffInfo.itemsChanged.${itemType} = [];
+    diffInfo.itemsChanged.${itemType}.length = 0;
     diffInfo.itemsChangedBool.${itemType} = {};
 
-    diffInfo.itemsAdded.${itemType} = [];
+    diffInfo.itemsAdded.${itemType}.length = 0;
     diffInfo.itemsAddedBool.${itemType} = {};
 
-    diffInfo.itemsRemoved.${itemType} = [];
+    diffInfo.itemsRemoved.${itemType}.length = 0;
     diffInfo.itemsRemovedBool.${itemType} = {};
 
      diffInfo.propsChanged.${itemType} = {};
@@ -199,35 +199,66 @@ export default function makeGetStatesDiffFunction() {
   ) {
     let itemNames = [];
     let previousItemNames = [];
-    diffInfo.propsChanged.all__ = [];
+    if (!diffInfo.propsChanged.all__.length) {
+      diffInfo.propsChanged.all__.length = [];
+    } else diffInfo.propsChanged.all__.length = 0;
     diffInfo.propsChangedBool.all__ = {};
-    diffInfo.itemsChanged.all__ = [];
+
+    if (!diffInfo.itemsChanged.all__.length) {
+      diffInfo.itemsChanged.all__.length = [];
+    } else diffInfo.itemsChanged.all__.length = 0;
     diffInfo.itemsChangedBool.all__ = {};
-    diffInfo.itemsAdded.all__ = [];
+
+    if (!diffInfo.itemsAdded.all__.length) {
+      diffInfo.itemsAdded.all__.length = [];
+    } else diffInfo.itemsAdded.all__.length = 0;
     diffInfo.itemsAddedBool.all__ = {};
-    diffInfo.itemsRemoved.all__ = [];
+
+    if (!diffInfo.itemsRemoved.all__.length) {
+      diffInfo.itemsRemoved.all__.length = [];
+    } else diffInfo.itemsRemoved.all__.length = 0;
     diffInfo.itemsRemovedBool.all__ = {};
+
     let itemTypeAddedToItemsTypesChanged = false;
     // let propAddedToPropsChanged = false;
-    diffInfo.itemTypesChanged = [];
-    diffInfo.itemTypesChangedBool = {};
+
+    if (!diffInfo.itemTypesChanged.all__.length) {
+      diffInfo.itemTypesChanged.all__.length = [];
+    } else diffInfo.itemTypesChanged.all__.length = 0;
+    diffInfo.itemTypesChangedBool.all__ = {};
 
     for (let i = 0; i < itemTypeNames.length; ++i) {
       const itemType = itemTypeNames[i];
 
       itemTypeAddedToItemsTypesChanged = false;
 
-      diffInfo.itemsChanged[itemType] = [];
+      if (!diffInfo.itemsChanged[itemType]) {
+        diffInfo.itemsChanged[itemType] = [];
+      } else diffInfo.itemsChanged[itemType].length = 0;
       diffInfo.itemsChangedBool[itemType] = {};
 
-      diffInfo.itemsAdded[itemType] = [];
+      if (!diffInfo.itemsAdded[itemType]) {
+        diffInfo.itemsAdded[itemType] = [];
+      } else diffInfo.itemsAdded[itemType].length = 0;
       diffInfo.itemsAddedBool[itemType] = {};
 
-      diffInfo.itemsRemoved[itemType] = [];
+      if (!diffInfo.itemsRemoved[itemType]) {
+        diffInfo.itemsRemoved[itemType] = [];
+      } else diffInfo.itemsRemoved[itemType].length = 0;
       diffInfo.itemsRemovedBool[itemType] = {};
 
-      diffInfo.propsChanged[itemType] = {};
+      if (!diffInfo.propsChanged[itemType]) {
+        diffInfo.propsChanged[itemType] = {};
+      }
       diffInfo.propsChangedBool[itemType] = {};
+
+      if (!diffInfo.propsChanged[itemType].all__) {
+        diffInfo.propsChanged[itemType].all__ = [];
+      } else diffInfo.propsChanged[itemType].all__.length = 0;
+
+      if (!diffInfo.propsChangedBool[itemType].all__) {
+        diffInfo.propsChangedBool[itemType].all__ = {};
+      }
 
       if (checkAllChanges || recordedChanges.itemTypesBool[itemType]) {
         itemNames = Object.keys(currentState[itemType]);
@@ -315,19 +346,19 @@ export default function makeGetStatesDiffFunction() {
                       itemTypeAddedToItemsTypesChanged = true;
                     }
 
-                    if (!diffInfo.itemsChanged[itemType]) {
-                      diffInfo.itemsChanged[itemType] = [];
-                    }
+                    // if (!diffInfo.itemsChanged[itemType]) {
+                    //   diffInfo.itemsChanged[itemType] = [];
+                    // }
 
-                    if (!diffInfo.itemsChangedBool[itemType]) {
-                      diffInfo.itemsChangedBool[itemType] = {};
-                    }
-                    if (!diffInfo.itemsChanged.all__) {
-                      diffInfo.itemsChanged.all__ = [];
-                    }
-                    if (!diffInfo.itemsChangedBool.all__) {
-                      diffInfo.itemsChangedBool.all__ = {};
-                    }
+                    // if (!diffInfo.itemsChangedBool[itemType]) {
+                    //   diffInfo.itemsChangedBool[itemType] = {};
+                    // }
+                    // if (!diffInfo.itemsChanged.all__) {
+                    //   diffInfo.itemsChanged.all__ = [];
+                    // }
+                    // if (!diffInfo.itemsChangedBool.all__) {
+                    //   diffInfo.itemsChangedBool.all__ = {};
+                    // }
 
                     if (!itemAddedToItemsChanged) {
                       diffInfo.itemsChanged[itemType].push(itemName);
@@ -339,38 +370,40 @@ export default function makeGetStatesDiffFunction() {
                       itemAddedToItemsChanged = true;
                     }
 
-                    if (!diffInfo.propsChanged[itemType]) {
-                      diffInfo.propsChanged[itemType] = {};
-                    }
+                    // if (!diffInfo.propsChanged[itemType]) {
+                    //   diffInfo.propsChanged[itemType] = {};
+                    // }
                     // `, "{}")}
 
-                    if (!diffInfo.propsChangedBool[itemType]) {
-                      diffInfo.propsChangedBool[itemType] = {};
-                    }
+                    // if (!diffInfo.propsChangedBool[itemType]) {
+                    //   diffInfo.propsChangedBool[itemType] = {};
+                    // }
 
-                    if (!diffInfo.propsChanged.all__) {
-                      diffInfo.propsChanged.all__ = [];
-                    }
+                    // if (!diffInfo.propsChanged.all__) {
+                    //   diffInfo.propsChanged.all__ = [];
+                    // } else {
+                    //   diffInfo.propsChanged.all__.length = 0;
+                    // }
 
-                    if (!diffInfo.propsChangedBool.all__) {
-                      diffInfo.propsChangedBool.all__ = {};
-                    }
+                    // if (!diffInfo.propsChangedBool.all__) {
+                    //   diffInfo.propsChangedBool.all__ = {};
+                    // }
 
                     if (!diffInfo.propsChanged[itemType][itemName]) {
                       diffInfo.propsChanged[itemType][itemName] = [];
-                    }
+                    } else diffInfo.propsChanged[itemType][itemName].length = 0;
 
                     if (!diffInfo.propsChangedBool[itemType][itemName]) {
                       diffInfo.propsChangedBool[itemType][itemName] = {};
                     }
 
-                    if (!diffInfo.propsChanged[itemType].all__) {
-                      diffInfo.propsChanged[itemType].all__ = [];
-                    }
+                    // if (!diffInfo.propsChanged[itemType].all__) {
+                    //   diffInfo.propsChanged[itemType].all__ = [];
+                    // } else diffInfo.propsChanged[itemType].all__.length = 0;
 
-                    if (!diffInfo.propsChangedBool[itemType].all__) {
-                      diffInfo.propsChangedBool[itemType].all__ = {};
-                    }
+                    // if (!diffInfo.propsChangedBool[itemType].all__) {
+                    //   diffInfo.propsChangedBool[itemType].all__ = {};
+                    // }
 
                     if (
                       !diffInfo.propsChangedBool[itemType][itemName][
@@ -394,9 +427,8 @@ export default function makeGetStatesDiffFunction() {
                       !diffInfo.propsChangedBool[itemType].all__[itemPropName]
                     ) {
                       diffInfo.propsChanged[itemType].all__.push(itemPropName);
-                      diffInfo.propsChangedBool[itemType].all__[
-                        itemPropName
-                      ] = true;
+                      diffInfo.propsChangedBool[itemType].all__[itemPropName] =
+                        true;
                     }
                   }
                 }
