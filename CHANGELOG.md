@@ -4,6 +4,16 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+v0.9
+
+- updated chootils to 0.3.7
+- big change to reduce garbage collection
+- uses less arrow functions with forEach functions, and uses for loops
+- recycles objects alot, and dosen't check Object.keys every time
+- added ability to set to half framerate, to help games not stutter and use less power
+- an "auto" framerate mode's included to half the framerate if it's skipping many frames
+-
+
 v0.8.4
 
 - added patch functions back again types are still working

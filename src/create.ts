@@ -5,7 +5,7 @@ import meta, {
 } from "./meta";
 import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
-import makeGetStatesDiffFunction from "./getStatesDiff";
+import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
 
 import {
@@ -37,6 +37,7 @@ import {
   removeItemFromArray,
   getUniqueArrayItems,
 } from "chootils/dist/arrays";
+import { createRecordedChanges } from "./updating";
 
 // ChangeToCheck
 /*
@@ -583,10 +584,11 @@ export function _createStoreHelpers<
   extraOptions?: {
     stepNames: T_StepNamesParam;
     dontSetMeta?: boolean; // when only wanting to use _createStoreHelpers for the types
+    framerate?: "full" | "half" | "auto";
   }
 ) {
   const { dontSetMeta } = extraOptions ?? {};
-  const itemTypes = (Object.keys(allInfo) as unknown) as Readonly<T_ItemType[]>;
+  const itemTypes = Object.keys(allInfo) as unknown as Readonly<T_ItemType[]>;
   type T_StepName = T_StepNamesParam[number] | "default";
 
   const stepNamesUntyped = extraOptions?.stepNames
@@ -596,6 +598,11 @@ export function _createStoreHelpers<
 
   const stepNames: Readonly<T_StepName[]> = [...stepNamesUntyped];
 
+  meta.frameRateTypeOption = extraOptions.framerate || "auto";
+  if (meta.frameRateTypeOption === "full") meta.frameRateType = "full";
+  else if (meta.frameRateTypeOption === "half") meta.frameRateType = "half";
+  else if (meta.frameRateTypeOption === "auto") meta.frameRateType = "full";
+
   if (!dontSetMeta) {
     meta.stepNames = stepNames;
     meta.currentStepIndex = 0;
@@ -604,15 +611,13 @@ export function _createStoreHelpers<
 
   type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
   type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
-  type Get_DefaultRefs<
-    K_Type extends keyof T_AllInfo
-  > = T_AllInfo[K_Type]["refs"];
+  type Get_DefaultRefs<K_Type extends keyof T_AllInfo> =
+    T_AllInfo[K_Type]["refs"];
 
-  type StartStatesItemName<
-    K_Type extends keyof T_AllInfo
-  > = T_AllInfo[K_Type]["startStates"] extends Record<string, any>
-    ? keyof T_AllInfo[K_Type]["startStates"]
-    : string;
+  type StartStatesItemName<K_Type extends keyof T_AllInfo> =
+    T_AllInfo[K_Type]["startStates"] extends Record<string, any>
+      ? keyof T_AllInfo[K_Type]["startStates"]
+      : string;
 
   type T_State = {
     [K_Type in T_ItemType]: Record<
@@ -644,6 +649,9 @@ export function _createStoreHelpers<
   const initialState: T_State = itemTypes.reduce((prev: any, key) => {
     prev[key] =
       allInfo[key].startStates || ({} as StartStatesItemName<typeof key>);
+
+    meta.itemNamesByItemType[key as string] = Object.keys(prev[key]);
+
     return prev;
   }, {});
 
@@ -667,6 +675,10 @@ export function _createStoreHelpers<
     meta.copyStates = makeCopyStatesFunction();
     meta.getStatesDiff = makeGetStatesDiffFunction();
     meta.mergeStates = makeCopyStatesFunction("merge");
+
+    createRecordedChanges(meta.recordedDeriveChanges);
+    createRecordedChanges(meta.recordedSubscribeChanges);
+    createDiffInfo(meta.diffInfo);
   }
 
   // -----------------------------------------------------------------
@@ -703,9 +715,7 @@ export function _createStoreHelpers<
     theItemType?: K_Type | K_Type[];
     theItemName?: ItemName<K_Type, T_ItemType, T_State>[];
     thePropertyNames: AllProperties<T_ItemType, T_State>[];
-    whatToDo: (
-      options: any
-    ) => // options: IfPropertyChangedWhatToDoParams<
+    whatToDo: (options: any) => // options: IfPropertyChangedWhatToDoParams<
     //   T_State,
     //   T_ItemType,
     //   T_PropertyName
@@ -714,9 +724,8 @@ export function _createStoreHelpers<
     becomes: ACheck_Becomes;
   }) {
     const editedItemTypes = asArray(theItemType);
-    let allowedItemNames:
-      | { [itemName: string]: boolean }
-      | undefined = undefined;
+    let allowedItemNames: { [itemName: string]: boolean } | undefined =
+      undefined;
 
     if (Array.isArray(theItemName)) {
       allowedItemNames = {};
@@ -872,18 +881,16 @@ export function _createStoreHelpers<
     runWhenStartingPietemListeners(() => {
       // add the new listener to all listeners and update listenerNamesByTypeByStep
 
-      meta.allListeners[
-        editedListener.name
-      ] = (editedListener as unknown) as UntypedListener;
+      meta.allListeners[editedListener.name] =
+        editedListener as unknown as UntypedListener;
 
-      meta.listenerNamesByPhaseByStep[phase][
-        editedListener.step ?? "default"
-      ] = addItemToUniqueArray(
-        meta.listenerNamesByPhaseByStep[phase][
-          editedListener.step ?? "default"
-        ] ?? [],
-        editedListener.name
-      );
+      meta.listenerNamesByPhaseByStep[phase][editedListener.step ?? "default"] =
+        addItemToUniqueArray(
+          meta.listenerNamesByPhaseByStep[phase][
+            editedListener.step ?? "default"
+          ] ?? [],
+          editedListener.name
+        );
     });
   }
 
@@ -962,7 +969,6 @@ export function _createStoreHelpers<
     T_StepName
   >) {
     let listenerName = name || "unnamedEffect" + Math.random();
-    // if (!name) console.log("used random name");
 
     const editedItemTypes = toSafeArray(check.type);
     let editedPropertyNames = toSafeArray(check.prop);
@@ -1066,12 +1072,12 @@ export function _createStoreHelpers<
     check: OneItem_Check<K_Type, K_PropertyName, T_ItemType, T_State>,
     hookDeps: any[] = []
   ) {
-    const [returnedState, setReturnedState] = useState(({
+    const [returnedState, setReturnedState] = useState({
       itemName: check.name,
       prevItemState: getPreviousState()[check.type][check.name],
       itemState: (getState() as any)[check.type as any][check.name],
       itemRefs: getRefs()[check.type][check.name],
-    } as unknown) as T_TheParameters);
+    } as unknown as T_TheParameters);
     // NOTE: could save timeUpdated to state, storing state in a ref, so it could reuse an object? not sure
     // const [timeUpdated, setTimeUpdated] = useState(Date.now());
 
@@ -1103,21 +1109,19 @@ export function _createStoreHelpers<
       name: ItemName<K_Type, T_ItemType, T_State>;
       step?: T_StepName;
     },
-    onPropChanges: Partial<
-      {
-        [K_PropertyName in PropertyName<
-          K_Type,
-          T_ItemType,
-          T_State
-        >]: ItemEffectCallback<
-          K_Type,
-          K_PropertyName,
-          T_ItemType,
-          T_State,
-          T_Refs
-        >;
-      }
-    >,
+    onPropChanges: Partial<{
+      [K_PropertyName in PropertyName<
+        K_Type,
+        T_ItemType,
+        T_State
+      >]: ItemEffectCallback<
+        K_Type,
+        K_PropertyName,
+        T_ItemType,
+        T_State,
+        T_Refs
+      >;
+    }>,
     hookDeps: any[] = []
   ) {
     useLayoutEffect(() => {
@@ -1126,7 +1130,7 @@ export function _createStoreHelpers<
       const namePrefix = toSafeListenerName("useStoreItemPropsEffect"); // note could add checkItem.type and checkItem.name for useful listener name
 
       forEach(propNameKeys, (loopedPropKey) => {
-        const name = namePrefix + loopedPropKey;
+        const name = namePrefix + (loopedPropKey as string);
 
         const itemEffectCallback = onPropChanges[loopedPropKey];
         startItemEffect({
@@ -1144,7 +1148,7 @@ export function _createStoreHelpers<
 
       return () => {
         forEach(propNameKeys, (loopedPropKey) => {
-          const name = namePrefix + loopedPropKey;
+          const name = namePrefix + (loopedPropKey as string);
           stopEffect(name);
         });
       };
@@ -1487,7 +1491,7 @@ export function _createStoreHelpers<
           theRuleFunction(options)?.name || getWholeRuleName(ruleName, options);
         stopEffect(foundOrMadeRuleName);
       } else {
-        console.log("hmm no rule for ", ruleName);
+        console.log("no rule set for ", ruleName);
       }
     }
 
@@ -1788,9 +1792,8 @@ export function _createStoreHelpers<
                       newPatchChangedForItemType[itemName];
 
                     if (newPatchChangedForItemName) {
-                      newPatchChangedForItemName[
-                        propertyName
-                      ] = newPropertyValue;
+                      newPatchChangedForItemName[propertyName] =
+                        newPropertyValue;
                     }
                   }
                 }
@@ -1870,9 +1873,8 @@ export function _createStoreHelpers<
                       newDiffChangedForItemType[itemName];
 
                     if (newDiffChangedForItemName) {
-                      newDiffChangedForItemName[
-                        propertyName
-                      ] = newPropertyValue;
+                      newDiffChangedForItemName[propertyName] =
+                        newPropertyValue;
                     }
                   }
                 }
@@ -2099,17 +2101,13 @@ export function _createStoreHelpers<
       }
       // Loop through added in patchToRemove, if it’s in newPatch , remove it
       // Keep track of noLongerAddedItems { itemType: []
-      const noLongerAddedItems: ItemName<
-        T_ItemType,
-        T_ItemType,
-        T_State
-      >[] = [];
+      const noLongerAddedItems: ItemName<T_ItemType, T_ItemType, T_State>[] =
+        [];
       if (newPatch.added[itemType]) {
         newPatch.added[itemType] = newPatch.added[itemType]!.filter(
           (itemName) => {
-            const shouldKeep = !patchToRemove.added[itemType]!.includes(
-              itemName
-            );
+            const shouldKeep =
+              !patchToRemove.added[itemType]!.includes(itemName);
             if (!shouldKeep) {
               noLongerAddedItems.push(itemName);
             }

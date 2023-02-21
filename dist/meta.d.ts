@@ -1,5 +1,5 @@
 import { ChangeToCheck, Phase } from "./types";
-export declare type RecordedChanges = {
+export type RecordedChanges = {
     itemTypesBool: {
         [type: string]: boolean;
     };
@@ -19,15 +19,15 @@ export declare type RecordedChanges = {
 };
 export declare const initialRecordedChanges: () => RecordedChanges;
 export declare const initialDiffInfo: UntypedDiffInfo;
-export declare type UntypedListener = {
+export type UntypedListener = {
     name: string;
     changesToCheck: ChangeToCheck<any, any>[];
     whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
     atStepEnd?: boolean;
     step?: string;
 };
-declare type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
-declare type DiffInfo_PropertiesChanged<T = any> = {
+type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
+type DiffInfo_PropertiesChanged<T = any> = {
     [key: string]: {
         [itemName: string]: PropertiesByItemType<T, any>[];
     } & {
@@ -36,7 +36,7 @@ declare type DiffInfo_PropertiesChanged<T = any> = {
 } & {
     all__?: string[];
 };
-declare type DiffInfo_PropertiesChangedBool<T = any> = {
+type DiffInfo_PropertiesChangedBool<T = any> = {
     [K in any]: {
         [itemName: string]: {
             [K_P in PropertiesByItemType<T, any>]: boolean;
@@ -51,9 +51,11 @@ declare type DiffInfo_PropertiesChangedBool<T = any> = {
         [K_P in string]: boolean;
     };
 };
-declare type UntypedDiffInfo = {
+export type UntypedDiffInfo = {
     itemTypesChanged: [];
-    itemsChanged: {};
+    itemsChanged: {
+        [type: string]: string[];
+    };
     itemsAdded: {
         [type: string]: string[];
     };
@@ -61,8 +63,14 @@ declare type UntypedDiffInfo = {
         [type: string]: string[];
     };
     propsChanged: DiffInfo_PropertiesChanged;
-    itemTypesChangedBool: {};
-    itemsChangedBool: {};
+    itemTypesChangedBool: {
+        [type: string]: boolean;
+    };
+    itemsChangedBool: {
+        [type: string]: {
+            [itemName: string]: boolean;
+        };
+    };
     propsChangedBool: DiffInfo_PropertiesChangedBool;
     itemsAddedBool: {
         [type: string]: {
@@ -75,8 +83,8 @@ declare type UntypedDiffInfo = {
         };
     };
 };
-declare type AFunction = (...args: any[]) => void;
-export declare type PietemMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
+type AFunction = (...args: any[]) => void;
+export type PietemMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
 declare const pietemMeta: {
     recordedSubscribeChanges: RecordedChanges;
     recordedDeriveChanges: RecordedChanges;
@@ -85,6 +93,15 @@ declare const pietemMeta: {
     previousFrameTime: number;
     latestFrameTime: number;
     latestFrameDuration: number;
+    shortestFrameDuration: number;
+    foundScreenFramerate: boolean;
+    lookingForScreenFramerate: boolean;
+    latestUpdateTime: number;
+    latestUpdateDuration: number;
+    frameRateTypeOption: "auto" | "full" | "half";
+    frameRateType: "full" | "half";
+    lateFramesAmount: number;
+    shouldRunUpdateAtEndOfUpdate: boolean;
     diffInfo: UntypedDiffInfo;
     previousState: any;
     currentState: any;
@@ -100,6 +117,9 @@ declare const pietemMeta: {
     listenerNamesByPhaseByStep: Record<Phase, Record<string, string[]>>;
     itemTypeNames: string[];
     propNamesByItemType: {
+        [itemTypeName: string]: string[];
+    };
+    itemNamesByItemType: {
         [itemTypeName: string]: string[];
     };
     defaultRefsByItemType: {
@@ -120,6 +140,6 @@ declare const pietemMeta: {
     currentStepName: string;
     currentStepIndex: number;
 };
-export declare type PietemMeta = typeof pietemMeta;
+export type PietemMeta = typeof pietemMeta;
 export default pietemMeta;
 export declare function toSafeListenerName(prefix?: string): string;

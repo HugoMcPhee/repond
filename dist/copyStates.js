@@ -94,7 +94,7 @@ export function makeCopyStatesFunction_both_prev(copyType = "copy") {
     "allRecordedChanges", // collected for a whole (frame or step?) used when doing "subscribe" (for a step?)
     copierFunctionString);
 }
-export function makeCopyStatesFunction() {
+export function makeCopyStatesFunction_string_version() {
     const { itemTypeNames, propNamesByItemType } = meta;
     let copierFunctionString = `
   let itemNames = [];
@@ -131,47 +131,43 @@ export function makeCopyStatesFunction() {
 }
 export default function makeCopyStatesFunction_both_nonstring(copyType = "copy") {
     if (copyType === "copy") {
-        return makeCopyStatesFunction();
-        // return function copyStates(currentObject: any, saveToObject: any) {
-        //   const { itemTypeNames, propNamesByItemType } = meta;
-        //
-        //   let itemNames = [];
-        //
-        //   forEach(itemTypeNames, (itemType) => {
-        //     if (copyType === "copy") {
-        //       saveToObject[itemType] = {};
-        //     }
-        //     // it needs to get the item names each time
-        //
-        //     if (currentObject[itemType]) {
-        //       itemNames = Object.keys(currentObject[itemType]);
-        //       for (let j = 0; j < itemNames.length; ++j) {
-        //         const itemName = itemNames[j];
-        //
-        //         if (!saveToObject[itemType][itemName]) {
-        //           saveToObject[itemType][itemName] = {};
-        //         }
-        //
-        //         forEach(propNamesByItemType[itemType], (itemProp) => {
-        //           saveToObject[itemType][itemName][itemProp] =
-        //             currentObject[itemType][itemName][itemProp];
-        //         });
-        //       }
-        //     }
-        //   });
-        // };
+        // return makeCopyStatesFunction();
+        return function copyStates(currentObject, saveToObject) {
+            const { itemTypeNames, propNamesByItemType, itemNamesByItemType } = meta;
+            // let itemNames = [];
+            for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
+                const itemType = itemTypeNames[typeIndex];
+                if (copyType === "copy") {
+                    saveToObject[itemType] = {};
+                }
+                if (currentObject[itemType]) {
+                    const itemNames = itemNamesByItemType[itemType];
+                    for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
+                        const itemName = itemNames[nameIndex];
+                        if (!saveToObject[itemType][itemName]) {
+                            saveToObject[itemType][itemName] = {};
+                        }
+                        for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
+                            const itemProp = propNamesByItemType[itemType][propIndex];
+                            saveToObject[itemType][itemName][itemProp] =
+                                currentObject[itemType][itemName][itemProp];
+                        }
+                    }
+                }
+            }
+        };
     }
     else if (copyType === "merge") {
         return function mergeStates(currentObject, saveToObject, recordedChanges, allRecordedChanges) {
-            const { itemTypeNames, propNamesByItemType } = meta;
-            let itemNames = [];
-            forEach(itemTypeNames, (itemType) => {
-                // it needs to get the item names each time
+            const { itemTypeNames, propNamesByItemType, itemNamesByItemType } = meta;
+            for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
+                const itemType = itemTypeNames[typeIndex];
                 if (currentObject[itemType]) {
-                    itemNames = Object.keys(currentObject[itemType]);
-                    for (let j = 0; j < itemNames.length; ++j) {
-                        const itemName = itemNames[j];
-                        forEach(propNamesByItemType[itemType], (itemProp) => {
+                    const itemNames = itemNamesByItemType[itemType];
+                    for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
+                        const itemName = itemNames[nameIndex];
+                        for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
+                            const itemProp = propNamesByItemType[itemType][propIndex];
                             // check if the item exists before copying
                             if (saveToObject[itemType][itemName] !== undefined &&
                                 currentObject[itemType] &&
@@ -180,40 +176,18 @@ export default function makeCopyStatesFunction_both_nonstring(copyType = "copy")
                                 saveToObject[itemType][itemName][itemProp] =
                                     currentObject[itemType][itemName][itemProp];
                                 recordedChanges.itemTypesBool[itemType] = true;
-                                if (!recordedChanges.itemNamesBool[itemType]) {
-                                    recordedChanges.itemNamesBool[itemType] = {};
-                                }
                                 recordedChanges.itemNamesBool[itemType][itemName] = true;
-                                if (!recordedChanges.itemPropertiesBool[itemType]) {
-                                    recordedChanges.itemPropertiesBool[itemType] = {};
-                                }
-                                if (!recordedChanges.itemPropertiesBool[itemType][itemName]) {
-                                    recordedChanges.itemPropertiesBool[itemType][itemName] = {};
-                                }
                                 recordedChanges.itemPropertiesBool[itemType][itemName][itemProp] = true;
-                                recordedChanges.somethingChanged = true;
                                 allRecordedChanges.itemTypesBool[itemType] = true;
-                                if (!allRecordedChanges.itemNamesBool[itemType]) {
-                                    allRecordedChanges.itemNamesBool[itemType] = {};
-                                }
                                 allRecordedChanges.itemNamesBool[itemType][itemName] = true;
-                                if (!allRecordedChanges.itemPropertiesBool[itemType]) {
-                                    allRecordedChanges.itemPropertiesBool[itemType] = {};
-                                }
-                                if (!allRecordedChanges.itemPropertiesBool[itemType][itemName]) {
-                                    allRecordedChanges.itemPropertiesBool[itemType][itemName] = {};
-                                }
                                 allRecordedChanges.itemPropertiesBool[itemType][itemName][itemProp] = true;
+                                recordedChanges.somethingChanged = true;
                                 allRecordedChanges.somethingChanged = true;
-                                // allRecordedChanges.itemTypesBool[itemType] = true;
-                                // allRecordedChanges.itemNamesBool[itemName] = true;
-                                // allRecordedChanges.itemPropertiesBool[itemProp] = true;
-                                // allRecordedChanges.somethingChanged = true;
                             }
-                        });
+                        }
                     }
                 }
-            });
+            }
         };
     }
 }

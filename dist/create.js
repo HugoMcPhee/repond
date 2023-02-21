@@ -1,12 +1,13 @@
 import meta, { toSafeListenerName, initialRecordedChanges, } from "./meta";
 import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
-import makeGetStatesDiffFunction from "./getStatesDiff";
+import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import { _addItem, _removeItem, _setState, runWhenStartingPietemListeners, runWhenStoppingPietemListeners, } from "./setting";
 import { makeRefsStructureFromPietemState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
 import { useLayoutEffect, useState, useCallback, useEffect } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
+import { createRecordedChanges } from "./updating";
 /*
 
 , T_ItemType, T_State
@@ -27,6 +28,13 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     if (!stepNamesUntyped.includes("default"))
         stepNamesUntyped.push("default");
     const stepNames = [...stepNamesUntyped];
+    meta.frameRateTypeOption = extraOptions.framerate || "auto";
+    if (meta.frameRateTypeOption === "full")
+        meta.frameRateType = "full";
+    else if (meta.frameRateTypeOption === "half")
+        meta.frameRateType = "half";
+    else if (meta.frameRateTypeOption === "auto")
+        meta.frameRateType = "full";
     if (!dontSetMeta) {
         meta.stepNames = stepNames;
         meta.currentStepIndex = 0;
@@ -47,6 +55,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     const initialState = itemTypes.reduce((prev, key) => {
         prev[key] =
             allInfo[key].startStates || {};
+        meta.itemNamesByItemType[key] = Object.keys(prev[key]);
         return prev;
     }, {});
     // ------------------------------------------------
@@ -66,6 +75,9 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         meta.copyStates = makeCopyStatesFunction();
         meta.getStatesDiff = makeGetStatesDiffFunction();
         meta.mergeStates = makeCopyStatesFunction("merge");
+        createRecordedChanges(meta.recordedDeriveChanges);
+        createRecordedChanges(meta.recordedSubscribeChanges);
+        createDiffInfo(meta.diffInfo);
     }
     // -----------------------------------------------------------------
     // main functions
@@ -186,8 +198,10 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         runWhenStartingPietemListeners(() => {
             // add the new listener to all listeners and update listenerNamesByTypeByStep
             var _a, _b, _c;
-            meta.allListeners[editedListener.name] = editedListener;
-            meta.listenerNamesByPhaseByStep[phase][(_a = editedListener.step) !== null && _a !== void 0 ? _a : "default"] = addItemToUniqueArray((_c = meta.listenerNamesByPhaseByStep[phase][(_b = editedListener.step) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
+            meta.allListeners[editedListener.name] =
+                editedListener;
+            meta.listenerNamesByPhaseByStep[phase][(_a = editedListener.step) !== null && _a !== void 0 ? _a : "default"] =
+                addItemToUniqueArray((_c = meta.listenerNamesByPhaseByStep[phase][(_b = editedListener.step) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
         });
     }
     function _stopPietemListener(listenerName) {
@@ -227,7 +241,6 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     }
     function startItemEffect({ check, run, atStepEnd, name, step, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
-        // if (!name) console.log("used random name");
         const editedItemTypes = toSafeArray(check.type);
         let editedPropertyNames = toSafeArray(check.prop);
         let editedItemNames = toSafeArray(check.name);
@@ -484,7 +497,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 stopEffect(foundOrMadeRuleName);
             }
             else {
-                console.log("hmm no rule for ", ruleName);
+                console.log("no rule set for ", ruleName);
             }
         }
         // NOTE Experimental, if all the rules have the same options (BUT not typesafe at the moment)
@@ -697,7 +710,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                                         }
                                         const newPatchChangedForItemName = newPatchChangedForItemType[itemName];
                                         if (newPatchChangedForItemName) {
-                                            newPatchChangedForItemName[propertyName] = newPropertyValue;
+                                            newPatchChangedForItemName[propertyName] =
+                                                newPropertyValue;
                                         }
                                     }
                                 }
@@ -758,7 +772,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                                         }
                                         const newDiffChangedForItemName = newDiffChangedForItemType[itemName];
                                         if (newDiffChangedForItemName) {
-                                            newDiffChangedForItemName[propertyName] = newPropertyValue;
+                                            newDiffChangedForItemName[propertyName] =
+                                                newPropertyValue;
                                         }
                                     }
                                 }

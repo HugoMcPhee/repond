@@ -1,6 +1,7 @@
 import meta from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkListeners from "./checkListeners";
+import { runNextFrame } from "./setting";
 /*
 
 ohhh, every setState is qued and run when the frame runs, so setState never runs before the frame)
@@ -22,6 +23,14 @@ function updateFrameTimes(animationFrameTime) {
     meta.latestFrameTime = animationFrameTime;
     if (meta.nextFrameIsFirst === false) {
         meta.latestFrameDuration = meta.latestFrameTime - meta.previousFrameTime;
+        // NOTE possibly stop this check if it's been done enough
+        // if (meta.frameRateTypeOption !== "full") {
+        //   if (meta.speedTestFramesRun < 15) {
+        //     if (meta.latestFrameDuration < meta.shortestFrameDuration) {
+        //       meta.shortestFrameDuration = meta.latestFrameDuration;
+        //     }
+        //   }
+        // }
     }
     else {
         meta.latestFrameDuration = 16.66667;
@@ -29,45 +38,52 @@ function updateFrameTimes(animationFrameTime) {
 }
 function runSetStates() {
     // merges all the states from setState()
-    forEach(meta.setStatesQue, (loopedUpdateFunction) => {
+    for (let index = 0; index < meta.setStatesQue.length; index++) {
+        const loopedUpdateFunction = meta.setStatesQue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
-    });
-    meta.setStatesQue = [];
+    }
+    meta.setStatesQue.length = 0;
 }
 function runAddListeners() {
     // adding listeners (rules) are queued and happen here
     // removing listeners happens instantly
-    forEach(meta.startListenersQue, (loopedUpdateFunction) => {
+    for (let index = 0; index < meta.startListenersQue.length; index++) {
+        const loopedUpdateFunction = meta.startListenersQue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
-    });
-    meta.startListenersQue = [];
+    }
+    meta.startListenersQue.length = 0;
 }
 function runAddAndRemove() {
-    forEach(meta.addAndRemoveItemsQue, (loopedUpdateFunction) => {
+    for (let index = 0; index < meta.addAndRemoveItemsQue.length; index++) {
+        const loopedUpdateFunction = meta.addAndRemoveItemsQue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
-    });
-    meta.addAndRemoveItemsQue = [];
+    }
+    meta.addAndRemoveItemsQue.length = 0;
 }
 function runListeners(phase, stepName) {
     const listenerNamesToRun = checkListeners(phase, stepName);
-    forEach(listenerNamesToRun, (name) => {
+    for (let index = 0; index < listenerNamesToRun.length; index++) {
+        const name = listenerNamesToRun[index];
         if (meta.allListeners[name])
             meta.allListeners[name].whatToDo(meta.diffInfo, meta.latestFrameDuration);
-    });
+    }
 }
 function runCallbacks(callbacksToRun) {
-    forEach(callbacksToRun, (loopedCallback) => {
+    for (let index = 0; index < callbacksToRun.length; index++) {
+        const loopedCallback = callbacksToRun[index];
         loopedCallback(meta.latestFrameDuration, meta.latestFrameTime);
-    });
+    }
 }
+const copiedCallbacks = [];
 function runAllCallbacks() {
-    let copiedCallbacks = [];
     if (meta.callbacksQue.length > 0) {
-        copiedCallbacks = meta.callbacksQue.slice(0) || [];
+        for (let index = 0; index < meta.callbacksQue.length; index++) {
+            copiedCallbacks.push(meta.callbacksQue[index]);
+        }
         meta.callbacksQue.length = 0;
-        meta.callbacksQue = [];
     }
     runCallbacks(copiedCallbacks);
+    copiedCallbacks.length = 0;
 }
 function runAllCallfowards() {
     let copiedCallforwards = [];
@@ -78,11 +94,39 @@ function runAllCallfowards() {
     }
     runCallbacks(copiedCallforwards);
 }
-function resetRecordedChanges(recordedChanges) {
+export function createRecordedChanges(recordedChanges) {
     recordedChanges.itemTypesBool = {};
     recordedChanges.itemNamesBool = {};
     recordedChanges.itemPropertiesBool = {};
+    forEach(meta.itemTypeNames, (itemType) => {
+        recordedChanges.itemTypesBool[itemType] = false;
+        recordedChanges.itemNamesBool[itemType] = {};
+        recordedChanges.itemPropertiesBool[itemType] = {};
+        forEach(meta.itemNamesByItemType[itemType], (itemName) => {
+            recordedChanges.itemNamesBool[itemType][itemName] = false;
+            recordedChanges.itemPropertiesBool[itemType][itemName] = {};
+            forEach(meta.propNamesByItemType[itemType], (propName) => {
+                recordedChanges.itemPropertiesBool[itemType][itemName][propName];
+            });
+        });
+    });
     recordedChanges.somethingChanged = false;
+}
+function resetRecordedChanges(recordedChanges) {
+    recordedChanges.somethingChanged = false;
+    for (let typeIndex = 0; typeIndex < meta.itemTypeNames.length; typeIndex++) {
+        const itemType = meta.itemTypeNames[typeIndex];
+        recordedChanges.itemTypesBool[itemType] = false;
+        for (let nameIndex = 0; nameIndex < meta.itemNamesByItemType[itemType].length; nameIndex++) {
+            const itemName = meta.itemNamesByItemType[itemType][nameIndex];
+            recordedChanges.itemNamesBool[itemType][itemName] = false;
+            for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
+                const propName = meta.propNamesByItemType[itemType][propIndex];
+                recordedChanges.itemPropertiesBool[itemType][itemName][propName] =
+                    false;
+            }
+        }
+    }
 }
 function resetRecordedSubscribeChanges() {
     resetRecordedChanges(meta.recordedSubscribeChanges);
@@ -90,10 +134,6 @@ function resetRecordedSubscribeChanges() {
 function resetRecordedDeriveChanges() {
     resetRecordedChanges(meta.recordedDeriveChanges);
 }
-// ohhhhhhhhhhhh waiiiiiiiittttttttt , hm
-// the steps should all react to any changes made from previous steps
-//
-// let timeLogged = Date.now();
 function runDeriveListeners(stepName) {
     resetRecordedDeriveChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
     runListeners("derive", stepName); //  a running derive-listener can add more to the setStates que (or others)
@@ -105,16 +145,17 @@ function runDeriveListeners(stepName) {
 function removeRemovedItemRefs() {
     if (!meta.diffInfo.itemsRemoved)
         return;
-    forEach(meta.diffInfo.itemTypesChanged, (loopedItemType) => {
-        forEach(meta.diffInfo.itemsRemoved[loopedItemType], (removedItemName) => {
+    for (let changedIndex = 0; changedIndex < meta.diffInfo.itemTypesChanged.length; changedIndex++) {
+        const loopedItemType = meta.diffInfo.itemTypesChanged[changedIndex];
+        for (let removedIndex = 0; removedIndex < meta.diffInfo.itemsRemoved[loopedItemType].length; removedIndex++) {
+            const removedItemName = meta.diffInfo.itemsRemoved[loopedItemType][removedIndex];
             delete meta.currentRefs[loopedItemType][removedItemName];
-        });
-    });
+        }
+    }
 }
 function runSetOfDeriveListeners(stepName) {
+    var _a;
     meta.currentMetaPhase = "runningDeriveListeners";
-    // recordedDeriveChanges are reset everytime a step derives?
-    // resetRecordedDeriveChanges();
     runDeriveListeners(stepName);
     if (!meta.recordedDeriveChanges.somethingChanged)
         return;
@@ -139,7 +180,18 @@ function runSetOfDeriveListeners(stepName) {
     runDeriveListeners(stepName);
     if (!meta.recordedDeriveChanges.somethingChanged)
         return;
-    console.warn("running derive listeners a lot :S", Object.keys(meta.recordedDeriveChanges.itemTypesBool), Object.keys(meta.recordedDeriveChanges.itemPropertiesBool));
+    console.warn("running derive listeners a lot :S");
+    console.log("step name", meta.currentStepName);
+    console.log("listener names");
+    console.log(JSON.stringify((_a = meta.listenerNamesByPhaseByStep.derive) === null || _a === void 0 ? void 0 : _a[meta.currentStepName], null, 2));
+    console.log("changes");
+    console.log(JSON.stringify(Object.entries(meta.recordedDeriveChanges.itemTypesBool)
+        .filter((item) => item[1] === true)
+        .map((item) => Object.values(meta.recordedDeriveChanges.itemPropertiesBool[item[0]]).map((value) => Object.entries(value)
+        .filter((propEntry) => propEntry[1] === true)
+        .map((propEntry) => propEntry[0]))), null, 2));
+    // meta.recordedDeriveChanges.itemPropertiesBool
+    // );
 }
 function runSubscribeListenersShortcut(stepName) {
     meta.currentMetaPhase = "runningSubscribeListeners"; // hm not checked anywhere, but checking metaPhase !== "runningDerivers" is
@@ -149,7 +201,6 @@ function runSubscribeListenersShortcut(stepName) {
 function runAStep(stepName) {
     runSetOfDeriveListeners(stepName);
     runSubscribeListenersShortcut(stepName);
-    // HERE? save the current state for that step, so it can be used as the prevState for this step next frame?
 }
 function runAStepLoop() {
     runAStep(meta.currentStepName);
@@ -268,9 +319,10 @@ function runSetOfStepsLoopShortcut() {
 }
 export function _updatePietem(animationFrameTime) {
     updateFrameTimes(animationFrameTime);
+    meta.latestUpdateTime = performance.now();
     setMetaPhase("runningUpdates");
     // save previous state, ,
-    // this won't this disreguard all the state stuff from the callbacks?
+    // this won't this disreguard all the state stuff from the callbacks
     // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
     meta.copyStates(meta.currentState, meta.previousState);
     runSetOfStepsLoopShortcut();
@@ -281,4 +333,9 @@ export function _updatePietem(animationFrameTime) {
     // runAllCallfowards(); // Moved callforwarsd to end of frame to help frame pacing issue on android? have also moved callforwarsd to inside callbacks
     // if theres nothing running on next frame
     meta.nextFrameIsFirst = meta.setStatesQue.length === 0;
+    meta.latestUpdateDuration = performance.now() - meta.latestUpdateTime;
+    if (meta.shouldRunUpdateAtEndOfUpdate) {
+        runNextFrame();
+        meta.shouldRunUpdateAtEndOfUpdate = false;
+    }
 }

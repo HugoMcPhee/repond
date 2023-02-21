@@ -36,6 +36,17 @@ const pietemMeta = {
     previousFrameTime: 0,
     latestFrameTime: 0,
     latestFrameDuration: 16.66667,
+    shortestFrameDuration: 16.6666667,
+    foundScreenFramerate: false,
+    lookingForScreenFramerate: false,
+    //
+    latestUpdateTime: 0,
+    latestUpdateDuration: 16.66667,
+    frameRateTypeOption: "auto",
+    frameRateType: "full",
+    lateFramesAmount: 0,
+    shouldRunUpdateAtEndOfUpdate: false,
+    //
     diffInfo: initialDiffInfo,
     // state
     previousState: {},
@@ -56,6 +67,7 @@ const pietemMeta = {
     //
     itemTypeNames: [],
     propNamesByItemType: {},
+    itemNamesByItemType: {},
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
     copyStates: (currentObject, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates

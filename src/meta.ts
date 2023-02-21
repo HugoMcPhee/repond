@@ -62,14 +62,14 @@ type DiffInfo_PropertiesChangedBool<T = any> = {
   all__?: { [K_P in string]: boolean };
 };
 
-type UntypedDiffInfo = {
+export type UntypedDiffInfo = {
   itemTypesChanged: [];
-  itemsChanged: {};
+  itemsChanged: { [type: string]: string[] };
   itemsAdded: { [type: string]: string[] };
   itemsRemoved: { [type: string]: string[] };
   propsChanged: DiffInfo_PropertiesChanged;
-  itemTypesChangedBool: {};
-  itemsChangedBool: {};
+  itemTypesChangedBool: { [type: string]: boolean };
+  itemsChangedBool: { [type: string]: { [itemName: string]: boolean } };
   propsChangedBool: DiffInfo_PropertiesChangedBool;
   itemsAddedBool: { [type: string]: { [itemName: string]: boolean } };
   itemsRemovedBool: { [type: string]: { [itemName: string]: boolean } };
@@ -106,6 +106,17 @@ const pietemMeta = {
   previousFrameTime: 0,
   latestFrameTime: 0,
   latestFrameDuration: 16.66667,
+  shortestFrameDuration: 16.6666667, // the screens frameRate
+  foundScreenFramerate: false,
+  lookingForScreenFramerate: false,
+  //
+  latestUpdateTime: 0,
+  latestUpdateDuration: 16.66667, // how long everything inside "update" took
+  frameRateTypeOption: "auto" as "full" | "half" | "auto",
+  frameRateType: "full" as "full" | "half",
+  lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
+  shouldRunUpdateAtEndOfUpdate: false,
+  //
   diffInfo: initialDiffInfo,
   // state
   previousState: {} as any,
@@ -129,6 +140,7 @@ const pietemMeta = {
   //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
+  itemNamesByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
   defaultRefsByItemType: {} as {
     [itemTypeName: string]: (
       itemName?: string,
@@ -136,9 +148,7 @@ const pietemMeta = {
     ) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
-    [itemTypeName: string]: (
-      itemName?: string
-    ) => //   itemName?: string
+    [itemTypeName: string]: (itemName?: string) => //   itemName?: string
     { [itemPropertyName: string]: any };
   },
   copyStates: (
@@ -164,7 +174,7 @@ const pietemMeta = {
   // react specific?
   autoListenerNameCounter: 1,
   //
-  stepNames: (["default"] as const) as Readonly<string[]>,
+  stepNames: ["default"] as const as Readonly<string[]>,
   currentStepName: "default" as Readonly<string>,
   currentStepIndex: 0,
 };

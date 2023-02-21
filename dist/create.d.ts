@@ -1,17 +1,17 @@
 import { KeysOfUnion, DeepReadonly, SetPietemState, XOR, ExtendsString, GetPartialState, PietemCallback } from "./types";
-declare type ItemName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ExtendsString<KeysOfUnion<T_State[K_Type]>>;
-declare type PropertyName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = KeysOfUnion<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
-declare type AllProperties<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type ItemName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ExtendsString<KeysOfUnion<T_State[K_Type]>>;
+type PropertyName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = KeysOfUnion<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
+type AllProperties<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     [K_Type in T_ItemType]: PropertyName<K_Type, T_ItemType, T_State>;
 }[T_ItemType];
-declare type DiffInfo_PropertiesChanged<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type DiffInfo_PropertiesChanged<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     [K_Type in T_ItemType]: Record<ItemName<K_Type, T_ItemType, T_State>, PropertyName<K_Type, T_ItemType, T_State>[]> & {
         all__: PropertyName<K_Type, T_ItemType, T_State>[];
     };
 } & {
     all__: AllProperties<T_ItemType, T_State>[];
 };
-declare type DiffInfo_PropertiesChangedBool<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type DiffInfo_PropertiesChangedBool<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     [K_Type in T_ItemType]: Record<ItemName<K_Type, T_ItemType, T_State>, {
         [K_PropName in PropertyName<K_Type, T_ItemType, T_State>]: boolean;
     }> & {
@@ -24,9 +24,9 @@ declare type DiffInfo_PropertiesChangedBool<T_ItemType extends string | number |
         [K_PropName in AllProperties<T_ItemType, T_State>]: boolean;
     };
 };
-declare type DiffInfo_ItemsChanged<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = Record<T_ItemType | "all__", ItemName<T_ItemType, T_ItemType, T_State>[]>;
-declare type DiffInfo_ItemsChangedBool<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = Record<T_ItemType | "all__", Record<ItemName<T_ItemType, T_ItemType, T_State>, boolean>>;
-declare type DiffInfo<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type DiffInfo_ItemsChanged<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = Record<T_ItemType | "all__", ItemName<T_ItemType, T_ItemType, T_State>[]>;
+type DiffInfo_ItemsChangedBool<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = Record<T_ItemType | "all__", Record<ItemName<T_ItemType, T_ItemType, T_State>, boolean>>;
+type DiffInfo<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     itemTypesChanged: T_ItemType[];
     itemsChanged: DiffInfo_ItemsChanged<T_ItemType, T_State>;
     propsChanged: DiffInfo_PropertiesChanged<T_ItemType, T_State>;
@@ -38,7 +38,7 @@ declare type DiffInfo<T_ItemType extends string | number | symbol, T_State exten
     itemsAddedBool: DiffInfo_ItemsChangedBool<T_ItemType, T_State>;
     itemsRemovedBool: DiffInfo_ItemsChangedBool<T_ItemType, T_State>;
 };
-declare type ItemEffectCallbackParams<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = {
+type ItemEffectCallbackParams<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = {
     itemName: ItemName<K_Type, T_ItemType, T_State>;
     newValue: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>][K_PropertyName];
     previousValue: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>][K_PropertyName];
@@ -46,39 +46,39 @@ declare type ItemEffectCallbackParams<K_Type extends T_ItemType, K_PropertyName 
     itemRefs: T_Refs[K_Type][ItemName<K_Type, T_ItemType, T_State>];
     frameDuration: number;
 };
-declare type ACheck_Becomes = undefined | string | number | boolean | ((theValue: any, prevValue: any) => boolean);
-declare type OneItem_ACheck_SingleProperty<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type ACheck_Becomes = undefined | string | number | boolean | ((theValue: any, prevValue: any) => boolean);
+type OneItem_ACheck_SingleProperty<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     prop?: K_PropertyName;
     type: K_Type;
     name: ItemName<K_Type, T_ItemType, T_State>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
 };
-declare type OneItem_ACheck_MultiProperties<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type OneItem_ACheck_MultiProperties<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     prop?: K_PropertyName[];
     type: K_Type;
     name: ItemName<K_Type, T_ItemType, T_State>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
 };
-declare type OneItem_Check<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = OneItem_ACheck_SingleProperty<K_Type, K_PropertyName, T_ItemType, T_State> | OneItem_ACheck_MultiProperties<K_Type, K_PropertyName, T_ItemType, T_State>;
-declare type ItemEffectRule_Check_SingleProperty<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type OneItem_Check<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = OneItem_ACheck_SingleProperty<K_Type, K_PropertyName, T_ItemType, T_State> | OneItem_ACheck_MultiProperties<K_Type, K_PropertyName, T_ItemType, T_State>;
+type ItemEffectRule_Check_SingleProperty<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     prop?: K_PropertyName;
     type: K_Type;
     name?: ItemName<K_Type, T_ItemType, T_State>[] | ItemName<K_Type, T_ItemType, T_State>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
 };
-declare type ItemEffectRule_Check_MultiProperties<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type ItemEffectRule_Check_MultiProperties<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     prop?: K_PropertyName[];
     type: K_Type;
     name?: ItemName<K_Type, T_ItemType, T_State>[] | ItemName<K_Type, T_ItemType, T_State>;
     becomes?: ACheck_Becomes;
     addedOrRemoved?: undefined;
 };
-declare type ItemEffectRule_Check<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ItemEffectRule_Check_SingleProperty<K_Type, K_PropertyName, T_ItemType, T_State> | ItemEffectRule_Check_MultiProperties<K_Type, K_PropertyName, T_ItemType, T_State>;
-declare type ItemEffectCallback<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = (loopedInfo: ItemEffectCallbackParams<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs>) => void;
-declare type ItemEffect_RuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = {
+type ItemEffectRule_Check<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ItemEffectRule_Check_SingleProperty<K_Type, K_PropertyName, T_ItemType, T_State> | ItemEffectRule_Check_MultiProperties<K_Type, K_PropertyName, T_ItemType, T_State>;
+type ItemEffectCallback<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = (loopedInfo: ItemEffectCallbackParams<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs>) => void;
+type ItemEffect_RuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = {
     check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>;
     run: ItemEffectCallback<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs>;
     atStepEnd?: boolean;
@@ -86,31 +86,31 @@ declare type ItemEffect_RuleOptions<K_Type extends T_ItemType, K_PropertyName ex
     step?: T_StepName;
     _isPerItem?: true;
 };
-declare type ItemEffect_RuleOptions__NoMeta<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = {
+type ItemEffect_RuleOptions__NoMeta<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = {
     check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>;
     run: ItemEffectCallback<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs>;
     atStepEnd?: boolean;
     name?: string;
     step?: T_StepName;
 };
-declare type EffectRule_ACheck_OneItemType<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type EffectRule_ACheck_OneItemType<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     type?: K_Type;
     name?: ItemName<K_Type, T_ItemType, T_State> | ItemName<K_Type, T_ItemType, T_State>[];
     prop?: PropertyName<K_Type, T_ItemType, T_State>[];
     addedOrRemoved?: boolean;
     becomes?: undefined;
 };
-declare type EffectRule_ACheck_MultipleItemTypes<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
+type EffectRule_ACheck_MultipleItemTypes<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     type?: T_ItemType[];
     name?: ItemName<T_ItemType, T_ItemType, T_State> | ItemName<T_ItemType, T_ItemType, T_State>[];
     prop?: AllProperties<T_ItemType, T_State>[];
     addedOrRemoved?: boolean;
     becomes?: undefined;
 };
-declare type EffectRule_ACheck<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck_OneItemType<K_Type, T_ItemType, T_State> | EffectRule_ACheck_MultipleItemTypes<T_ItemType, T_State>;
-declare type EffectRule_Check<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck<K_Type, T_ItemType, T_State>[] | EffectRule_ACheck<K_Type, T_ItemType, T_State>;
-declare type EffectCallback<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = (diffInfo: DiffInfo<T_ItemType, T_State>, frameDuration: number) => void;
-declare type Effect_RuleOptions<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
+type EffectRule_ACheck<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck_OneItemType<K_Type, T_ItemType, T_State> | EffectRule_ACheck_MultipleItemTypes<T_ItemType, T_State>;
+type EffectRule_Check<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck<K_Type, T_ItemType, T_State>[] | EffectRule_ACheck<K_Type, T_ItemType, T_State>;
+type EffectCallback<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = (diffInfo: DiffInfo<T_ItemType, T_State>, frameDuration: number) => void;
+type Effect_RuleOptions<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
     name?: string;
     check: EffectRule_Check<K_Type, T_ItemType, T_State>;
     run: EffectCallback<T_ItemType, T_State>;
@@ -118,16 +118,16 @@ declare type Effect_RuleOptions<K_Type extends T_ItemType, T_ItemType extends st
     step?: T_StepName;
     _isPerItem?: false;
 };
-declare type Effect_RuleOptions__NoMeta<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
+type Effect_RuleOptions__NoMeta<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
     name?: string;
     check: EffectRule_Check<K_Type, T_ItemType, T_State>;
     run: EffectCallback<T_ItemType, T_State>;
     atStepEnd?: boolean;
     step?: T_StepName;
 };
-declare type FlexibleRuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = XOR<Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>, ItemEffect_RuleOptions<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs, T_StepName>>;
-declare type MakeRule_Rule<T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = FlexibleRuleOptions<T_ItemType, PropertyName<T_ItemType, T_ItemType, T_State>, T_ItemType, T_State, T_Refs, T_StepName>;
-declare type UseStoreItemParams<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = {
+type FlexibleRuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = XOR<Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>, ItemEffect_RuleOptions<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs, T_StepName>>;
+type MakeRule_Rule<T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = FlexibleRuleOptions<T_ItemType, PropertyName<T_ItemType, T_ItemType, T_State>, T_ItemType, T_State, T_Refs, T_StepName>;
+type UseStoreItemParams<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>> = {
     itemName: ItemName<K_Type, T_ItemType, T_State>;
     prevItemState: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>];
     itemState: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>];
@@ -142,6 +142,7 @@ export declare function _createStoreHelpers<T_AllInfo extends {
 }, T_ItemType extends keyof T_AllInfo, T_StepNamesParam extends Readonly<string[]>>(allInfo: T_AllInfo, extraOptions?: {
     stepNames: T_StepNamesParam;
     dontSetMeta?: boolean;
+    framerate?: "full" | "half" | "auto";
 }): {
     getPreviousState: () => { [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; };
     getState: () => DeepReadonly<{ [K_Type in T_ItemType]: Record<T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type]["startStates"] : string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;

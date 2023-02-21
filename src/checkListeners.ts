@@ -1,64 +1,85 @@
-import { forEach, breakableForEach } from "chootils/dist/loops";
 import meta from "./meta";
 import { ChangeToCheck, Phase } from "./types";
+
+const listenerNamesToUpdate: string[] = [];
+const noListenerNames: string[] = [];
 
 export default function checkListeners(
   phase: Phase = "subscribe",
   stepName: string = "default"
 ): string[] {
-  const listenerNamesToUpdate: string[] = [];
+  listenerNamesToUpdate.length = 0;
 
   let foundListenerNames =
-    meta.listenerNamesByPhaseByStep[phase][stepName] ?? [];
+    meta.listenerNamesByPhaseByStep[phase][stepName] ?? noListenerNames;
   let allListeners = meta.allListeners;
 
-  forEach(foundListenerNames, (listenerName: string) => {
+  for (let nameIndex = 0; nameIndex < foundListenerNames.length; nameIndex++) {
+    const listenerName = foundListenerNames[nameIndex];
+
     const loopedListener = allListeners[listenerName];
     const loopedCheckers = loopedListener.changesToCheck;
 
-    breakableForEach(
-      loopedCheckers,
-      (loopedChecker: ChangeToCheck<any, any>) => {
-        // NOTE The diff info here could be unique for this step!
-        // ( using the diff found from prevStatesByStep[stepName] )
-        // NOTE the step diffInfo should probably also be passed to the listeners when they run
+    for (
+      let checkerIndex = 0;
+      checkerIndex < loopedCheckers.length;
+      checkerIndex++
+    ) {
+      const loopedChecker = loopedCheckers[checkerIndex];
 
-        if (checkIfCheckerChanged(loopedChecker, meta.diffInfo)) {
-          listenerNamesToUpdate.push(loopedListener.name);
-          return true;
-        }
+      // NOTE The diff info here could be unique for this step!
+      // ( using the diff found from prevStatesByStep[stepName] )
+      // NOTE the step diffInfo should probably also be passed to the listeners when they run
+
+      if (checkIfCheckerChanged(loopedChecker, meta.diffInfo)) {
+        listenerNamesToUpdate.push(loopedListener.name);
+        break;
       }
-    );
-  });
+    }
+  }
 
   return listenerNamesToUpdate;
 }
+
+const checkerAllOption = ["all__"];
 
 function checkIfCheckerChanged(
   theChecker: ChangeToCheck<any, any>,
   diffInfo: typeof meta.diffInfo
 ) {
   const editedChecker = {
-    types: theChecker.types || ["all__"],
-    names: theChecker.names || ["all__"],
-    props: theChecker.props || ["all__"],
+    types: theChecker.types || checkerAllOption,
+    names: theChecker.names || checkerAllOption,
+    props: theChecker.props || checkerAllOption,
   };
 
   let listenerShouldUpdate = false;
 
   // only updates on items removed if this property is true
   if (theChecker.addedOrRemoved) {
-    breakableForEach(editedChecker.types as any[], (loopedItemType) => {
+    for (
+      let typesIndex = 0;
+      typesIndex < editedChecker.types.length;
+      typesIndex++
+    ) {
+      const loopedItemType = editedChecker.types[typesIndex];
+
       if (
         (editedChecker.names[0] === "all__" &&
           diffInfo.itemsAdded[loopedItemType].length > 0) ||
         diffInfo.itemsRemoved[loopedItemType].length > 0
       ) {
         listenerShouldUpdate = true;
-        return true;
+        break;
       }
 
-      breakableForEach(editedChecker.names, (loopedItemName) => {
+      for (
+        let namesIndex = 0;
+        namesIndex < editedChecker.names.length;
+        namesIndex++
+      ) {
+        const loopedItemName = editedChecker.names[namesIndex];
+
         if (
           (diffInfo.itemsAddedBool[loopedItemType] &&
             diffInfo.itemsAddedBool[loopedItemType][loopedItemName]) ||
@@ -66,26 +87,37 @@ function checkIfCheckerChanged(
             diffInfo.itemsRemovedBool[loopedItemType][loopedItemName])
         ) {
           listenerShouldUpdate = true;
-          return true;
+          break;
         }
-      });
-    });
+      }
+    }
 
     // exist the function before checking the other updates (if onlyAddedOrRemoved is true)
     return listenerShouldUpdate;
   }
+  for (
+    let typesIndex = 0;
+    typesIndex < editedChecker.types.length;
+    typesIndex++
+  ) {
+    const loopedItemType = editedChecker.types[typesIndex];
 
-  breakableForEach(editedChecker.types as any[], (loopedItemType) => {
     if (
       editedChecker.names[0] === "all__" &&
       diffInfo.itemsAdded?.[loopedItemType]?.length > 0
       // diffInfo.itemsRemoved[loopedItemType].length > 0)   // checking itemsRemoved used to cause issues, but doesn't seem to now?
     ) {
       listenerShouldUpdate = true;
-      return true;
+      break;
     }
 
-    breakableForEach(editedChecker.names, (loopedItemName) => {
+    for (
+      let namesIndex = 0;
+      namesIndex < editedChecker.names.length;
+      namesIndex++
+    ) {
+      const loopedItemName = editedChecker.names[namesIndex];
+
       if (
         diffInfo.itemsAddedBool[loopedItemType] &&
         diffInfo.itemsAddedBool[loopedItemType][loopedItemName]
@@ -94,23 +126,29 @@ function checkIfCheckerChanged(
         // (diffInfo.itemsRemovedBool[loopedItemType] &&
         // diffInfo.itemsRemovedBool[loopedItemType][loopedItemName])
         listenerShouldUpdate = true;
-        return true;
+        break;
       }
-      breakableForEach(editedChecker.props as any[], (loopedPropertyName) => {
+
+      for (
+        let propIndex = 0;
+        propIndex < editedChecker.props.length;
+        propIndex++
+      ) {
+        const loopedPropertyName = editedChecker.props[propIndex];
         if (
           diffInfo.propsChangedBool[loopedItemType] &&
           diffInfo.propsChangedBool[loopedItemType][loopedItemName] &&
           (diffInfo.propsChangedBool[loopedItemType][loopedItemName][
             loopedPropertyName
-          ] ||
+          ] === true ||
             loopedPropertyName === "all__")
         ) {
           listenerShouldUpdate = true;
-          return true;
+          break;
         }
-      });
-    });
-  });
+      }
+    }
+  }
 
   return listenerShouldUpdate;
 }

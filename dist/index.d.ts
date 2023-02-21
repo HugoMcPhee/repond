@@ -1,8 +1,8 @@
 import { _createStoreHelpers as createStoreHelpers } from "./create";
-export declare type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
+export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
     [itemName: string]: ReturnType<T_defaultStateFunctionType>;
 };
-export declare type StoreHelperTypes<T_GetState extends () => {
+export type StoreHelperTypes<T_GetState extends () => {
     [key: string]: {
         [key: string]: any;
     };

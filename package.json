@@ -1,10 +1,10 @@
 {
   "name": "pietem",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "realtime state management focused on items and reactions",
-  "___main": "src/index.ts",
-  "___types": "dist/index.d.ts",
-  "___files": [
+  "__main": "src/index.tsx",
+  "__types": "dist/index.d.ts",
+  "__files": [
     "src"
   ],
   "main": "dist/index.js",
@@ -37,6 +37,6 @@
     "@types/react": "^17.0.42",
     "react": "^17.0.2",
     "typescript": "^4.6.2",
-    "chootils": "^0.3.4"
+    "chootils": "^0.3.8"
   }
 }
