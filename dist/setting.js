@@ -1,10 +1,10 @@
 import meta from "./meta";
-import { _updatePietem } from "./updating";
-function updatePietemNextFrame() {
-    return requestAnimationFrame(_updatePietem);
+import { _updateRepond } from "./updating";
+function updateRepondNextFrame() {
+    return requestAnimationFrame(_updateRepond);
 }
-function updatePietemInTwoFrames() {
-    return requestAnimationFrame(updatePietemNextFrame);
+function updateRepondInTwoFrames() {
+    return requestAnimationFrame(updateRepondNextFrame);
 }
 function findScreenFramerate() {
     meta.lookingForScreenFramerate = true;
@@ -38,7 +38,7 @@ function runNextFrameIfNeeded() {
     if (!meta.shouldRunUpdateAtEndOfUpdate) {
         if (meta.nextFrameIsFirst &&
             meta.currentMetaPhase === "waitingForFirstUpdate") {
-            updatePietemNextFrame();
+            updateRepondNextFrame();
             meta.currentMetaPhase = "waitingForMoreUpdates";
         }
         else {
@@ -71,41 +71,41 @@ export function runNextFrame() {
             }
         }
         if (meta.frameRateType === "full") {
-            meta.latestFrameId = updatePietemNextFrame();
+            meta.latestFrameId = updateRepondNextFrame();
         }
         else if (meta.frameRateType === "half") {
             if (meta.latestUpdateDuration < meta.shortestFrameDuration) {
-                meta.latestFrameId = updatePietemInTwoFrames();
+                meta.latestFrameId = updateRepondInTwoFrames();
             }
             else {
-                meta.latestFrameId = updatePietemNextFrame();
+                meta.latestFrameId = updateRepondNextFrame();
             }
         }
     }
 }
 // only runs when calling  _setState
-function runWhenUpdatingPietem(whatToRun, callback) {
+function runWhenUpdatingRepond(whatToRun, callback) {
     meta.setStatesQue.push(whatToRun);
     if (callback)
         meta.callbacksQue.push(callback);
     runNextFrameIfNeeded();
 }
-export function runWhenStartingPietemListeners(whatToRun) {
+export function runWhenStartingRepondListeners(whatToRun) {
     meta.startListenersQue.push(whatToRun);
     runNextFrameIfNeeded();
 }
-export function runWhenStoppingPietemListeners(whatToRun) {
+export function runWhenStoppingRepondListeners(whatToRun) {
     // stopping listeners runs instantly
     whatToRun();
 }
-function runWhenAddingAndRemovingPietem(whatToRun, callback) {
+function runWhenAddingAndRemovingRepond(whatToRun, callback) {
     meta.addAndRemoveItemsQue.push(whatToRun);
     if (callback)
         meta.callbacksQue.push(callback);
     runNextFrameIfNeeded();
 }
 export function _setState(newState, callback) {
-    runWhenUpdatingPietem(() => {
+    runWhenUpdatingRepond(() => {
         const newStateValue = typeof newState === "function" ? newState(meta.currentState) : newState;
         if (!newStateValue)
             return;
@@ -115,11 +115,11 @@ export function _setState(newState, callback) {
     }, callback);
 }
 export function _removeItem({ type: itemType, name: itemName }, callback) {
-    runWhenAddingAndRemovingPietem(() => {
+    runWhenAddingAndRemovingRepond(() => {
         // removing itemName
         delete meta.currentState[itemType][itemName];
         meta.itemNamesByItemType[itemType] = Object.keys(meta.currentState[itemType]);
-        // delete meta.currentRefs[itemType][itemName]; // now done at the end of update pietem
+        // delete meta.currentRefs[itemType][itemName]; // now done at the end of update repond
         meta.recordedSubscribeChanges.itemTypesBool[itemType] = true;
         meta.recordedSubscribeChanges.somethingChanged = true;
         meta.recordedDeriveChanges.itemTypesBool[itemType] = true;
@@ -127,7 +127,7 @@ export function _removeItem({ type: itemType, name: itemName }, callback) {
     }, callback);
 }
 export function _addItem({ type, name, state, refs, }, callback) {
-    runWhenAddingAndRemovingPietem(() => {
+    runWhenAddingAndRemovingRepond(() => {
         meta.currentState[type][name] = {
             ...meta.defaultStateByItemType[type](name),
             ...(state || {}),

@@ -84,8 +84,8 @@ export type UntypedDiffInfo = {
     };
 };
 type AFunction = (...args: any[]) => void;
-export type PietemMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
-declare const pietemMeta: {
+export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
+declare const repondMeta: {
     recordedSubscribeChanges: RecordedChanges;
     recordedDeriveChanges: RecordedChanges;
     nextFrameIsFirst: boolean;
@@ -107,7 +107,7 @@ declare const pietemMeta: {
     currentState: any;
     initialState: any;
     currentRefs: any;
-    currentMetaPhase: PietemMetaPhase;
+    currentMetaPhase: RepondMetaPhase;
     addAndRemoveItemsQue: AFunction[];
     startListenersQue: AFunction[];
     setStatesQue: AFunction[];
@@ -140,6 +140,6 @@ declare const pietemMeta: {
     currentStepName: string;
     currentStepIndex: number;
 };
-export type PietemMeta = typeof pietemMeta;
-export default pietemMeta;
+export type RepondMeta = typeof repondMeta;
+export default repondMeta;
 export declare function toSafeListenerName(prefix?: string): string;

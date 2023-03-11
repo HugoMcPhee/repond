@@ -96,13 +96,13 @@ export type ExtendsString<T> = T extends string ? T : never;
 
 // ------------------------------------
 
-export type PietemCallback = (frameDuration: number, frameTime: number) => any;
+export type RepondCallback = (frameDuration: number, frameTime: number) => any;
 
-export type SetPietemState<T_State> = (
+export type SetRepondState<T_State> = (
   newState:
     | GetPartialState<T_State>
     | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>),
-  callback?: PietemCallback
+  callback?: RepondCallback
 ) => void;
 
 export type Phase = "subscribe" | "derive";

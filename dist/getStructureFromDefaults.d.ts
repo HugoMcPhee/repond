@@ -1,1 +1,1 @@
-export declare function getPietemStructureFromDefaults(): void;
+export declare function getRepondStructureFromDefaults(): void;

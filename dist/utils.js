@@ -18,7 +18,7 @@ export function asArray(theValue) {
     return (_a = toSafeArray(theValue)) !== null && _a !== void 0 ? _a : [];
 }
 //  For createConcepts
-export function makeRefsStructureFromPietemState() {
+export function makeRefsStructureFromRepondState() {
     forEach(meta.itemTypeNames, (typeName) => {
         // if no initialRefs were provided add defaults here?
         // need to store initalRefs? worldStateMeta.customInitialRefs

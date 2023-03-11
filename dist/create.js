@@ -1,10 +1,10 @@
 import meta, { toSafeListenerName, initialRecordedChanges, } from "./meta";
-import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
+import { getRepondStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
-import { _addItem, _removeItem, _setState, runWhenStartingPietemListeners, runWhenStoppingPietemListeners, } from "./setting";
-import { makeRefsStructureFromPietemState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
+import { _addItem, _removeItem, _setState, runWhenStartingRepondListeners, runWhenStoppingRepondListeners, } from "./setting";
+import { makeRefsStructureFromRepondState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
 import { useLayoutEffect, useState, useCallback, useEffect } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 import { createRecordedChanges } from "./updating";
@@ -59,7 +59,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         return prev;
     }, {});
     // ------------------------------------------------
-    // Setup Pietem
+    // Setup Repond
     // ------------------------------------------------
     if (!dontSetMeta) {
         const currentState = cloneObjectWithJson(initialState);
@@ -70,8 +70,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         meta.previousState = previousState;
         meta.defaultStateByItemType = defaultStates;
         meta.defaultRefsByItemType = defaultRefs;
-        getPietemStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-        makeRefsStructureFromPietemState(); // sets currenPietemRefs based on itemNames from pietem state
+        getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
+        makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemNames from repond state
         meta.copyStates = makeCopyStatesFunction();
         meta.getStatesDiff = makeGetStatesDiffFunction();
         meta.mergeStates = makeCopyStatesFunction("merge");
@@ -145,7 +145,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             });
         };
     }
-    // converts a pietem effect to a normalised 'listener', where the names are an array instead of one
+    // converts a repond effect to a normalised 'listener', where the names are an array instead of one
     function anyChangeRuleACheckToListenerACheck(checkProperty) {
         return {
             names: toSafeArray(checkProperty.name),
@@ -161,7 +161,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         }
         return anyChangeRuleACheckToListenerACheck(checkProperty);
     }
-    // converts a pietem effect to a listener
+    // converts a repond effect to a listener
     function convertEffectToListener(anyChangeRule) {
         return {
             changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
@@ -183,7 +183,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             addedOrRemoved: loopeChangeToCheck.addedOrRemoved,
         }));
     }
-    function _startPietemListener(newListener) {
+    function _startRepondListener(newListener) {
         const atStepEnd = !!newListener.atStepEnd;
         const phase = atStepEnd ? "subscribe" : "derive";
         const editedListener = {
@@ -195,7 +195,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             editedListener.atStepEnd = atStepEnd;
         if (newListener.step)
             editedListener.step = newListener.step;
-        runWhenStartingPietemListeners(() => {
+        runWhenStartingRepondListeners(() => {
             // add the new listener to all listeners and update listenerNamesByTypeByStep
             var _a, _b, _c;
             meta.allListeners[editedListener.name] =
@@ -204,8 +204,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 addItemToUniqueArray((_c = meta.listenerNamesByPhaseByStep[phase][(_b = editedListener.step) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
         });
     }
-    function _stopPietemListener(listenerName) {
-        runWhenStoppingPietemListeners(() => {
+    function _stopRepondListener(listenerName) {
+        runWhenStoppingRepondListeners(() => {
             var _a, _b;
             const theListener = meta.allListeners[listenerName];
             if (!theListener)
@@ -237,7 +237,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             atStepEnd: theEffect.atStepEnd,
             step: theEffect.step,
         };
-        return _startPietemListener(convertEffectToListener(editedEffect));
+        return _startRepondListener(convertEffectToListener(editedEffect));
     }
     function startItemEffect({ check, run, atStepEnd, name, step, }) {
         let listenerName = name || "unnamedEffect" + Math.random();
@@ -266,7 +266,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         return listenerName;
     }
     function stopEffect(listenerName) {
-        _stopPietemListener(listenerName);
+        _stopRepondListener(listenerName);
     }
     function useStore(whatToReturn, check, hookDeps = []) {
         const [, setTick] = useState(0);
@@ -558,9 +558,9 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     function applyPatch(patch) {
         forEach(itemTypes, (itemType) => {
             var _a, _b;
-            // Loop through removed items, and run removePietemItem()
+            // Loop through removed items, and run removeRepondItem()
             forEach((_a = patch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => removeItem({ type: itemType, name: itemName }));
-            // Loop through added items and run addPietemItem()
+            // Loop through added items and run addRepondItem()
             forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => {
                 var _a, _b;
                 return addItem({

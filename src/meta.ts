@@ -77,7 +77,7 @@ export type UntypedDiffInfo = {
 
 type AFunction = (...args: any[]) => void;
 
-export type PietemMetaPhase =
+export type RepondMetaPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
   | "runningUpdates"
@@ -92,7 +92,7 @@ but then, if setState is run when a step has already run, add it to the
 
 */
 
-const pietemMeta = {
+const repondMeta = {
   // prevStatesByStep: {
   //   default: {},
   // } as Record<string, any>,
@@ -124,7 +124,7 @@ const pietemMeta = {
   initialState: {} as any,
   // refs
   currentRefs: {} as any,
-  currentMetaPhase: "waitingForFirstUpdate" as PietemMetaPhase,
+  currentMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
   startListenersQue: [] as AFunction[],
@@ -179,12 +179,12 @@ const pietemMeta = {
   currentStepIndex: 0,
 };
 
-export type PietemMeta = typeof pietemMeta;
+export type RepondMeta = typeof repondMeta;
 
-export default pietemMeta;
+export default repondMeta;
 
 export function toSafeListenerName(prefix?: string): string {
-  const theId = pietemMeta.autoListenerNameCounter;
-  pietemMeta.autoListenerNameCounter += 1;
+  const theId = repondMeta.autoListenerNameCounter;
+  repondMeta.autoListenerNameCounter += 1;
   return (prefix || "autoListener") + "_" + theId;
 }

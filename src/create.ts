@@ -3,7 +3,7 @@ import meta, {
   UntypedListener,
   initialRecordedChanges,
 } from "./meta";
-import { getPietemStructureFromDefaults } from "./getStructureFromDefaults";
+import { getRepondStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
@@ -12,21 +12,21 @@ import {
   _addItem,
   _removeItem,
   _setState,
-  runWhenStartingPietemListeners,
-  runWhenStoppingPietemListeners,
+  runWhenStartingRepondListeners,
+  runWhenStoppingRepondListeners,
 } from "./setting";
 import {
   KeysOfUnion,
   DeepReadonly,
-  SetPietemState,
+  SetRepondState,
   XOR,
   Phase,
   ExtendsString,
   GetPartialState,
-  PietemCallback,
+  RepondCallback,
 } from "./types";
 import {
-  makeRefsStructureFromPietemState,
+  makeRefsStructureFromRepondState,
   cloneObjectWithJson,
   asArray,
   toSafeArray,
@@ -307,7 +307,7 @@ type ItemEffect_RuleOptions__NoMeta<
 };
 
 // -----------------
-// AnyChangeRule ( like a slightly different and typed pietem listener )
+// AnyChangeRule ( like a slightly different and typed repond listener )
 
 type EffectRule_ACheck_OneItemType<
   K_Type extends T_ItemType,
@@ -656,7 +656,7 @@ export function _createStoreHelpers<
   }, {});
 
   // ------------------------------------------------
-  // Setup Pietem
+  // Setup Repond
   // ------------------------------------------------
 
   if (!dontSetMeta) {
@@ -669,8 +669,8 @@ export function _createStoreHelpers<
     meta.defaultStateByItemType = defaultStates as any;
     meta.defaultRefsByItemType = defaultRefs as any;
 
-    getPietemStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-    makeRefsStructureFromPietemState(); // sets currenPietemRefs based on itemNames from pietem state
+    getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
+    makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemNames from repond state
 
     meta.copyStates = makeCopyStatesFunction();
     meta.getStatesDiff = makeGetStatesDiffFunction();
@@ -688,10 +688,10 @@ export function _createStoreHelpers<
   const getState = (): DeepReadonly<T_State> =>
     meta.currentState as DeepReadonly<T_State>;
 
-  const setState: SetPietemState<T_State> = (newState, callback) =>
+  const setState: SetRepondState<T_State> = (newState, callback) =>
     _setState(newState, callback);
 
-  function onNextTick(callback: PietemCallback) {
+  function onNextTick(callback: RepondCallback) {
     meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
   }
 
@@ -792,7 +792,7 @@ export function _createStoreHelpers<
     };
   }
 
-  // converts a pietem effect to a normalised 'listener', where the names are an array instead of one
+  // converts a repond effect to a normalised 'listener', where the names are an array instead of one
   function anyChangeRuleACheckToListenerACheck<K_Type extends T_ItemType>(
     checkProperty: EffectRule_ACheck<K_Type, T_ItemType, T_State>
   ) {
@@ -820,7 +820,7 @@ export function _createStoreHelpers<
     return anyChangeRuleACheckToListenerACheck(checkProperty);
   }
 
-  // converts a pietem effect to a listener
+  // converts a repond effect to a listener
   function convertEffectToListener<
     T_AnyChangeRule extends Effect_RuleOptions_NameRequired<
       any,
@@ -860,7 +860,7 @@ export function _createStoreHelpers<
     );
   }
 
-  function _startPietemListener<K_Type extends T_ItemType>(
+  function _startRepondListener<K_Type extends T_ItemType>(
     newListener: Listener<K_Type, T_ItemType, T_State, T_StepName>
   ) {
     const atStepEnd = !!newListener.atStepEnd;
@@ -878,7 +878,7 @@ export function _createStoreHelpers<
     if (atStepEnd) editedListener.atStepEnd = atStepEnd;
     if (newListener.step) editedListener.step = newListener.step;
 
-    runWhenStartingPietemListeners(() => {
+    runWhenStartingRepondListeners(() => {
       // add the new listener to all listeners and update listenerNamesByTypeByStep
 
       meta.allListeners[editedListener.name] =
@@ -894,8 +894,8 @@ export function _createStoreHelpers<
     });
   }
 
-  function _stopPietemListener(listenerName: string) {
-    runWhenStoppingPietemListeners(() => {
+  function _stopRepondListener(listenerName: string) {
+    runWhenStoppingRepondListeners(() => {
       const theListener = meta.allListeners[listenerName];
       if (!theListener) return;
       const atStepEnd = !!theListener.atStepEnd;
@@ -948,7 +948,7 @@ export function _createStoreHelpers<
       step: theEffect.step,
     };
 
-    return _startPietemListener(convertEffectToListener(editedEffect) as any);
+    return _startRepondListener(convertEffectToListener(editedEffect) as any);
   }
 
   function startItemEffect<
@@ -1001,14 +1001,14 @@ export function _createStoreHelpers<
   }
 
   function stopEffect(listenerName: string) {
-    _stopPietemListener(listenerName);
+    _stopRepondListener(listenerName);
   }
 
-  function useStore<K_Type extends T_ItemType, T_ReturnedPietemProps>(
-    whatToReturn: (state: DeepReadonly<T_State>) => T_ReturnedPietemProps,
+  function useStore<K_Type extends T_ItemType, T_ReturnedRepondProps>(
+    whatToReturn: (state: DeepReadonly<T_State>) => T_ReturnedRepondProps,
     check: EffectRule_Check<K_Type, T_ItemType, T_State>,
     hookDeps: any[] = []
-  ): T_ReturnedPietemProps {
+  ): T_ReturnedRepondProps {
     const [, setTick] = useState(0);
     const rerender = useCallback(() => setTick((tick) => tick + 1), []);
 
@@ -1019,7 +1019,7 @@ export function _createStoreHelpers<
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
 
-    return whatToReturn(meta.currentState) as T_ReturnedPietemProps;
+    return whatToReturn(meta.currentState) as T_ReturnedRepondProps;
   }
 
   function useStoreEffect<K_Type extends T_ItemType>(
@@ -1580,11 +1580,11 @@ export function _createStoreHelpers<
 
   function applyPatch(patch: StatesPatch) {
     forEach(itemTypes, (itemType) => {
-      // Loop through removed items, and run removePietemItem()
+      // Loop through removed items, and run removeRepondItem()
       forEach(patch.removed[itemType] ?? [], (itemName) =>
         removeItem({ type: itemType, name: itemName })
       );
-      // Loop through added items and run addPietemItem()
+      // Loop through added items and run addRepondItem()
       forEach(patch.added[itemType] ?? [], (itemName) =>
         addItem({
           type: itemType,

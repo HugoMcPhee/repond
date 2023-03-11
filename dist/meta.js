@@ -22,7 +22,7 @@ store all the derive and subscribe changes like normal?
 but then, if setState is run when a step has already run, add it to the
 
 */
-const pietemMeta = {
+const repondMeta = {
     // prevStatesByStep: {
     //   default: {},
     // } as Record<string, any>,
@@ -82,9 +82,9 @@ const pietemMeta = {
     currentStepName: "default",
     currentStepIndex: 0,
 };
-export default pietemMeta;
+export default repondMeta;
 export function toSafeListenerName(prefix) {
-    const theId = pietemMeta.autoListenerNameCounter;
-    pietemMeta.autoListenerNameCounter += 1;
+    const theId = repondMeta.autoListenerNameCounter;
+    repondMeta.autoListenerNameCounter += 1;
     return (prefix || "autoListener") + "_" + theId;
 }

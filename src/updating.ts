@@ -1,4 +1,4 @@
-import meta, { RecordedChanges, PietemMetaPhase } from "./meta";
+import meta, { RecordedChanges, RepondMetaPhase } from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkListeners from "./checkListeners";
 import { Phase } from "./types";
@@ -24,7 +24,7 @@ function updateDiffInfo(recordedChanges: RecordedChanges) {
   );
 }
 
-function setMetaPhase(metaPhase: PietemMetaPhase) {
+function setMetaPhase(metaPhase: RepondMetaPhase) {
   meta.currentMetaPhase = metaPhase;
 }
 
@@ -359,7 +359,7 @@ function runSetOfStepsLoopShortcut() {
   console.warn("tried to run a 30th step", meta.stepNames.length);
 }
 
-export function _updatePietem(animationFrameTime: number) {
+export function _updateRepond(animationFrameTime: number) {
   updateFrameTimes(animationFrameTime);
   meta.latestUpdateTime = performance.now();
 

@@ -1,6 +1,6 @@
 {
-  "name": "pietem",
-  "version": "0.9.0",
+  "name": "repond",
+  "version": "0.9.1",
   "description": "realtime state management focused on items and reactions",
   "__main": "src/index.tsx",
   "__types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HugoMcPhee/pietem.git"
+    "url": "git+https://github.com/HugoMcPhee/repond.git"
   },
   "keywords": [
     "state",
@@ -29,7 +29,9 @@
     "entities",
     "react",
     "listener",
-    "event"
+    "event",
+    "reaction",
+    "respond"
   ],
   "author": "Hugo McPhee",
   "license": "MIT",

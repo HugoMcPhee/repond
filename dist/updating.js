@@ -317,7 +317,7 @@ function runSetOfStepsLoopShortcut() {
         return;
     console.warn("tried to run a 30th step", meta.stepNames.length);
 }
-export function _updatePietem(animationFrameTime) {
+export function _updateRepond(animationFrameTime) {
     updateFrameTimes(animationFrameTime);
     meta.latestUpdateTime = performance.now();
     setMetaPhase("runningUpdates");

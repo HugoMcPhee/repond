@@ -4,6 +4,10 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+v0.9.1
+
+- renamed to repond and updated names to match
+
 v0.9
 
 - updated chootils to 0.3.7
