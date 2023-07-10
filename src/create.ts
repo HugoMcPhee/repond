@@ -570,7 +570,7 @@ T_StepName extends string,
 
 export function _createStoreHelpers<
   T_AllInfo extends {
-    [T_ItemType: string]: {
+    [StoreName: string]: {
       state: (itemName: any) => any;
       refs: (itemName: any, type: any) => any;
       startStates?: Record<any, any>;
@@ -588,15 +588,16 @@ export function _createStoreHelpers<
   }
 ) {
   const { dontSetMeta } = extraOptions ?? {};
-  const itemTypes = Object.keys(allInfo) as unknown as Readonly<T_ItemType[]>;
-  type T_StepName = T_StepNamesParam[number] | "default";
+  type StepName = T_StepNamesParam[number] | "default";
+  type StoreName = T_ItemType;
+  const itemTypes = Object.keys(allInfo) as unknown as Readonly<StoreName[]>;
 
   const stepNamesUntyped = extraOptions?.stepNames
     ? [...extraOptions.stepNames]
     : ["default"];
   if (!stepNamesUntyped.includes("default")) stepNamesUntyped.push("default");
 
-  const stepNames: Readonly<T_StepName[]> = [...stepNamesUntyped];
+  const stepNames: Readonly<StepName[]> = [...stepNamesUntyped];
 
   meta.frameRateTypeOption = extraOptions.framerate || "auto";
   if (meta.frameRateTypeOption === "full") meta.frameRateType = "full";
@@ -609,34 +610,41 @@ export function _createStoreHelpers<
     meta.currentStepName = stepNames[meta.currentStepIndex];
   }
 
-  type DefaultStates = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["state"] };
-  type DefaultRefs = { [K_Type in T_ItemType]: T_AllInfo[K_Type]["refs"] };
+  type DefaultStates = { [K_Type in StoreName]: T_AllInfo[K_Type]["state"] };
+  type DefaultRefs = { [K_Type in StoreName]: T_AllInfo[K_Type]["refs"] };
   type Get_DefaultRefs<K_Type extends keyof T_AllInfo> =
     T_AllInfo[K_Type]["refs"];
+
+  // Make a type that has the start states of all the stores
+  type StartStates = {
+    [K_Type in StoreName]: T_AllInfo[K_Type]["startStates"];
+  };
 
   type StartStatesItemName<K_Type extends keyof T_AllInfo> =
     T_AllInfo[K_Type]["startStates"] extends Record<string, any>
       ? keyof T_AllInfo[K_Type]["startStates"]
       : string;
 
-  type T_State = {
-    [K_Type in T_ItemType]: Record<
+  // make an AllState type that conditionally uses the keys and values of startStates if available or otherwise uses string as the key and the return type of the default "state"  (for that store) as the value
+  type AllState = {
+    [K_Type in StoreName]: T_AllInfo[K_Type]["startStates"] extends Record<
+      string,
+      any
+    >
+      ? T_AllInfo[K_Type]["startStates"]
+      : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>;
+  };
+
+  // ReturnType<T_AllInfo[K_Type]["state"]> //
+
+  // Make an AllRefs type that uses Get_DefaultRefs for each store
+  type AllRefs = {
+    [K_Type in StoreName]: Record<
       StartStatesItemName<K_Type>,
-      ReturnType<T_AllInfo[K_Type]["state"]> // NOTE: refs and state wont be generic typed until ReturnType is generic
+      ReturnType<Get_DefaultRefs<K_Type>> // NOTE: refs wont be generic typed, generic ReturnType doesn't seem to work with nested generic function types like Blah<_T_Blah>["blah"]<T_Paramter>
     >;
   };
 
-  type T_Refs = {
-    [K_Type in T_ItemType]: Record<
-      StartStatesItemName<K_Type>,
-      ReturnType<Get_DefaultRefs<K_Type>> // NOTE: refs and state wont be generic typed until ReturnType is generic
-    >;
-  };
-
-  // type Get_T_Refs<K_Type extends T_ItemType> = Record<
-  //   StartStatesItemName<K_Type>,
-  //   ReturnType<Get_DefaultRefs<K_Type>>
-  // >;
   const defaultStates: DefaultStates = itemTypes.reduce((prev: any, key) => {
     prev[key] = allInfo[key].state;
     return prev;
@@ -646,7 +654,7 @@ export function _createStoreHelpers<
     return prev;
   }, {});
 
-  const initialState: T_State = itemTypes.reduce((prev: any, key) => {
+  const initialState: AllState = itemTypes.reduce((prev: any, key) => {
     prev[key] =
       allInfo[key].startStates || ({} as StartStatesItemName<typeof key>);
 
@@ -660,8 +668,8 @@ export function _createStoreHelpers<
   // ------------------------------------------------
 
   if (!dontSetMeta) {
-    const currentState: T_State = cloneObjectWithJson(initialState);
-    const previousState: T_State = cloneObjectWithJson(initialState);
+    const currentState: AllState = cloneObjectWithJson(initialState);
+    const previousState: AllState = cloneObjectWithJson(initialState);
     // store initialState and set currentState
     meta.initialState = initialState;
     meta.currentState = currentState;
@@ -685,19 +693,19 @@ export function _createStoreHelpers<
   // main functions
   // -----------------------------------------------------------------
 
-  const getState = (): DeepReadonly<T_State> =>
-    meta.currentState as DeepReadonly<T_State>;
+  const getState = (): DeepReadonly<AllState> =>
+    meta.currentState as DeepReadonly<AllState>;
 
-  const setState: SetRepondState<T_State> = (newState, callback) =>
+  const setState: SetRepondState<AllState> = (newState, callback) =>
     _setState(newState, callback);
 
   function onNextTick(callback: RepondCallback) {
     meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
   }
 
-  const getPreviousState = (): T_State => meta.previousState as T_State;
+  const getPreviousState = (): AllState => meta.previousState as AllState;
 
-  const getRefs = (): T_Refs => meta.currentRefs as T_Refs;
+  const getRefs = (): AllRefs => meta.currentRefs as AllRefs;
 
   // -------------------------------------------------------
   // utils
@@ -705,7 +713,7 @@ export function _createStoreHelpers<
 
   // Convert an itemEffect callback to a regular effect callback
   // NOTE: not typed but only internal
-  function itemEffectCallbackToEffectCallback<K_Type extends T_ItemType>({
+  function itemEffectCallbackToEffectCallback<K_Type extends StoreName>({
     theItemType,
     theItemName,
     thePropertyNames,
@@ -713,8 +721,8 @@ export function _createStoreHelpers<
     becomes,
   }: {
     theItemType?: K_Type | K_Type[];
-    theItemName?: ItemName<K_Type, T_ItemType, T_State>[];
-    thePropertyNames: AllProperties<T_ItemType, T_State>[];
+    theItemName?: ItemName<K_Type, StoreName, AllState>[];
+    thePropertyNames: AllProperties<StoreName, AllState>[];
     whatToDo: (options: any) => // options: IfPropertyChangedWhatToDoParams<
     //   T_State,
     //   T_ItemType,
@@ -736,10 +744,10 @@ export function _createStoreHelpers<
       });
     }
 
-    return (diffInfo: DiffInfo<T_ItemType, T_State>, frameDuration: number) => {
+    return (diffInfo: DiffInfo<StoreName, AllState>, frameDuration: number) => {
       forEach(editedItemTypes, (theItemType) => {
         const prevItemsState = getPreviousState()[theItemType] as any;
-        const itemsState = (getState() as T_State)[theItemType];
+        const itemsState = (getState() as AllState)[theItemType];
         const itemsRefs = getRefs()[theItemType];
         forEach(diffInfo.itemsChanged[theItemType], (itemNameThatChanged) => {
           if (
@@ -793,15 +801,15 @@ export function _createStoreHelpers<
   }
 
   // converts a repond effect to a normalised 'listener', where the names are an array instead of one
-  function anyChangeRuleACheckToListenerACheck<K_Type extends T_ItemType>(
-    checkProperty: EffectRule_ACheck<K_Type, T_ItemType, T_State>
+  function anyChangeRuleACheckToListenerACheck<K_Type extends StoreName>(
+    checkProperty: EffectRule_ACheck<K_Type, StoreName, AllState>
   ) {
     return {
       names: toSafeArray(checkProperty.name),
       types: checkProperty.type as Listener_ACheck<
         K_Type,
-        T_ItemType,
-        T_State
+        StoreName,
+        AllState
       >["types"],
       props: checkProperty.prop,
       addedOrRemoved: checkProperty.addedOrRemoved,
@@ -809,8 +817,8 @@ export function _createStoreHelpers<
   }
 
   // converts a conccept effect check to a listener check (where it's an array of checks)
-  function anyChangeRuleCheckToListenerCheck<K_Type extends T_ItemType>(
-    checkProperty: EffectRule_Check<K_Type, T_ItemType, T_State>
+  function anyChangeRuleCheckToListenerCheck<K_Type extends StoreName>(
+    checkProperty: EffectRule_Check<K_Type, StoreName, AllState>
   ) {
     if (Array.isArray(checkProperty)) {
       return checkProperty.map((loopedCheckProperty) =>
@@ -824,13 +832,13 @@ export function _createStoreHelpers<
   function convertEffectToListener<
     T_AnyChangeRule extends Effect_RuleOptions_NameRequired<
       any,
-      T_ItemType,
-      T_State,
-      T_StepName
+      StoreName,
+      AllState,
+      StepName
     >
   >(
     anyChangeRule: T_AnyChangeRule
-  ): Listener<T_ItemType, T_ItemType, T_State, T_StepName> {
+  ): Listener<StoreName, StoreName, AllState, StepName> {
     return {
       changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
       atStepEnd: !!anyChangeRule.atStepEnd,
@@ -844,9 +852,9 @@ export function _createStoreHelpers<
   // more utils
   // --------------------------------------------------------------------
 
-  function normaliseChangesToCheck<K_Type extends T_ItemType>(
-    changesToCheck: Listener_Check<K_Type, T_ItemType, T_State>
-  ): Listener_ACheck_MultipleItemTypes<T_ItemType, T_State>[] {
+  function normaliseChangesToCheck<K_Type extends StoreName>(
+    changesToCheck: Listener_Check<K_Type, StoreName, AllState>
+  ): Listener_ACheck_MultipleItemTypes<StoreName, AllState>[] {
     const changesToCheckArray = asArray(changesToCheck);
 
     return changesToCheckArray.map(
@@ -860,16 +868,16 @@ export function _createStoreHelpers<
     );
   }
 
-  function _startRepondListener<K_Type extends T_ItemType>(
-    newListener: Listener<K_Type, T_ItemType, T_State, T_StepName>
+  function _startRepondListener<K_Type extends StoreName>(
+    newListener: Listener<K_Type, StoreName, AllState, StepName>
   ) {
     const atStepEnd = !!newListener.atStepEnd;
     const phase: Phase = atStepEnd ? "subscribe" : "derive";
 
     const editedListener: ListenerAfterNormalising<
       K_Type,
-      T_ItemType,
-      T_State
+      StoreName,
+      AllState
     > = {
       name: newListener.name,
       changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
@@ -915,27 +923,22 @@ export function _createStoreHelpers<
   // other functions
   // --------------------------------------------------------------------
   function getItem<
-    K_Type extends T_ItemType,
-    T_ItemName extends ItemName<K_Type, T_ItemType, T_State>
+    K_Type extends StoreName,
+    T_ItemName extends ItemName<K_Type, StoreName, AllState>
   >(type: K_Type, name: T_ItemName) {
     return [
       (getState() as any)[type][name],
       getRefs()[type][name],
       getPreviousState()[type][name],
     ] as [
-      T_State[K_Type][T_ItemName],
+      AllState[K_Type][T_ItemName],
       ReturnType<typeof getRefs>[K_Type][T_ItemName],
       ReturnType<typeof getPreviousState>[K_Type][T_ItemName]
     ];
   }
 
-  function startEffect<K_Type extends T_ItemType>(
-    theEffect: Effect_RuleOptions__NoMeta<
-      K_Type,
-      T_ItemType,
-      T_State,
-      T_StepName
-    >
+  function startEffect<K_Type extends StoreName>(
+    theEffect: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
   ) {
     let listenerName = theEffect.name || toSafeListenerName("effect");
 
@@ -952,8 +955,8 @@ export function _createStoreHelpers<
   }
 
   function startItemEffect<
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
   >({
     check,
     run,
@@ -963,10 +966,10 @@ export function _createStoreHelpers<
   }: ItemEffect_RuleOptions__NoMeta<
     K_Type,
     K_PropertyName,
-    T_ItemType,
-    T_State,
-    T_Refs,
-    T_StepName
+    StoreName,
+    AllState,
+    AllRefs,
+    StepName
   >) {
     let listenerName = name || "unnamedEffect" + Math.random();
 
@@ -984,7 +987,7 @@ export function _createStoreHelpers<
       theItemType: editedItemTypes,
       theItemName: editedItemNames,
       thePropertyNames:
-        editedPropertyNames ?? ([] as AllProperties<T_ItemType, T_State>[]),
+        editedPropertyNames ?? ([] as AllProperties<StoreName, AllState>[]),
       whatToDo: run,
       becomes: check.becomes,
     });
@@ -1004,9 +1007,9 @@ export function _createStoreHelpers<
     _stopRepondListener(listenerName);
   }
 
-  function useStore<K_Type extends T_ItemType, T_ReturnedRepondProps>(
-    whatToReturn: (state: DeepReadonly<T_State>) => T_ReturnedRepondProps,
-    check: EffectRule_Check<K_Type, T_ItemType, T_State>,
+  function useStore<K_Type extends StoreName, T_ReturnedRepondProps>(
+    whatToReturn: (state: DeepReadonly<AllState>) => T_ReturnedRepondProps,
+    check: EffectRule_Check<K_Type, StoreName, AllState>,
     hookDeps: any[] = []
   ): T_ReturnedRepondProps {
     const [, setTick] = useState(0);
@@ -1022,9 +1025,9 @@ export function _createStoreHelpers<
     return whatToReturn(meta.currentState) as T_ReturnedRepondProps;
   }
 
-  function useStoreEffect<K_Type extends T_ItemType>(
-    run: EffectCallback<T_ItemType, T_State>,
-    check: EffectRule_Check<K_Type, T_ItemType, T_State>,
+  function useStoreEffect<K_Type extends StoreName>(
+    run: EffectCallback<StoreName, AllState>,
+    check: EffectRule_Check<K_Type, StoreName, AllState>,
     hookDeps: any[] = []
   ) {
     useLayoutEffect(() => {
@@ -1036,20 +1039,20 @@ export function _createStoreHelpers<
   }
 
   function useStoreItemEffect<
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
     T_ReturnType
   >(
     run: (
       loopedInfo: ItemEffectCallbackParams<
         K_Type,
         K_PropertyName,
-        T_ItemType,
-        T_State,
-        T_Refs
+        StoreName,
+        AllState,
+        AllRefs
       >
     ) => T_ReturnType,
-    check: ItemEffectRule_Check<K_Type, K_PropertyName, T_ItemType, T_State>,
+    check: ItemEffectRule_Check<K_Type, K_PropertyName, StoreName, AllState>,
     hookDeps: any[] = []
   ) {
     useLayoutEffect(() => {
@@ -1063,13 +1066,13 @@ export function _createStoreHelpers<
   }
 
   function useStoreItem<
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
     T_ReturnType,
-    T_TheParameters = UseStoreItemParams<K_Type, T_ItemType, T_State, T_Refs>
+    T_TheParameters = UseStoreItemParams<K_Type, StoreName, AllState, AllRefs>
   >(
     itemEffectCallback: (loopedInfo: T_TheParameters) => T_ReturnType,
-    check: OneItem_Check<K_Type, K_PropertyName, T_ItemType, T_State>,
+    check: OneItem_Check<K_Type, K_PropertyName, StoreName, AllState>,
     hookDeps: any[] = []
   ) {
     const [returnedState, setReturnedState] = useState({
@@ -1103,23 +1106,23 @@ export function _createStoreHelpers<
     { type: "characters", name: "walker" },
   );
   */
-  function useStoreItemPropsEffect<K_Type extends T_ItemType>(
+  function useStoreItemPropsEffect<K_Type extends StoreName>(
     checkItem: {
       type: K_Type;
-      name: ItemName<K_Type, T_ItemType, T_State>;
-      step?: T_StepName;
+      name: ItemName<K_Type, StoreName, AllState>;
+      step?: StepName;
     },
     onPropChanges: Partial<{
       [K_PropertyName in PropertyName<
         K_Type,
-        T_ItemType,
-        T_State
+        StoreName,
+        AllState
       >]: ItemEffectCallback<
         K_Type,
         K_PropertyName,
-        T_ItemType,
-        T_State,
-        T_Refs
+        StoreName,
+        AllState,
+        AllRefs
       >;
     }>,
     hookDeps: any[] = []
@@ -1156,23 +1159,23 @@ export function _createStoreHelpers<
     }, hookDeps);
   }
 
-  type AddItemOptions<K_Type extends T_ItemType> = {
+  type AddItemOptions<K_Type extends StoreName> = {
     type: K_Type;
     name: string;
-    state?: Partial<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
-    refs?: Partial<T_Refs[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
+    state?: Partial<AllState[K_Type][ItemName<K_Type, StoreName, AllState>]>;
+    refs?: Partial<AllRefs[K_Type][ItemName<K_Type, StoreName, AllState>]>;
   };
-  function addItem<K_Type extends T_ItemType>(
+  function addItem<K_Type extends StoreName>(
     addItemOptions: AddItemOptions<K_Type>,
     callback?: any
   ) {
     _addItem(
-      addItemOptions as AddItemOptionsUntyped<T_State, T_Refs, K_Type>,
+      addItemOptions as AddItemOptionsUntyped<AllState, AllRefs, K_Type>,
       callback
     );
   }
 
-  function removeItem(itemInfo: { type: T_ItemType; name: string }) {
+  function removeItem(itemInfo: { type: StoreName; name: string }) {
     _removeItem(
       itemInfo as {
         type: string;
@@ -1191,23 +1194,23 @@ export function _createStoreHelpers<
 
   // NOTE could make options generic and return that
   // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
-  type MakeEffect = <K_Type extends T_ItemType>(
-    options: Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
+  type MakeEffect = <K_Type extends StoreName>(
+    options: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
 
   // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
   type MakeItemEffect = <
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
   >(
     options: ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs,
-      T_StepName
+      StoreName,
+      AllState,
+      AllRefs,
+      StepName
     >
     // ) => ItemEffect_RuleOptions<
     //   K_Type,
@@ -1220,20 +1223,20 @@ export function _createStoreHelpers<
   ) => any;
 
   type MakeDynamicEffectInlineFunction = <
-    K_Type extends T_ItemType,
+    K_Type extends StoreName,
     T_Options extends any
   >(
     theRule: (
       options: T_Options
-    ) => Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
+    ) => Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
   ) => (
     options: T_Options
     // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
   ) => any;
 
   type MakeDynamicItemEffectInlineFunction = <
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
     T_Options extends any
   >(
     theRule: (
@@ -1241,10 +1244,10 @@ export function _createStoreHelpers<
     ) => ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs,
-      T_StepName
+      StoreName,
+      AllState,
+      AllRefs,
+      StepName
     >
   ) => (
     options: T_Options
@@ -1258,31 +1261,31 @@ export function _createStoreHelpers<
     // >;
   ) => any;
 
-  function makeEffect<K_Type extends T_ItemType>(
-    options: Effect_RuleOptions__NoMeta<K_Type, T_ItemType, T_State, T_StepName>
-  ): Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName> {
+  function makeEffect<K_Type extends StoreName>(
+    options: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
+  ): Effect_RuleOptions<K_Type, StoreName, AllState, StepName> {
     return { ...options, _isPerItem: false };
   }
 
   function makeItemEffect<
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
   >(
     options: ItemEffect_RuleOptions__NoMeta<
       K_Type,
       K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs,
-      T_StepName
+      StoreName,
+      AllState,
+      AllRefs,
+      StepName
     >
   ): ItemEffect_RuleOptions<
     K_Type,
     K_PropertyName,
-    T_ItemType,
-    T_State,
-    T_Refs,
-    T_StepName
+    StoreName,
+    AllState,
+    AllRefs,
+    StepName
   > {
     return { ...options, _isPerItem: true };
   }
@@ -1306,21 +1309,19 @@ export function _createStoreHelpers<
   //   effect: MakeEffect;
   // };
 
-  function makeRules<
-    K_RuleName extends string,
-    K_RulesToAdd extends (arg0: {
+  function makeRules<K_RuleName extends string>(
+    rulesToAdd: (arg0: {
       itemEffect: MakeItemEffect;
       effect: MakeEffect;
     }) => // ) => Record<K_RuleName, MakeRule_Rule >
-    Record<K_RuleName, MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>>
-  >(
-    rulesToAdd: K_RulesToAdd
+    Record<K_RuleName, MakeRule_Rule<StoreName, AllState, AllRefs, StepName>>
   ): {
     start: (ruleName: K_RuleName) => void;
     stop: (ruleName: K_RuleName) => void;
     startAll: () => void;
     stopAll: () => void;
     ruleNames: K_RuleName[];
+    run: (ruleName: K_RuleName) => void;
   } {
     // type RuleName = keyof ReturnType<typeof rulesToAdd>;
     const editedRulesToAdd = rulesToAdd({
@@ -1357,6 +1358,49 @@ export function _createStoreHelpers<
       }
     }
 
+    // type EditedRulesToAdd = typeof editedRulesToAdd;
+    // type EditedRulesToAdd222 = EditedRulesToAdd[K_RuleName]["check"];
+
+    // run the rule directly
+    function run(ruleName: K_RuleName) {
+      // NOTE this doesn't wait for the step chosen for the rule!
+      // maybe it should?
+
+      const theRule = editedRulesToAdd[ruleName as any] as MakeRule_Rule<
+        StoreName,
+        AllState,
+        AllRefs,
+        StepName
+      >;
+      if (!theRule) return;
+
+      if (theRule._isPerItem) {
+        // Run the item rule for each item (and prop)
+        const itemType = theRule.check.type as StoreName;
+        const itemNames = meta.itemNamesByItemType[itemType as string];
+        const propNames = toSafeArray(theRule.check.prop);
+        const itemsState = (getState() as AllState)[itemType];
+        const prevItemsState = (getPreviousState() as AllState)[itemType];
+        const itemsRefs = (getRefs() as AllState)[itemType];
+        forEach(itemNames, (itemName) => {
+          forEach(propNames, (propName) => {
+            const newValue = itemsState[itemName][propName];
+            theRule.run({
+              itemName: itemName as any,
+              newValue,
+              previousValue: prevItemsState[itemName][propName],
+              itemState: itemsState[itemName],
+              itemRefs: itemsRefs[itemName],
+              frameDuration: 16.66666,
+            });
+          });
+        });
+      } else {
+        // Run the rule once
+        theRule.run(meta.diffInfo as any, 16.66666);
+      }
+    }
+
     function startAll() {
       forEach(ruleNames, (ruleName) => start(ruleName));
     }
@@ -1371,6 +1415,7 @@ export function _createStoreHelpers<
       startAll,
       stopAll,
       ruleNames: ruleNames as K_RuleName[],
+      run,
     };
   }
 
@@ -1378,19 +1423,19 @@ export function _createStoreHelpers<
   // make rules dynamic
 
   function makeDynamicEffectInlineFunction<
-    K_Type extends T_ItemType,
+    K_Type extends StoreName,
     T_Options extends any
   >(
     theRule: (
       options: T_Options
-    ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>
+    ) => Effect_RuleOptions<K_Type, StoreName, AllState, StepName>
   ) {
     // return theRule;
     return (options: T_Options) => ({ ...theRule(options), _isPerItem: false });
   }
   function makeDynamicItemEffectInlineFunction<
-    K_Type extends T_ItemType,
-    K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>,
+    K_Type extends StoreName,
+    K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
     T_Options extends any
   >(
     theRule: (
@@ -1398,10 +1443,10 @@ export function _createStoreHelpers<
     ) => ItemEffect_RuleOptions<
       K_Type,
       K_PropertyName,
-      T_ItemType,
-      T_State,
-      T_Refs,
-      T_StepName
+      StoreName,
+      AllState,
+      AllRefs,
+      StepName
     >
   ) {
     // return theRule;
@@ -1429,7 +1474,7 @@ export function _createStoreHelpers<
     K_RuleName extends string,
     T_MakeRule_Function extends (
       ...args: any
-    ) => MakeRule_Rule<T_ItemType, T_State, T_Refs, T_StepName>,
+    ) => MakeRule_Rule<StoreName, AllState, AllRefs, StepName>,
     T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
   >(
     rulesToAdd: (arg0: {
@@ -1527,22 +1572,261 @@ export function _createStoreHelpers<
   }
 
   // ---------------------------------------------------
+  // Make Rule Makers
+  // ---------------------------------------------------
+
+  function makeRuleMaker<
+    T_StoreName extends StoreName & string,
+    T_StoreItemName extends keyof AllState[T_StoreName] & string,
+    T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] &
+      string,
+    T_StepName extends StepName,
+    T_UsefulParams extends Record<any, any>
+  >(
+    storeName: T_StoreName,
+    storeItemName: T_StoreItemName,
+    storyProperty: T_PropertyName,
+    stepName?: T_StepName,
+    getUsefulParams?: () => T_UsefulParams
+  ) {
+    type StoreState = AllState[T_StoreName][T_StoreItemName];
+
+    type PropertyValue = StoreState[T_PropertyName];
+    type RulesOptions = Partial<
+      Record<PropertyValue, (usefulStuff: T_UsefulParams) => void>
+    >;
+    const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
+    function newRuleMaker(callBacksObject: RulesOptions) {
+      return makeRules(({ effect }) => ({
+        whenPropertyChanges: effect({
+          run(_diffInfo) {
+            const usefulStoryStuff = getUsefulParams();
+            const latestValue = (getState() as AllState)[storeName][
+              storeItemName
+            ][storyProperty] as PropertyValue;
+
+            callBacksObject[latestValue]?.(usefulStoryStuff);
+          },
+          check: {
+            prop: [storyProperty],
+            name: storeItemName,
+            type: storeName,
+          } as unknown as EffectRule_Check<T_StoreName, StoreName, AllState>,
+          step: stepName ?? "default",
+          atStepEnd: true,
+          name: ruleName,
+        }),
+      }));
+    }
+
+    return newRuleMaker;
+  }
+
+  function makeLeaveRuleMaker<
+    T_StoreName extends StoreName & string,
+    T_StoreItemName extends keyof AllState[T_StoreName] & string,
+    T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] &
+      string,
+    T_StepName extends StepName,
+    T_UsefulParams extends Record<any, any>
+  >(
+    storeName: T_StoreName,
+    storeItemName: T_StoreItemName,
+    storyProperty: T_PropertyName,
+    stepName?: T_StepName,
+    getUsefulParams?: () => T_UsefulParams
+  ) {
+    type StoreState = AllState[T_StoreName][T_StoreItemName];
+
+    type PropertyValue = StoreState[T_PropertyName];
+    type RulesOptions = Partial<
+      Record<PropertyValue, (usefulStuff: T_UsefulParams) => void>
+    >;
+    const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
+    function newRuleMaker(callBacksObject: RulesOptions) {
+      return makeRules(({ effect }) => ({
+        whenPropertyChanges: effect({
+          run(_diffInfo) {
+            const usefulStoryStuff = getUsefulParams();
+            const prevValue = (getPreviousState() as AllState)[storeName][
+              storeItemName
+            ][storyProperty] as PropertyValue;
+
+            callBacksObject[prevValue]?.(usefulStoryStuff);
+          },
+          check: {
+            prop: [storyProperty],
+            name: storeItemName,
+            type: storeName,
+          } as unknown as EffectRule_Check<T_StoreName, StoreName, AllState>,
+          step: stepName ?? "default",
+          atStepEnd: true,
+          name: ruleName,
+        }),
+      }));
+    }
+
+    return newRuleMaker;
+  }
+
+  // makeNestedRuleMaker, similar to makeRuleMaker but accepts parameters for two store properties (can be from different stores) , and the callback fires when properties of both stores change
+  function makeNestedRuleMaker<
+    T_StoreName1 extends StoreName & string,
+    T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
+    T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] &
+      string,
+    T_StoreName2 extends StoreName & string,
+    T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
+    T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] &
+      string,
+    T_StepName extends StepName,
+    T_UsefulParams extends Record<any, any>
+  >(
+    storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1],
+    storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2],
+    stepName?: T_StepName,
+    getUsefulParams?: () => T_UsefulParams
+  ) {
+    const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
+    const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+
+    type StoreState1 = AllState[T_StoreName1][T_StoreItemName1];
+    type StoreState2 = AllState[T_StoreName2][T_StoreItemName2];
+
+    type PropertyValue1 = StoreState1[T_PropertyName1];
+    type PropertyValue2 = StoreState2[T_PropertyName2];
+    type RulesOptions = Partial<
+      Record<
+        PropertyValue1,
+        Partial<
+          Record<
+            PropertyValue2,
+            (usefulStuff: ReturnType<typeof getUsefulParams>) => void
+          >
+        >
+      >
+    >;
+    const ruleName = `customRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+    function newRuleMaker(callBacksObject: RulesOptions) {
+      return makeRules(({ effect }) => ({
+        whenPropertyChanges: effect({
+          run(_diffInfo) {
+            const usefulStoryStuff = getUsefulParams();
+            const latestValue1 = (getState() as AllState)[storeName1][
+              storeItemName1
+            ][storyProperty1] as PropertyValue1;
+            const latestValue2 = (getState() as AllState)[storeName2][
+              storeItemName2
+            ][storyProperty2] as PropertyValue2;
+
+            callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff);
+          },
+          check: [
+            { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
+            { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+          ] as unknown as EffectRule_Check<
+            T_StoreName1 | T_StoreName2,
+            StoreName,
+            AllState
+          >,
+          step: stepName ?? "default",
+          atStepEnd: true,
+          name: ruleName,
+        }),
+      }));
+    }
+
+    return newRuleMaker;
+  }
+
+  // makeNestedLeaveRuleMaker, the same as makeNestedRuleMaker , but the callback fires when the properties of both stores become NOT the specified values, but were previously
+  function makeNestedLeaveRuleMaker<
+    T_StoreName1 extends StoreName & string,
+    T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
+    T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] &
+      string,
+    T_StoreName2 extends StoreName & string,
+    T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
+    T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] &
+      string,
+    T_UsefulParams extends Record<any, any>
+  >(
+    storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1],
+    storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2],
+    stepName?: StepName,
+    getUsefulParams?: () => T_UsefulParams
+  ) {
+    const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
+    const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+
+    type StoreState1 = AllState[T_StoreName1][T_StoreItemName1];
+    type StoreState2 = AllState[T_StoreName2][T_StoreItemName2];
+
+    type PropertyValue1 = StoreState1[T_PropertyName1];
+    type PropertyValue2 = StoreState2[T_PropertyName2];
+    type RulesOptions = Partial<
+      Record<
+        PropertyValue1,
+        Partial<Record<PropertyValue2, (usefulStuff: T_UsefulParams) => void>>
+      >
+    >;
+    const ruleName = `customLeaveRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+    function newRuleMaker(callBacksObject: RulesOptions) {
+      return makeRules(({ effect }) => ({
+        whenPropertyChanges: effect({
+          run(_diffInfo) {
+            const usefulParams = getUsefulParams();
+            const latestValue1 = (getState() as AllState)[storeName1][
+              storeItemName1
+            ][storyProperty1] as PropertyValue1;
+            const latestValue2 = (getState() as AllState)[storeName2][
+              storeItemName2
+            ][storyProperty2] as PropertyValue2;
+            const prevValue1 = getPreviousState()[storeName1][storeItemName1][
+              storyProperty1
+            ] as PropertyValue1;
+            const prevValue2 = getPreviousState()[storeName2][storeItemName2][
+              storyProperty2
+            ] as PropertyValue2;
+
+            const callback = callBacksObject[prevValue1]?.[prevValue2];
+            if (callback) callback(usefulParams);
+          },
+          check: [
+            { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
+            { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+          ] as unknown as EffectRule_Check<
+            T_StoreName1 | T_StoreName2,
+            StoreName,
+            AllState
+          >,
+          step: stepName ?? "default",
+          atStepEnd: true,
+          name: ruleName,
+        }),
+      }));
+    }
+
+    return newRuleMaker;
+  }
+
+  // ---------------------------------------------------
   // Patches and Diffs
   // ---------------------------------------------------
 
   type ItemNamesByType = {
-    [K_Type in T_ItemType]: ItemName<K_Type, T_ItemType, T_State>[];
+    [K_Type in StoreName]: ItemName<K_Type, StoreName, AllState>[];
   };
 
   type StatesPatch = {
-    changed: GetPartialState<T_State>;
+    changed: GetPartialState<AllState>;
     added: Partial<ItemNamesByType>;
     removed: Partial<ItemNamesByType>;
   };
 
   type StatesDiff = {
-    changedNext: GetPartialState<T_State>;
-    changedPrev: GetPartialState<T_State>;
+    changedNext: GetPartialState<AllState>;
+    changedPrev: GetPartialState<AllState>;
     added: Partial<ItemNamesByType>;
     removed: Partial<ItemNamesByType>;
   };
@@ -1575,7 +1859,7 @@ export function _createStoreHelpers<
       propsChangedBool: {},
       itemsAddedBool: {},
       itemsRemovedBool: {},
-    } as DiffInfo<T_ItemType, T_State>;
+    } as DiffInfo<StoreName, AllState>;
   }
 
   function applyPatch(patch: StatesPatch) {
@@ -1598,7 +1882,7 @@ export function _createStoreHelpers<
   }
 
   function applyPatchHere(
-    newStates: GetPartialState<T_State>,
+    newStates: GetPartialState<AllState>,
     patch: StatesPatch
   ) {
     forEach(itemTypes, (itemType) => {
@@ -1613,7 +1897,7 @@ export function _createStoreHelpers<
       // Loop through each new item, and add it to newStates with state(itemName)
       forEach(patch.added[itemType] ?? [], (itemName) => {
         if (!newStates[itemType]) {
-          newStates[itemType] = {} as typeof newStates[typeof itemType];
+          newStates[itemType] = {} as (typeof newStates)[typeof itemType];
         }
         const itemTypeState = newStates[itemType];
         if (itemTypeState) {
@@ -1661,18 +1945,18 @@ export function _createStoreHelpers<
   }
 
   function getPatchOrDiff(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>,
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>,
     patchOrDiff: "patch"
   ): StatesPatch;
   function getPatchOrDiff(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>,
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>,
     patchOrDiff: "diff"
   ): StatesDiff;
   function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>,
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>,
     patchOrDiff: T_PatchOrDiff
   ) {
     const newPatch = makeEmptyPatch();
@@ -1747,8 +2031,8 @@ export function _createStoreHelpers<
 
         let propertyNamesForItemType = [] as PropertyName<
           typeof itemType,
-          T_ItemType,
-          T_State
+          StoreName,
+          AllState
         >[];
         let propertyNamesHaveBeenFound = false;
         forEach(itemNamesAddedForType ?? [], (itemName) => {
@@ -1758,7 +2042,7 @@ export function _createStoreHelpers<
           if (!propertyNamesHaveBeenFound) {
             propertyNamesForItemType = Object.keys(
               defaultItemState
-            ) as PropertyName<typeof itemType, T_ItemType, T_State>[];
+            ) as PropertyName<typeof itemType, StoreName, AllState>[];
             propertyNamesHaveBeenFound = true;
           }
 
@@ -1827,8 +2111,8 @@ export function _createStoreHelpers<
 
         let propertyNamesForItemType = [] as PropertyName<
           typeof itemType,
-          T_ItemType,
-          T_State
+          StoreName,
+          AllState
         >[];
         let propertyNamesHaveBeenFound = false;
         forEach(itemNamesRemovedForType ?? [], (itemName) => {
@@ -1838,7 +2122,7 @@ export function _createStoreHelpers<
           if (!propertyNamesHaveBeenFound) {
             propertyNamesForItemType = Object.keys(
               defaultItemState
-            ) as PropertyName<typeof itemType, T_ItemType, T_State>[];
+            ) as PropertyName<typeof itemType, StoreName, AllState>[];
             propertyNamesHaveBeenFound = true;
           }
 
@@ -1889,15 +2173,15 @@ export function _createStoreHelpers<
   }
 
   function getPatch(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>
   ) {
     return getPatchOrDiff(prevState, newState, "patch");
   }
 
   function getPatchAndReversed(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>
   ) {
     const patch = getPatch(prevState, newState);
     const reversePatch = getPatch(newState, prevState);
@@ -1905,12 +2189,12 @@ export function _createStoreHelpers<
   }
 
   function getReversePatch(
-    partialState: GetPartialState<T_State>,
+    partialState: GetPartialState<AllState>,
     newPatch: StatesPatch
   ) {
-    const prevState: GetPartialState<T_State> = {};
+    const prevState: GetPartialState<AllState> = {};
     meta.copyStates(partialState, prevState);
-    const newState: GetPartialState<T_State> = {};
+    const newState: GetPartialState<AllState> = {};
     meta.copyStates(partialState, newState);
     applyPatchHere(newState, newPatch);
     const reversePatch = getPatch(newState, prevState);
@@ -1991,7 +2275,7 @@ export function _createStoreHelpers<
         const allChangedItemNames = Object.keys({
           ...(itemsChangedPrev ?? {}),
           ...(itemsChangedNew ?? {}),
-        }) as ItemName<typeof itemType, T_ItemType, T_State>[];
+        }) as ItemName<typeof itemType, StoreName, AllState>[];
 
         if (!combinedPatch.changed[itemType]) {
           combinedPatch.changed[itemType] = {};
@@ -2035,7 +2319,7 @@ export function _createStoreHelpers<
   }
 
   function makeMinimalPatch(
-    currentStates: GetPartialState<T_State>,
+    currentStates: GetPartialState<AllState>,
     thePatch: StatesPatch
   ) {
     const minimalPatch = cloneObjectWithJson(thePatch) as StatesPatch;
@@ -2043,14 +2327,14 @@ export function _createStoreHelpers<
     forEach(itemTypes, (itemType) => {
       const propertyNames = Object.keys(
         defaultStates[itemType]("anItemName")
-      ) as PropertyName<typeof itemType, T_ItemType, T_State>[];
+      ) as PropertyName<typeof itemType, StoreName, AllState>[];
 
       const changedForType = minimalPatch.changed[itemType];
       if (changedForType) {
         const changedItemNames = Object.keys(changedForType ?? {}) as ItemName<
           typeof itemType,
-          T_ItemType,
-          T_State
+          StoreName,
+          AllState
         >[];
         forEach(changedItemNames, (itemName) => {
           const changedForItem = changedForType[itemName];
@@ -2101,8 +2385,7 @@ export function _createStoreHelpers<
       }
       // Loop through added in patchToRemove, if it’s in newPatch , remove it
       // Keep track of noLongerAddedItems { itemType: []
-      const noLongerAddedItems: ItemName<T_ItemType, T_ItemType, T_State>[] =
-        [];
+      const noLongerAddedItems: ItemName<StoreName, StoreName, AllState>[] = [];
       if (newPatch.added[itemType]) {
         newPatch.added[itemType] = newPatch.added[itemType]!.filter(
           (itemName) => {
@@ -2122,7 +2405,7 @@ export function _createStoreHelpers<
       if (removedPatchChangedForType && newPatchChangedForType) {
         const changedItemNames = Object.keys(
           removedPatchChangedForType ?? {}
-        ) as ItemName<typeof itemType, T_ItemType, T_State>[];
+        ) as ItemName<typeof itemType, StoreName, AllState>[];
         forEach(changedItemNames, (itemName) => {
           const removedPatchChangedForItem =
             removedPatchChangedForType[itemName];
@@ -2159,8 +2442,8 @@ export function _createStoreHelpers<
   }
 
   function getDiff(
-    prevState: GetPartialState<T_State>,
-    newState: GetPartialState<T_State>
+    prevState: GetPartialState<AllState>,
+    newState: GetPartialState<AllState>
   ) {
     return getPatchOrDiff(prevState, newState, "diff");
   }
@@ -2228,6 +2511,10 @@ export function _createStoreHelpers<
     getItem,
     makeRules,
     makeDynamicRules,
+    makeRuleMaker,
+    makeLeaveRuleMaker,
+    makeNestedRuleMaker,
+    makeNestedLeaveRuleMaker,
     startEffect,
     startItemEffect,
     stopEffect,
