@@ -2,14 +2,14 @@
   "name": "repond",
   "version": "0.9.2",
   "description": "realtime state management focused on items and reactions",
-  "main": "src/index.tsx",
-  "types": "src/index.tsx",
-  "files": [
+  "__main": "src/index.tsx",
+  "__types": "src/index.tsx",
+  "__files": [
     "src"
   ],
-  "__main": "dist/index.js",
-  "__types": "dist/index.d.ts",
-  "__files": [
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
     "dist"
   ],
   "scripts": {
