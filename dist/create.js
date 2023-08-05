@@ -40,10 +40,6 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         meta.currentStepIndex = 0;
         meta.currentStepName = stepNames[meta.currentStepIndex];
     }
-    // type Get_T_Refs<K_Type extends T_ItemType> = Record<
-    //   StartStatesItemName<K_Type>,
-    //   ReturnType<Get_DefaultRefs<K_Type>>
-    // >;
     const defaultStates = itemTypes.reduce((prev, key) => {
         prev[key] = allInfo[key].state;
         return prev;
@@ -413,6 +409,45 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 stopEffect(ruleNamePrefix + ruleName);
             }
         }
+        // type EditedRulesToAdd = typeof editedRulesToAdd;
+        // type EditedRulesToAdd222 = EditedRulesToAdd[K_RuleName]["check"];
+        // run the rule directly
+        function run(ruleName) {
+            // NOTE this doesn't wait for the step chosen for the rule!
+            // maybe it should?
+            const theRule = editedRulesToAdd[ruleName];
+            if (!theRule)
+                return;
+            if (theRule._isPerItem) {
+                // Run the item rule for each item (and prop)
+                const itemType = theRule.check.type;
+                const itemNames = meta.itemNamesByItemType[itemType];
+                const propNames = toSafeArray(theRule.check.prop);
+                const itemsState = getState()[itemType];
+                const prevItemsState = getPreviousState()[itemType];
+                const itemsRefs = getRefs()[itemType];
+                forEach(itemNames, (itemName) => {
+                    forEach(propNames, (propName) => {
+                        const newValue = itemsState[itemName][propName];
+                        theRule.run({
+                            itemName: itemName,
+                            newValue,
+                            previousValue: prevItemsState[itemName][propName],
+                            itemState: itemsState[itemName],
+                            itemRefs: itemsRefs[itemName],
+                            frameDuration: 16.66666,
+                        });
+                    });
+                });
+            }
+            else {
+                // Run the rule once
+                theRule.run(meta.diffInfo, 16.66666);
+            }
+        }
+        function runAll() {
+            forEach(ruleNames, (ruleName) => run(ruleName));
+        }
         function startAll() {
             forEach(ruleNames, (ruleName) => start(ruleName));
         }
@@ -425,6 +460,8 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             startAll,
             stopAll,
             ruleNames: ruleNames,
+            run,
+            runAll,
         };
     }
     // -----------------
@@ -525,6 +562,115 @@ export function _createStoreHelpers(allInfo, extraOptions) {
             startAll,
             stopAll,
         };
+    }
+    // ---------------------------------------------------
+    // Make Rule Makers
+    // ---------------------------------------------------
+    function makeRuleMaker(storeName, storeItemName, storyProperty, stepName, getUsefulParams) {
+        const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
+        function newRuleMaker(callBacksObject) {
+            return makeRules(({ effect }) => ({
+                whenPropertyChanges: effect({
+                    run(_diffInfo) {
+                        var _a;
+                        const usefulStoryStuff = getUsefulParams();
+                        const latestValue = getState()[storeName][storeItemName][storyProperty];
+                        (_a = callBacksObject[latestValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
+                    },
+                    check: {
+                        prop: [storyProperty],
+                        name: storeItemName,
+                        type: storeName,
+                    },
+                    step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                    atStepEnd: true,
+                    name: ruleName,
+                }),
+            }));
+        }
+        return newRuleMaker;
+    }
+    function makeLeaveRuleMaker(storeName, storeItemName, storyProperty, stepName, getUsefulParams) {
+        const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
+        function newRuleMaker(callBacksObject) {
+            return makeRules(({ effect }) => ({
+                whenPropertyChanges: effect({
+                    run(_diffInfo) {
+                        var _a;
+                        const usefulStoryStuff = getUsefulParams();
+                        const prevValue = getPreviousState()[storeName][storeItemName][storyProperty];
+                        (_a = callBacksObject[prevValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
+                    },
+                    check: {
+                        prop: [storyProperty],
+                        name: storeItemName,
+                        type: storeName,
+                    },
+                    step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                    atStepEnd: true,
+                    name: ruleName,
+                }),
+            }));
+        }
+        return newRuleMaker;
+    }
+    // makeNestedRuleMaker, similar to makeRuleMaker but accepts parameters for two store properties (can be from different stores) , and the callback fires when properties of both stores change
+    function makeNestedRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulParams) {
+        const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
+        const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+        const ruleName = `customRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+        function newRuleMaker(callBacksObject) {
+            return makeRules(({ effect }) => ({
+                whenPropertyChanges: effect({
+                    run(_diffInfo) {
+                        var _a, _b;
+                        const usefulStoryStuff = getUsefulParams();
+                        const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
+                        const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
+                        (_b = (_a = callBacksObject[latestValue1]) === null || _a === void 0 ? void 0 : _a[latestValue2]) === null || _b === void 0 ? void 0 : _b.call(_a, usefulStoryStuff);
+                    },
+                    check: [
+                        { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
+                        { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+                    ],
+                    step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                    atStepEnd: true,
+                    name: ruleName,
+                }),
+            }));
+        }
+        return newRuleMaker;
+    }
+    // makeNestedLeaveRuleMaker, the same as makeNestedRuleMaker , but the callback fires when the properties of both stores become NOT the specified values, but were previously
+    function makeNestedLeaveRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulParams) {
+        const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
+        const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+        const ruleName = `customLeaveRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+        function newRuleMaker(callBacksObject) {
+            return makeRules(({ effect }) => ({
+                whenPropertyChanges: effect({
+                    run(_diffInfo) {
+                        var _a;
+                        const usefulParams = getUsefulParams();
+                        const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
+                        const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
+                        const prevValue1 = getPreviousState()[storeName1][storeItemName1][storyProperty1];
+                        const prevValue2 = getPreviousState()[storeName2][storeItemName2][storyProperty2];
+                        const callback = (_a = callBacksObject[prevValue1]) === null || _a === void 0 ? void 0 : _a[prevValue2];
+                        if (callback)
+                            callback(usefulParams);
+                    },
+                    check: [
+                        { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
+                        { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+                    ],
+                    step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                    atStepEnd: true,
+                    name: ruleName,
+                }),
+            }));
+        }
+        return newRuleMaker;
     }
     function makeEmptyPatch() {
         return {
@@ -1027,6 +1173,10 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         getItem,
         makeRules,
         makeDynamicRules,
+        makeRuleMaker,
+        makeLeaveRuleMaker,
+        makeNestedRuleMaker,
+        makeNestedLeaveRuleMaker,
         startEffect,
         startItemEffect,
         stopEffect,
