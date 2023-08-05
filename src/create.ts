@@ -1322,6 +1322,7 @@ export function _createStoreHelpers<
     stopAll: () => void;
     ruleNames: K_RuleName[];
     run: (ruleName: K_RuleName) => void;
+    runAll: () => void;
   } {
     // type RuleName = keyof ReturnType<typeof rulesToAdd>;
     const editedRulesToAdd = rulesToAdd({
@@ -1401,6 +1402,10 @@ export function _createStoreHelpers<
       }
     }
 
+    function runAll() {
+      forEach(ruleNames, (ruleName) => run(ruleName));
+    }
+
     function startAll() {
       forEach(ruleNames, (ruleName) => start(ruleName));
     }
@@ -1416,6 +1421,7 @@ export function _createStoreHelpers<
       stopAll,
       ruleNames: ruleNames as K_RuleName[],
       run,
+      runAll,
     };
   }
 

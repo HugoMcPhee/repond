@@ -101,7 +101,7 @@ export type RepondCallback = (frameDuration: number, frameTime: number) => any;
 export type SetRepondState<T_State> = (
   newState:
     | GetPartialState<T_State>
-    | ((state: DeepReadonly<T_State>) => GetPartialState<T_State>),
+    | ((state: DeepReadonly<T_State>) => GetPartialState<T_State> | undefined),
   callback?: RepondCallback
 ) => void;
 

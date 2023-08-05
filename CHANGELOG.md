@@ -8,8 +8,9 @@ v0.9.2
 
 - added helpers to make easier switch-like rules with makeRuleMaker, makeNestedRuleMaker, makeNestedLeaveRuleMaker NOTE if it's too much, they could be made with a seperate rules helper that takes setState and makeRule etc as parameters
 - now state properties can be typed based on the item name (from startStates), like a model.animationWeights object can have the correct animation names as keys for that object, before it would combine all the animation names from all the models
-- added "run" to rules objects to run a rule as a manual action, good as a start to being able to run all rules on initial state :)
+- added "run" and "runAll" to rules objects to run a rule as a manual action, good as a start to being able to run all rules on initial state :)
 - fixed rule names for rules objects not being typed
+- supports returning early from setState functions
 
 v0.9.1
 
