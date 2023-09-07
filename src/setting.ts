@@ -39,7 +39,18 @@ function findScreenFramerate() {
   });
 }
 
+function handleGoingToBackground(event: Event) {
+  if (document.visibilityState === "hidden") {
+    meta.didGoToBackground = true;
+  }
+}
+
 function runNextFrameIfNeeded() {
+  if (!meta.didGoToBackgroundEventListenerWasAdded) {
+    meta.didGoToBackgroundEventListenerWasAdded = true;
+    document.addEventListener("visibilitychange", handleGoingToBackground);
+  }
+
   if (!meta.shouldRunUpdateAtEndOfUpdate) {
     if (
       meta.nextFrameIsFirst &&

@@ -177,6 +177,9 @@ const repondMeta = {
   stepNames: ["default"] as const as Readonly<string[]>,
   currentStepName: "default" as Readonly<string>,
   currentStepIndex: 0,
+  //
+  didGoToBackgroundEventListenerWasAdded: false,
+  didGoToBackground: false, // is in a background tab, so requestAnimationFrame is paused
 };
 
 export type RepondMeta = typeof repondMeta;

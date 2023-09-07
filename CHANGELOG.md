@@ -4,6 +4,10 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+v0.9.3
+
+- fixes issue of a long frameDuration when returning from unfocused tab
+
 v0.9.2
 
 - added helpers to make easier switch-like rules with makeRuleMaker, makeNestedRuleMaker, makeNestedLeaveRuleMaker NOTE if it's too much, they could be made with a seperate rules helper that takes setState and makeRule etc as parameters
