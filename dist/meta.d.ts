@@ -139,6 +139,8 @@ declare const repondMeta: {
     stepNames: readonly string[];
     currentStepName: string;
     currentStepIndex: number;
+    didGoToBackgroundEventListenerWasAdded: boolean;
+    didGoToBackground: boolean;
 };
 export type RepondMeta = typeof repondMeta;
 export default repondMeta;

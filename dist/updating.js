@@ -21,7 +21,7 @@ function setMetaPhase(metaPhase) {
 function updateFrameTimes(animationFrameTime) {
     meta.previousFrameTime = meta.latestFrameTime;
     meta.latestFrameTime = animationFrameTime;
-    if (meta.nextFrameIsFirst === false) {
+    if (meta.nextFrameIsFirst === false && !meta.didGoToBackground) {
         meta.latestFrameDuration = meta.latestFrameTime - meta.previousFrameTime;
         // NOTE possibly stop this check if it's been done enough
         // if (meta.frameRateTypeOption !== "full") {
@@ -34,6 +34,9 @@ function updateFrameTimes(animationFrameTime) {
     }
     else {
         meta.latestFrameDuration = 16.66667;
+        if (meta.didGoToBackground) {
+            meta.didGoToBackground = false;
+        }
     }
 }
 function runSetStates() {
@@ -62,6 +65,8 @@ function runAddAndRemove() {
 }
 function runListeners(phase, stepName) {
     const listenerNamesToRun = checkListeners(phase, stepName);
+    if (listenerNamesToRun.length === 0)
+        return;
     for (let index = 0; index < listenerNamesToRun.length; index++) {
         const name = listenerNamesToRun[index];
         if (meta.allListeners[name])

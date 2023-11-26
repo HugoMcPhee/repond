@@ -81,6 +81,9 @@ const repondMeta = {
     stepNames: ["default"],
     currentStepName: "default",
     currentStepIndex: 0,
+    //
+    didGoToBackgroundEventListenerWasAdded: false,
+    didGoToBackground: false, // is in a background tab, so requestAnimationFrame is paused
 };
 export default repondMeta;
 export function toSafeListenerName(prefix) {

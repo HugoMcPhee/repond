@@ -34,7 +34,16 @@ function findScreenFramerate() {
         });
     });
 }
+function handleGoingToBackground(event) {
+    if (document.visibilityState === "hidden") {
+        meta.didGoToBackground = true;
+    }
+}
 function runNextFrameIfNeeded() {
+    if (!meta.didGoToBackgroundEventListenerWasAdded) {
+        meta.didGoToBackgroundEventListenerWasAdded = true;
+        document.addEventListener("visibilitychange", handleGoingToBackground);
+    }
     if (!meta.shouldRunUpdateAtEndOfUpdate) {
         if (meta.nextFrameIsFirst &&
             meta.currentMetaPhase === "waitingForFirstUpdate") {
