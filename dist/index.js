@@ -10,4 +10,7 @@ export function makeInitialState({ itemPrefix, itemAmount, defaultState, }) {
     }
     return newInitialState;
 }
+export function exampleStepName(name) {
+    return "default";
+}
 export { createStoreHelpers };

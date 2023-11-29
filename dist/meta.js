@@ -30,21 +30,21 @@ const repondMeta = {
     // this gets reset at the start of a frame, and kept added to throughout the frame
     recordedSubscribeChanges: initialRecordedChanges(),
     // this gets reset for each step (might not still be true)
-    recordedDeriveChanges: initialRecordedChanges(),
-    nextFrameIsFirst: true,
+    recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
+    nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
     latestFrameId: 0,
     previousFrameTime: 0,
     latestFrameTime: 0,
     latestFrameDuration: 16.66667,
-    shortestFrameDuration: 16.6666667,
+    shortestFrameDuration: 16.6666667, // the screens frameRate
     foundScreenFramerate: false,
     lookingForScreenFramerate: false,
     //
     latestUpdateTime: 0,
-    latestUpdateDuration: 16.66667,
+    latestUpdateDuration: 16.66667, // how long everything inside "update" took
     frameRateTypeOption: "auto",
     frameRateType: "full",
-    lateFramesAmount: 0,
+    lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
     shouldRunUpdateAtEndOfUpdate: false,
     //
     diffInfo: initialDiffInfo,
@@ -59,7 +59,7 @@ const repondMeta = {
     addAndRemoveItemsQue: [],
     startListenersQue: [],
     setStatesQue: [],
-    callforwardsQue: [],
+    callforwardsQue: [], // runs at the start of a tick
     callbacksQue: [],
     //
     allListeners: {},
@@ -67,7 +67,7 @@ const repondMeta = {
     //
     itemTypeNames: [],
     propNamesByItemType: {},
-    itemNamesByItemType: {},
+    itemNamesByItemType: {}, // current item names only, not previous..
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
     copyStates: (currentObject, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates

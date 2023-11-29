@@ -1,5 +1,8 @@
 // import meta from "./meta";
-import { _createStoreHelpers as createStoreHelpers } from "./create";
+import { makeRepond as makeRepond } from "./create";
+import { RepondTypes } from "./declarations";
+export * from "./declarations";
+export * from "./create";
 
 export type InitialItemsState<
   T_defaultStateFunctionType extends (...args: any) => any
@@ -14,12 +17,8 @@ export type StoreHelperTypes<
 > = {
   ItemType: keyof ReturnType<T_GetState>;
   AllItemsState: ReturnType<T_GetState>[T_ItemType];
-  ItemState: ReturnType<T_GetState>[T_ItemType][keyof ReturnType<
-    T_GetState
-  >[T_ItemType]];
-  ItemRefs: ReturnType<T_GetRefs>[T_ItemType][keyof ReturnType<
-    T_GetRefs
-  >[T_ItemType]];
+  ItemState: ReturnType<T_GetState>[T_ItemType][keyof ReturnType<T_GetState>[T_ItemType]];
+  ItemRefs: ReturnType<T_GetRefs>[T_ItemType][keyof ReturnType<T_GetRefs>[T_ItemType]];
 };
 
 // for generating items with names
@@ -41,4 +40,4 @@ export function makeInitialState({
   return newInitialState;
 }
 
-export { createStoreHelpers };
+export { makeRepond };

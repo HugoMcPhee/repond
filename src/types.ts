@@ -61,7 +61,7 @@ interface ReadonlySetDeep<ItemType>
 //
 
 // ----------------------------
-// stuff from createStoreHelpers
+// stuff from makeRepond
 
 // type Without<T, K> = Pick<T, Exclude<keyof T, K>>;
 type WithoutB<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };

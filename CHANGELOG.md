@@ -4,6 +4,11 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+v 0.10.0
+
+- exports all helpers from index, no need to get heleprs from makePrendy helpers!
+- renamed createStoreHelpers to makeRepond
+
 v0.9.2
 
 - added helpers to make easier switch-like rules with makeRuleMaker, makeNestedRuleMaker, makeNestedLeaveRuleMaker NOTE if it's too much, they could be made with a seperate rules helper that takes setState and makeRule etc as parameters

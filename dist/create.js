@@ -28,7 +28,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
     if (!stepNamesUntyped.includes("default"))
         stepNamesUntyped.push("default");
     const stepNames = [...stepNamesUntyped];
-    meta.frameRateTypeOption = extraOptions.framerate || "auto";
+    meta.frameRateTypeOption = (extraOptions === null || extraOptions === void 0 ? void 0 : extraOptions.framerate) || "auto";
     if (meta.frameRateTypeOption === "full")
         meta.frameRateType = "full";
     else if (meta.frameRateTypeOption === "half")
@@ -415,6 +415,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
         function run(ruleName) {
             // NOTE this doesn't wait for the step chosen for the rule!
             // maybe it should?
+            var _a;
             const theRule = editedRulesToAdd[ruleName];
             if (!theRule)
                 return;
@@ -422,7 +423,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 // Run the item rule for each item (and prop)
                 const itemType = theRule.check.type;
                 const itemNames = meta.itemNamesByItemType[itemType];
-                const propNames = toSafeArray(theRule.check.prop);
+                const propNames = (_a = toSafeArray(theRule.check.prop)) !== null && _a !== void 0 ? _a : [];
                 const itemsState = getState()[itemType];
                 const prevItemsState = getPreviousState()[itemType];
                 const itemsRefs = getRefs()[itemType];
@@ -573,7 +574,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 whenPropertyChanges: effect({
                     run(_diffInfo) {
                         var _a;
-                        const usefulStoryStuff = getUsefulParams();
+                        const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
                         const latestValue = getState()[storeName][storeItemName][storyProperty];
                         (_a = callBacksObject[latestValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
                     },
@@ -597,7 +598,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 whenPropertyChanges: effect({
                     run(_diffInfo) {
                         var _a;
-                        const usefulStoryStuff = getUsefulParams();
+                        const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
                         const prevValue = getPreviousState()[storeName][storeItemName][storyProperty];
                         (_a = callBacksObject[prevValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
                     },
@@ -624,7 +625,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 whenPropertyChanges: effect({
                     run(_diffInfo) {
                         var _a, _b;
-                        const usefulStoryStuff = getUsefulParams();
+                        const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
                         const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
                         const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
                         (_b = (_a = callBacksObject[latestValue1]) === null || _a === void 0 ? void 0 : _a[latestValue2]) === null || _b === void 0 ? void 0 : _b.call(_a, usefulStoryStuff);
@@ -651,7 +652,7 @@ export function _createStoreHelpers(allInfo, extraOptions) {
                 whenPropertyChanges: effect({
                     run(_diffInfo) {
                         var _a;
-                        const usefulParams = getUsefulParams();
+                        const usefulParams = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
                         const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
                         const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
                         const prevValue1 = getPreviousState()[storeName1][storeItemName1][storyProperty1];
