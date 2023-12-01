@@ -76,7 +76,7 @@ type StartStatesItemName<K_Type extends keyof G_AllInfo> =
     : string;
 
 // make an AllState type that conditionally uses the keys and values of startStates if available or otherwise uses string as the key and the return type of the default "state"  (for that store) as the value
-type AllState = {
+export type AllState = {
   [K_Type in StoreName]: G_AllInfo[K_Type]["startStates"] extends Record<
     string,
     any
@@ -86,7 +86,7 @@ type AllState = {
 };
 
 // Make an AllRefs type that uses Get_DefaultRefs for each store
-type AllRefs = {
+export type AllRefs = {
   [K_Type in StoreName]: Record<
     StartStatesItemName<K_Type>,
     ReturnType<Get_DefaultRefs<K_Type>> // NOTE: refs wont be generic typed, generic ReturnType doesn't seem to work with nested generic function types like Blah<_T_Blah>["blah"]<T_Paramter>
@@ -610,7 +610,7 @@ T_StepName extends string,
 
 */
 
-export function makeRepond<
+export function initRepond<
   T_AllInfo extends {
     [StoreName: string]: {
       state: (itemName: any) => any;

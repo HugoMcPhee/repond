@@ -1,5 +1,5 @@
 // import meta from "./meta";
-import { makeRepond as makeRepond } from "./create";
+import { initRepond as initRepond } from "./create";
 import { RepondTypes } from "./declarations";
 export * from "./declarations";
 export * from "./create";
@@ -40,4 +40,4 @@ export function makeInitialState({
   return newInitialState;
 }
 
-export { makeRepond };
+export { initRepond as makeRepond };
