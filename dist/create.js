@@ -20,18 +20,18 @@ T_StepName extends string,
 
 */
 export function initRepond(allInfo, extraOptions) {
-    const { dontSetMeta } = extraOptions !== null && extraOptions !== void 0 ? extraOptions : {};
+    const { dontSetMeta } = extraOptions ?? {};
     // type StepName = T_StepNamesParam[number] | "default";
     // type StepName = RepondTypes["StepNames"][number];
     // type StoreName = T_ItemType;
     const itemTypes = Object.keys(allInfo);
-    const stepNamesUntyped = (extraOptions === null || extraOptions === void 0 ? void 0 : extraOptions.stepNames)
+    const stepNamesUntyped = extraOptions?.stepNames
         ? [...extraOptions.stepNames]
         : ["default"];
     if (!stepNamesUntyped.includes("default"))
         stepNamesUntyped.push("default");
     const stepNames = [...stepNamesUntyped];
-    meta.frameRateTypeOption = (extraOptions === null || extraOptions === void 0 ? void 0 : extraOptions.framerate) || "auto";
+    meta.frameRateTypeOption = extraOptions?.framerate || "auto";
     if (meta.frameRateTypeOption === "full")
         meta.frameRateType = "full";
     else if (meta.frameRateTypeOption === "half")
@@ -242,23 +242,21 @@ function _startRepondListener(newListener) {
         editedListener.step = newListener.step;
     runWhenStartingRepondListeners(() => {
         // add the new listener to all listeners and update listenerNamesByTypeByStep
-        var _a, _b, _c;
         meta.allListeners[editedListener.name] =
             editedListener;
-        meta.listenerNamesByPhaseByStep[phase][(_a = editedListener.step) !== null && _a !== void 0 ? _a : "default"] =
-            addItemToUniqueArray((_c = meta.listenerNamesByPhaseByStep[phase][(_b = editedListener.step) !== null && _b !== void 0 ? _b : "default"]) !== null && _c !== void 0 ? _c : [], editedListener.name);
+        meta.listenerNamesByPhaseByStep[phase][editedListener.step ?? "default"] =
+            addItemToUniqueArray(meta.listenerNamesByPhaseByStep[phase][editedListener.step ?? "default"] ?? [], editedListener.name);
     });
 }
 function _stopRepondListener(listenerName) {
     runWhenStoppingRepondListeners(() => {
-        var _a, _b;
         const theListener = meta.allListeners[listenerName];
         if (!theListener)
             return;
         const atStepEnd = !!theListener.atStepEnd;
         const phase = atStepEnd ? "subscribe" : "derive";
-        const step = (_a = theListener.step) !== null && _a !== void 0 ? _a : "default";
-        meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray((_b = meta.listenerNamesByPhaseByStep[phase][step]) !== null && _b !== void 0 ? _b : [], theListener.name);
+        const step = theListener.step ?? "default";
+        meta.listenerNamesByPhaseByStep[phase][step] = removeItemFromArray(meta.listenerNamesByPhaseByStep[phase][step] ?? [], theListener.name);
         delete meta.allListeners[listenerName];
     });
 }
@@ -297,7 +295,7 @@ function startItemEffect({ check, run, atStepEnd, name, step, }) {
     let runEffect = itemEffectCallbackToEffectCallback({
         theItemType: editedItemTypes,
         theItemName: editedItemNames,
-        thePropertyNames: editedPropertyNames !== null && editedPropertyNames !== void 0 ? editedPropertyNames : [],
+        thePropertyNames: editedPropertyNames ?? [],
         whatToDo: run,
         becomes: check.becomes,
     });
@@ -464,7 +462,6 @@ function makeRules(rulesToAdd) {
     function run(ruleName) {
         // NOTE this doesn't wait for the step chosen for the rule!
         // maybe it should?
-        var _a;
         const theRule = editedRulesToAdd[ruleName];
         if (!theRule)
             return;
@@ -472,7 +469,7 @@ function makeRules(rulesToAdd) {
             // Run the item rule for each item (and prop)
             const itemType = theRule.check.type;
             const itemNames = meta.itemNamesByItemType[itemType];
-            const propNames = (_a = toSafeArray(theRule.check.prop)) !== null && _a !== void 0 ? _a : [];
+            const propNames = toSafeArray(theRule.check.prop) ?? [];
             const itemsState = getState()[itemType];
             const prevItemsState = getPreviousState()[itemType];
             const itemsRefs = getRefs()[itemType];
@@ -577,10 +574,9 @@ function makeDynamicRules(rulesToAdd) {
     function stop(ruleName, 
     // @ts-ignore
     options) {
-        var _a;
         const theRuleFunction = allRules[ruleName];
         if (theRuleFunction && typeof theRuleFunction === "function") {
-            const foundOrMadeRuleName = ((_a = theRuleFunction(options)) === null || _a === void 0 ? void 0 : _a.name) || getWholeRuleName(ruleName, options);
+            const foundOrMadeRuleName = theRuleFunction(options)?.name || getWholeRuleName(ruleName, options);
             stopEffect(foundOrMadeRuleName);
         }
         else {
@@ -622,17 +618,16 @@ function makeRuleMaker(storeName, storeItemName, storyProperty, stepName, getUse
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
-                    var _a;
-                    const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
+                    const usefulStoryStuff = getUsefulParams?.();
                     const latestValue = getState()[storeName][storeItemName][storyProperty];
-                    (_a = callBacksObject[latestValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
+                    callBacksObject[latestValue]?.(usefulStoryStuff);
                 },
                 check: {
                     prop: [storyProperty],
                     name: storeItemName,
                     type: storeName,
                 },
-                step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                step: stepName ?? "default",
                 atStepEnd: true,
                 name: ruleName,
             }),
@@ -646,17 +641,16 @@ function makeLeaveRuleMaker(storeName, storeItemName, storyProperty, stepName, g
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
-                    var _a;
-                    const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
+                    const usefulStoryStuff = getUsefulParams?.();
                     const prevValue = getPreviousState()[storeName][storeItemName][storyProperty];
-                    (_a = callBacksObject[prevValue]) === null || _a === void 0 ? void 0 : _a.call(callBacksObject, usefulStoryStuff);
+                    callBacksObject[prevValue]?.(usefulStoryStuff);
                 },
                 check: {
                     prop: [storyProperty],
                     name: storeItemName,
                     type: storeName,
                 },
-                step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                step: stepName ?? "default",
                 atStepEnd: true,
                 name: ruleName,
             }),
@@ -673,17 +667,16 @@ function makeNestedRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulParams) 
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
-                    var _a, _b;
-                    const usefulStoryStuff = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
+                    const usefulStoryStuff = getUsefulParams?.();
                     const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
                     const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
-                    (_b = (_a = callBacksObject[latestValue1]) === null || _a === void 0 ? void 0 : _a[latestValue2]) === null || _b === void 0 ? void 0 : _b.call(_a, usefulStoryStuff);
+                    callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff);
                 },
                 check: [
                     { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
                     { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
                 ],
-                step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                step: stepName ?? "default",
                 atStepEnd: true,
                 name: ruleName,
             }),
@@ -700,13 +693,12 @@ function makeNestedLeaveRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulPar
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
-                    var _a;
-                    const usefulParams = getUsefulParams === null || getUsefulParams === void 0 ? void 0 : getUsefulParams();
+                    const usefulParams = getUsefulParams?.();
                     const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
                     const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
                     const prevValue1 = getPreviousState()[storeName1][storeItemName1][storyProperty1];
                     const prevValue2 = getPreviousState()[storeName2][storeItemName2][storyProperty2];
-                    const callback = (_a = callBacksObject[prevValue1]) === null || _a === void 0 ? void 0 : _a[prevValue2];
+                    const callback = callBacksObject[prevValue1]?.[prevValue2];
                     if (callback)
                         callback(usefulParams);
                 },
@@ -714,7 +706,7 @@ function makeNestedLeaveRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulPar
                     { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
                     { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
                 ],
-                step: stepName !== null && stepName !== void 0 ? stepName : "default",
+                step: stepName ?? "default",
                 atStepEnd: true,
                 name: ruleName,
             }),
@@ -754,18 +746,14 @@ function makeEmptyDiffInfo() {
 function applyPatch(patch) {
     const itemTypes = getItemTypes();
     forEach(itemTypes, (itemType) => {
-        var _a, _b;
         // Loop through removed items, and run removeRepondItem()
-        forEach((_a = patch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => removeItem({ type: itemType, name: itemName }));
+        forEach(patch.removed[itemType] ?? [], (itemName) => removeItem({ type: itemType, name: itemName }));
         // Loop through added items and run addRepondItem()
-        forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => {
-            var _a, _b;
-            return addItem({
-                type: itemType,
-                name: itemName,
-                state: (_b = (_a = patch.changed) === null || _a === void 0 ? void 0 : _a[itemType]) === null || _b === void 0 ? void 0 : _b[itemName],
-            });
-        });
+        forEach(patch.added[itemType] ?? [], (itemName) => addItem({
+            type: itemType,
+            name: itemName,
+            state: patch.changed?.[itemType]?.[itemName],
+        }));
     });
     // run setState(patch.changed)
     setState(patch.changed);
@@ -774,16 +762,15 @@ function applyPatchHere(newStates, patch) {
     const itemTypes = getItemTypes();
     const defaultStates = getDefaultStates();
     forEach(itemTypes, (itemType) => {
-        var _a, _b;
         // Loop through each removed item, and delete it from newStates
-        forEach((_a = patch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => {
+        forEach(patch.removed[itemType] ?? [], (itemName) => {
             const itemTypeState = newStates[itemType];
             if (itemTypeState && itemTypeState[itemName]) {
                 delete itemTypeState[itemName];
             }
         });
         // Loop through each new item, and add it to newStates with state(itemName)
-        forEach((_b = patch.added[itemType]) !== null && _b !== void 0 ? _b : [], (itemName) => {
+        forEach(patch.added[itemType] ?? [], (itemName) => {
             if (!newStates[itemType]) {
                 newStates[itemType] = {};
             }
@@ -859,9 +846,8 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
                 if (patchChangesForItemName) {
                     const propsChangedForType = tempDiffInfo.propsChanged[itemType];
                     forEach(propsChangedForType[itemName], (propertyName) => {
-                        var _a, _b;
                         patchChangesForItemName[propertyName] =
-                            (_b = (_a = newState === null || newState === void 0 ? void 0 : newState[itemType]) === null || _a === void 0 ? void 0 : _a[itemName]) === null || _b === void 0 ? void 0 : _b[propertyName];
+                            newState?.[itemType]?.[itemName]?.[propertyName];
                     });
                 }
             });
@@ -874,15 +860,14 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     // Loop through each property and compare
     // If they’re different, add it to the changed object
     forEach(itemTypes, (itemType) => {
-        var _a;
-        if ((_a = newPatch === null || newPatch === void 0 ? void 0 : newPatch.added[itemType]) === null || _a === void 0 ? void 0 : _a.length) {
+        if (newPatch?.added[itemType]?.length) {
             const itemNamesAddedForType = newPatch.added[itemType];
             const newItemTypeState = newState[itemType];
             let propertyNamesForItemType = [];
             let propertyNamesHaveBeenFound = false;
-            forEach(itemNamesAddedForType !== null && itemNamesAddedForType !== void 0 ? itemNamesAddedForType : [], (itemName) => {
+            forEach(itemNamesAddedForType ?? [], (itemName) => {
                 const defaultItemState = defaultStates[itemType](itemName);
-                const addedItemState = newItemTypeState === null || newItemTypeState === void 0 ? void 0 : newItemTypeState[itemName];
+                const addedItemState = newItemTypeState?.[itemName];
                 if (!propertyNamesHaveBeenFound) {
                     propertyNamesForItemType = Object.keys(defaultItemState);
                     propertyNamesHaveBeenFound = true;
@@ -890,7 +875,7 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
                 if (addedItemState) {
                     forEach(propertyNamesForItemType, (propertyName) => {
                         const defaultPropertyValue = defaultItemState[propertyName];
-                        const newPropertyValue = addedItemState === null || addedItemState === void 0 ? void 0 : addedItemState[propertyName];
+                        const newPropertyValue = addedItemState?.[propertyName];
                         if (defaultPropertyValue !== undefined &&
                             newPropertyValue !== undefined) {
                             let valuesAreTheSame = defaultPropertyValue === newPropertyValue;
@@ -935,15 +920,14 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     // If they’re different, add it to the changedPrev object
     // (same as for added, but instead of adding to newPatch.changed, it's to newDiff.changedPrev, and checking the prevState)
     forEach(itemTypes, (itemType) => {
-        var _a;
-        if ((_a = newDiff.removed[itemType]) === null || _a === void 0 ? void 0 : _a.length) {
+        if (newDiff.removed[itemType]?.length) {
             const itemNamesRemovedForType = newDiff.removed[itemType];
             const prevItemTypeState = prevState[itemType];
             let propertyNamesForItemType = [];
             let propertyNamesHaveBeenFound = false;
-            forEach(itemNamesRemovedForType !== null && itemNamesRemovedForType !== void 0 ? itemNamesRemovedForType : [], (itemName) => {
+            forEach(itemNamesRemovedForType ?? [], (itemName) => {
                 const defaultItemState = defaultStates[itemType](itemName);
-                const removedItemState = prevItemTypeState === null || prevItemTypeState === void 0 ? void 0 : prevItemTypeState[itemName];
+                const removedItemState = prevItemTypeState?.[itemName];
                 if (!propertyNamesHaveBeenFound) {
                     propertyNamesForItemType = Object.keys(defaultItemState);
                     propertyNamesHaveBeenFound = true;
@@ -951,7 +935,7 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
                 if (removedItemState) {
                     forEach(propertyNamesForItemType, (propertyName) => {
                         const defaultPropertyValue = defaultItemState[propertyName];
-                        const newPropertyValue = removedItemState === null || removedItemState === void 0 ? void 0 : removedItemState[propertyName];
+                        const newPropertyValue = removedItemState?.[propertyName];
                         if (defaultPropertyValue !== undefined &&
                             newPropertyValue !== undefined) {
                             let valuesAreTheSame = removedItemState[propertyName] === newPropertyValue;
@@ -1006,14 +990,13 @@ function combineTwoPatches(prevPatch, newPatch) {
     //
     forEach(itemTypes, (itemType) => {
         // combine added and removed , and remove duplicates
-        var _a;
         const itemsAddedPrev = prevPatch.added[itemType];
         const itemsAddedNew = newPatch.added[itemType];
-        const hasAddedItems = (itemsAddedPrev === null || itemsAddedPrev === void 0 ? void 0 : itemsAddedPrev.length) || (itemsAddedNew === null || itemsAddedNew === void 0 ? void 0 : itemsAddedNew.length);
+        const hasAddedItems = itemsAddedPrev?.length || itemsAddedNew?.length;
         if (hasAddedItems) {
             combinedPatch.added[itemType] = getUniqueArrayItems([
-                ...(itemsAddedPrev !== null && itemsAddedPrev !== void 0 ? itemsAddedPrev : []),
-                ...(itemsAddedNew !== null && itemsAddedNew !== void 0 ? itemsAddedNew : []),
+                ...(itemsAddedPrev ?? []),
+                ...(itemsAddedNew ?? []),
             ]);
         }
         const itemsRemovedPrev = prevPatch.removed[itemType];
@@ -1022,8 +1005,8 @@ function combineTwoPatches(prevPatch, newPatch) {
             (itemsRemovedNew && itemsRemovedNew.length > 0);
         if (hasRemovedItems) {
             combinedPatch.removed[itemType] = getUniqueArrayItems([
-                ...(itemsRemovedPrev !== null && itemsRemovedPrev !== void 0 ? itemsRemovedPrev : []),
-                ...(itemsRemovedNew !== null && itemsRemovedNew !== void 0 ? itemsRemovedNew : []),
+                ...(itemsRemovedPrev ?? []),
+                ...(itemsRemovedNew ?? []),
             ]);
         }
         // Anything in removed in prev that was added in new, removed from removed
@@ -1052,8 +1035,8 @@ function combineTwoPatches(prevPatch, newPatch) {
         const hasChangedItems = itemsChangedPrev || itemsChangedNew;
         if (hasChangedItems) {
             const allChangedItemNames = Object.keys({
-                ...(itemsChangedPrev !== null && itemsChangedPrev !== void 0 ? itemsChangedPrev : {}),
-                ...(itemsChangedNew !== null && itemsChangedNew !== void 0 ? itemsChangedNew : {}),
+                ...(itemsChangedPrev ?? {}),
+                ...(itemsChangedNew ?? {}),
             });
             if (!combinedPatch.changed[itemType]) {
                 combinedPatch.changed[itemType] = {};
@@ -1061,15 +1044,14 @@ function combineTwoPatches(prevPatch, newPatch) {
             const combinedPatchChangedForItemType = combinedPatch.changed[itemType];
             if (combinedPatchChangedForItemType) {
                 forEach(allChangedItemNames, (itemName) => {
-                    var _a, _b;
                     const combinedPatchChangedForItemName = combinedPatchChangedForItemType[itemName];
                     combinedPatchChangedForItemType[itemName] = {
-                        ...((_a = itemsChangedPrev === null || itemsChangedPrev === void 0 ? void 0 : itemsChangedPrev[itemName]) !== null && _a !== void 0 ? _a : {}),
-                        ...((_b = itemsChangedNew === null || itemsChangedNew === void 0 ? void 0 : itemsChangedNew[itemName]) !== null && _b !== void 0 ? _b : {}),
+                        ...(itemsChangedPrev?.[itemName] ?? {}),
+                        ...(itemsChangedNew?.[itemName] ?? {}),
                     };
                 });
                 // Remove any item changes that are in removed
-                forEach((_a = combinedPatch.removed[itemType]) !== null && _a !== void 0 ? _a : [], (itemName) => {
+                forEach(combinedPatch.removed[itemType] ?? [], (itemName) => {
                     if (combinedPatchChangedForItemType[itemName]) {
                         delete combinedPatchChangedForItemType[itemName];
                     }
@@ -1099,11 +1081,10 @@ function makeMinimalPatch(currentStates, thePatch) {
         const propertyNames = Object.keys(defaultStates[itemType]("anItemName"));
         const changedForType = minimalPatch.changed[itemType];
         if (changedForType) {
-            const changedItemNames = Object.keys(changedForType !== null && changedForType !== void 0 ? changedForType : {});
+            const changedItemNames = Object.keys(changedForType ?? {});
             forEach(changedItemNames, (itemName) => {
-                var _a;
                 const changedForItem = changedForType[itemName];
-                const itemState = (_a = currentStates === null || currentStates === void 0 ? void 0 : currentStates[itemType]) === null || _a === void 0 ? void 0 : _a[itemName];
+                const itemState = currentStates?.[itemType]?.[itemName];
                 if (changedForItem && itemState) {
                     forEach(propertyNames, (propertyName) => {
                         // If the value’s the same as state, remove that change property
@@ -1113,7 +1094,7 @@ function makeMinimalPatch(currentStates, thePatch) {
                     });
                 }
                 // (if the item has no more properties, remove that changed item)
-                const changedPropertyNames = Object.keys(changedForItem !== null && changedForItem !== void 0 ? changedForItem : {});
+                const changedPropertyNames = Object.keys(changedForItem ?? {});
                 if (changedPropertyNames.length === 0) {
                     delete changedForType[itemName];
                 }
@@ -1121,11 +1102,11 @@ function makeMinimalPatch(currentStates, thePatch) {
         }
         // Loop through the added items, if the item already exists in state, remove it from added
         if (minimalPatch.added[itemType]) {
-            minimalPatch.added[itemType] = minimalPatch.added[itemType].filter((itemName) => { var _a; return !!((_a = currentStates === null || currentStates === void 0 ? void 0 : currentStates[itemType]) === null || _a === void 0 ? void 0 : _a[itemName]); });
+            minimalPatch.added[itemType] = minimalPatch.added[itemType].filter((itemName) => !!currentStates?.[itemType]?.[itemName]);
         }
         // Loop through the removed items, if the item doesn’t exist in state, remove it from removed
         if (minimalPatch.removed[itemType]) {
-            minimalPatch.removed[itemType] = minimalPatch.removed[itemType].filter((itemName) => { var _a; return !((_a = currentStates === null || currentStates === void 0 ? void 0 : currentStates[itemType]) === null || _a === void 0 ? void 0 : _a[itemName]); });
+            minimalPatch.removed[itemType] = minimalPatch.removed[itemType].filter((itemName) => !currentStates?.[itemType]?.[itemName]);
         }
     });
 }
@@ -1153,13 +1134,13 @@ function removePartialPatch(thePatch, patchToRemove) {
         const removedPatchChangedForType = patchToRemove.changed[itemType];
         const newPatchChangedForType = newPatch.changed[itemType];
         if (removedPatchChangedForType && newPatchChangedForType) {
-            const changedItemNames = Object.keys(removedPatchChangedForType !== null && removedPatchChangedForType !== void 0 ? removedPatchChangedForType : {});
+            const changedItemNames = Object.keys(removedPatchChangedForType ?? {});
             forEach(changedItemNames, (itemName) => {
                 const removedPatchChangedForItem = removedPatchChangedForType[itemName];
                 const newPatchChangedForItem = newPatchChangedForType[itemName];
                 if (removedPatchChangedForItem && newPatchChangedForItem) {
                     // (if the item has no more properties, remove that changed item)
-                    const removedPatchChangedPropertyNames = Object.keys(removedPatchChangedForItem !== null && removedPatchChangedForItem !== void 0 ? removedPatchChangedForItem : {});
+                    const removedPatchChangedPropertyNames = Object.keys(removedPatchChangedForItem ?? {});
                     forEach(removedPatchChangedPropertyNames, (propertyName) => {
                         if (JSON.stringify(removedPatchChangedForItem[propertyName]) ===
                             JSON.stringify(newPatchChangedForItem[propertyName])) {
@@ -1167,7 +1148,7 @@ function removePartialPatch(thePatch, patchToRemove) {
                         }
                     });
                 }
-                const changedPropertyNamesB = Object.keys(removedPatchChangedForItem !== null && removedPatchChangedForItem !== void 0 ? removedPatchChangedForItem : {});
+                const changedPropertyNamesB = Object.keys(removedPatchChangedForItem ?? {});
                 // If there's no more property changes for an item name, or that item isn't added anymore, then remove it from changes
                 const noMorePropertyChanges = changedPropertyNamesB.length === 0;
                 if (noMorePropertyChanges || noLongerAddedItems.includes(itemName)) {

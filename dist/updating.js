@@ -154,7 +154,6 @@ function removeRemovedItemRefs() {
     }
 }
 function runSetOfDeriveListeners(stepName) {
-    var _a;
     meta.currentMetaPhase = "runningDeriveListeners";
     runDeriveListeners(stepName);
     if (!meta.recordedDeriveChanges.somethingChanged)
@@ -183,7 +182,7 @@ function runSetOfDeriveListeners(stepName) {
     console.warn("running derive listeners a lot :S");
     console.log("step name", meta.currentStepName);
     console.log("listener names");
-    console.log(JSON.stringify((_a = meta.listenerNamesByPhaseByStep.derive) === null || _a === void 0 ? void 0 : _a[meta.currentStepName], null, 2));
+    console.log(JSON.stringify(meta.listenerNamesByPhaseByStep.derive?.[meta.currentStepName], null, 2));
     console.log("changes");
     console.log(JSON.stringify(Object.entries(meta.recordedDeriveChanges.itemTypesBool)
         .filter((item) => item[1] === true)

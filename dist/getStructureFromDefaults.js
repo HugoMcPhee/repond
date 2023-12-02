@@ -10,12 +10,11 @@ export function getRepondStructureFromDefaults() {
     */
     meta.itemTypeNames = Object.keys(meta.defaultStateByItemType);
     forEach(meta.itemTypeNames, (itemType) => {
-        var _a;
         if (!validItemNameByType[itemType]) {
             const nowItemNames = Object.keys(meta.currentState[itemType]);
             validItemNameByType[itemType] = nowItemNames[0];
         }
-        let validName = (_a = validItemNameByType[itemType]) !== null && _a !== void 0 ? _a : "testItemName";
+        let validName = validItemNameByType[itemType] ?? "testItemName";
         const propNames = Object.keys(meta.defaultStateByItemType[itemType](validName));
         meta.propNamesByItemType[itemType] = propNames;
     });

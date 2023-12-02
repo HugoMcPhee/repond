@@ -14,8 +14,7 @@ export function toSafeArray(theValue) {
 }
 // same as toSafeArray, but returns an empty array instead of undefined
 export function asArray(theValue) {
-    var _a;
-    return (_a = toSafeArray(theValue)) !== null && _a !== void 0 ? _a : [];
+    return toSafeArray(theValue) ?? [];
 }
 //  For createConcepts
 export function makeRefsStructureFromRepondState() {

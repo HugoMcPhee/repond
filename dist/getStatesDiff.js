@@ -240,7 +240,6 @@ function clearDiffInfo(diffInfo) {
 export default function makeGetStatesDiffFunction() {
     const { itemTypeNames, propNamesByItemType } = meta;
     return function getStatesDiff(currentState, prevState, diffInfo, recordedChanges, checkAllChanges) {
-        var _a, _b, _c;
         // let itemNames = meta.itemNamesByItemType;
         let previousItemNames = [];
         // NOTE could move into same loop as below!
@@ -267,7 +266,7 @@ export default function makeGetStatesDiffFunction() {
                 for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
                     const itemName = itemNames[nameIndex];
                     if (checkAllChanges ||
-                        ((_a = recordedChanges.itemNamesBool[itemType]) === null || _a === void 0 ? void 0 : _a[itemName]) === true) {
+                        recordedChanges.itemNamesBool[itemType]?.[itemName] === true) {
                         // check for items added since previous object
                         if (prevState[itemType][itemName] === undefined) {
                             diffInfo.itemsAdded.all__.push(itemName);
@@ -287,7 +286,7 @@ export default function makeGetStatesDiffFunction() {
                             for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; ++propIndex) {
                                 const itemPropName = propNamesByItemType[itemType][propIndex];
                                 if (checkAllChanges ||
-                                    ((_c = (_b = recordedChanges.itemPropertiesBool[itemType]) === null || _b === void 0 ? void 0 : _b[itemName]) === null || _c === void 0 ? void 0 : _c[itemPropName]) === true) {
+                                    recordedChanges.itemPropertiesBool[itemType]?.[itemName]?.[itemPropName] === true) {
                                     // propAddedToPropsChanged = false;
                                     // TODO IDEA - fast compare object values
                                     // if its not the same, and it's an object

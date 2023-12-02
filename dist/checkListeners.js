@@ -2,9 +2,8 @@ import meta from "./meta";
 const listenerNamesToUpdate = [];
 const noListenerNames = [];
 export default function checkListeners(phase = "subscribe", stepName = "default") {
-    var _a;
     listenerNamesToUpdate.length = 0;
-    let foundListenerNames = (_a = meta.listenerNamesByPhaseByStep[phase][stepName]) !== null && _a !== void 0 ? _a : noListenerNames;
+    let foundListenerNames = meta.listenerNamesByPhaseByStep[phase][stepName] ?? noListenerNames;
     let allListeners = meta.allListeners;
     for (let nameIndex = 0; nameIndex < foundListenerNames.length; nameIndex++) {
         const listenerName = foundListenerNames[nameIndex];
@@ -25,7 +24,6 @@ export default function checkListeners(phase = "subscribe", stepName = "default"
 }
 const checkerAllOption = ["all__"];
 function checkIfCheckerChanged(theChecker, diffInfo) {
-    var _a, _b;
     const editedChecker = {
         types: theChecker.types || checkerAllOption,
         names: theChecker.names || checkerAllOption,
@@ -59,7 +57,7 @@ function checkIfCheckerChanged(theChecker, diffInfo) {
     for (let typesIndex = 0; typesIndex < editedChecker.types.length; typesIndex++) {
         const loopedItemType = editedChecker.types[typesIndex];
         if (editedChecker.names[0] === "all__" &&
-            ((_b = (_a = diffInfo.itemsAdded) === null || _a === void 0 ? void 0 : _a[loopedItemType]) === null || _b === void 0 ? void 0 : _b.length) > 0
+            diffInfo.itemsAdded?.[loopedItemType]?.length > 0
         // diffInfo.itemsRemoved[loopedItemType].length > 0)   // checking itemsRemoved used to cause issues, but doesn't seem to now?
         ) {
             listenerShouldUpdate = true;
