@@ -226,8 +226,8 @@ export function createDiffInfo(diffInfo: UntypedDiffInfo) {
 
       forEach(meta.propNamesByItemType[itemType], (propName) => {
         diffInfo.propsChangedBool[itemType][itemName][propName] = false;
-        diffInfo.propsChangedBool[itemType].all__[propName] = false;
-        diffInfo.propsChangedBool.all__[propName] = false;
+        diffInfo.propsChangedBool[itemType].all__![propName] = false;
+        diffInfo.propsChangedBool.all__![propName] = false;
       });
     });
   });
@@ -236,7 +236,7 @@ export function createDiffInfo(diffInfo: UntypedDiffInfo) {
 function clearDiffInfo(diffInfo: UntypedDiffInfo) {
   diffInfo.itemTypesChanged.length = 0;
   diffInfo.itemsChanged.all__.length = 0;
-  diffInfo.propsChanged.all__.length = 0;
+  diffInfo.propsChanged.all__!.length = 0;
 
   diffInfo.itemsAdded.all__.length = 0;
   diffInfo.itemsRemoved.all__.length = 0;
@@ -251,7 +251,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
     diffInfo.itemsAdded[itemType].length = 0;
     diffInfo.itemsRemoved[itemType].length = 0;
     diffInfo.itemsChanged[itemType].length = 0;
-    diffInfo.propsChanged[itemType].all__.length = 0;
+    diffInfo.propsChanged[itemType].all__!.length = 0;
 
     for (
       let nameIndex = 0;
@@ -274,7 +274,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
         const propName = meta.propNamesByItemType[itemType][propIndex];
 
         diffInfo.propsChangedBool[itemType][itemName][propName] = false;
-        diffInfo.propsChangedBool[itemType].all__[propName] = false;
+        diffInfo.propsChangedBool[itemType].all__![propName] = false;
       }
     }
   }

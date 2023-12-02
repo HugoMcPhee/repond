@@ -1,6 +1,18 @@
 import { KeysOfUnion, DeepReadonly, SetRepondState, XOR, ExtendsString, GetPartialState, RepondCallback } from "./types";
+import { RepondTypes } from "./declarations";
+type StepName = RepondTypes["StepNames"][number];
+type AllStoreInfo = RepondTypes["AllStoreInfo"];
+export type ItemType = keyof AllStoreInfo;
+type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["refs"];
+type StartStatesItemName<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["startStates"] extends Record<string, any> ? keyof AllStoreInfo[K_Type]["startStates"] : string;
+export type AllState = {
+    [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"] extends Record<string, any> ? AllStoreInfo[K_Type]["startStates"] : Record<string, ReturnType<AllStoreInfo[K_Type]["state"]>>;
+};
+export type AllRefs = {
+    [K_Type in ItemType]: Record<StartStatesItemName<K_Type>, ReturnType<Get_DefaultRefs<K_Type>>>;
+};
 type ItemName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = ExtendsString<KeysOfUnion<T_State[K_Type]>>;
-type PropertyName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = KeysOfUnion<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]>;
+type PropertyName<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = KeysOfUnion<T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>]> & string;
 type AllProperties<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     [K_Type in T_ItemType]: PropertyName<K_Type, T_ItemType, T_State>;
 }[T_ItemType];
@@ -133,7 +145,7 @@ type UseStoreItemParams<K_Type extends T_ItemType, T_ItemType extends string | n
     itemState: T_State[K_Type][ItemName<K_Type, T_ItemType, T_State>];
     itemRefs: T_Refs[K_Type][ItemName<K_Type, T_ItemType, T_State>];
 };
-export declare function _createStoreHelpers<T_AllInfo extends {
+export declare function initRepond<T_AllInfo extends {
     [StoreName: string]: {
         state: (itemName: any) => any;
         refs: (itemName: any, type: any) => any;
@@ -144,228 +156,173 @@ export declare function _createStoreHelpers<T_AllInfo extends {
     dontSetMeta?: boolean;
     framerate?: "full" | "half" | "auto";
 }): {
-    getPreviousState: () => { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; };
-    getState: () => DeepReadonly<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-    setState: SetRepondState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-    onNextTick: (callback: RepondCallback) => void;
-    getRefs: () => { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; };
-    getItem: <K_Type_2 extends T_ItemType, T_ItemName extends ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_2]>>>(type: K_Type_2, name: T_ItemName) => [{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_2][T_ItemName], { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }[K_Type_2][T_ItemName], { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_2][T_ItemName]];
-    makeRules: <K_RuleName extends string>(rulesToAdd: (arg0: {
-        itemEffect: <K_Type_3 extends T_ItemType, K_PropertyName extends KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_3][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_3]>>]>>(options: ItemEffect_RuleOptions__NoMeta<K_Type_3, K_PropertyName, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }, "default" | T_StepNamesParam[number]>) => any;
-        effect: <K_Type_4 extends T_ItemType>(options: Effect_RuleOptions__NoMeta<K_Type_4, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, "default" | T_StepNamesParam[number]>) => any;
-    }) => Record<K_RuleName, MakeRule_Rule<T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }, "default" | T_StepNamesParam[number]>>) => {
-        start: (ruleName: K_RuleName) => void;
-        stop: (ruleName: K_RuleName) => void;
-        startAll: () => void;
-        stopAll: () => void;
-        ruleNames: K_RuleName[];
-        run: (ruleName: K_RuleName) => void;
-        runAll: () => void;
+    getPreviousState: () => AllState;
+    getState: () => {
+        readonly [x: string]: {
+            readonly [x: string]: any;
+        };
+        readonly [x: number]: {
+            readonly [x: string]: any;
+        };
     };
-    makeDynamicRules: <K_RuleName_1 extends string, T_MakeRule_Function extends (...args: any) => MakeRule_Rule<T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }, "default" | T_StepNamesParam[number]>, T_RulesToAdd = Record<K_RuleName_1, T_MakeRule_Function>>(rulesToAdd: (arg0: {
-        itemEffect: <K_Type_5 extends T_ItemType, K_PropertyName_1 extends KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_5][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_5]>>]>, T_Options extends unknown>(theRule: (options: T_Options) => ItemEffect_RuleOptions__NoMeta<K_Type_5, K_PropertyName_1, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }, "default" | T_StepNamesParam[number]>) => (options: T_Options) => any;
-        effect: <K_Type_6 extends T_ItemType, T_Options_1 extends unknown>(theRule: (options: T_Options_1) => Effect_RuleOptions__NoMeta<K_Type_6, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, "default" | T_StepNamesParam[number]>) => (options: T_Options_1) => any;
-    }) => T_RulesToAdd) => {
-        start: <K_ChosenRuleName extends keyof T_RulesToAdd & K_RuleName_1>(ruleName: K_ChosenRuleName, options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]) => void;
-        stop: <K_ChosenRuleName_1 extends keyof T_RulesToAdd & K_RuleName_1>(ruleName: K_ChosenRuleName_1, options: Parameters<T_RulesToAdd[K_ChosenRuleName_1]>[0]) => void;
-        ruleNames: (keyof T_RulesToAdd)[];
-        startAll: (options: Parameters<T_RulesToAdd[keyof T_RulesToAdd]>[0]) => void;
-        stopAll: (options: Parameters<T_RulesToAdd[keyof T_RulesToAdd]>[0]) => void;
-    };
-    makeRuleMaker: <T_StoreName extends T_ItemType & string, T_StoreItemName extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName] & string, T_PropertyName extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName][T_StoreItemName] & string, T_StepName extends "default" | T_StepNamesParam[number], T_UsefulParams extends Record<any, any>>(storeName: T_StoreName, storeItemName: T_StoreItemName, storyProperty: T_PropertyName, stepName?: T_StepName, getUsefulParams?: () => T_UsefulParams) => (callBacksObject: Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName][T_StoreItemName][T_PropertyName], (usefulStuff: T_UsefulParams) => void>>) => {
-        start: (ruleName: "whenPropertyChanges") => void;
-        stop: (ruleName: "whenPropertyChanges") => void;
-        startAll: () => void;
-        stopAll: () => void;
-        ruleNames: "whenPropertyChanges"[];
-        run: (ruleName: "whenPropertyChanges") => void;
-        runAll: () => void;
-    };
-    makeLeaveRuleMaker: <T_StoreName_1 extends T_ItemType & string, T_StoreItemName_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName_1] & string, T_PropertyName_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName_1][T_StoreItemName_1] & string, T_StepName_1 extends "default" | T_StepNamesParam[number], T_UsefulParams_1 extends Record<any, any>>(storeName: T_StoreName_1, storeItemName: T_StoreItemName_1, storyProperty: T_PropertyName_1, stepName?: T_StepName_1, getUsefulParams?: () => T_UsefulParams_1) => (callBacksObject: Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName_1][T_StoreItemName_1][T_PropertyName_1], (usefulStuff: T_UsefulParams_1) => void>>) => {
-        start: (ruleName: "whenPropertyChanges") => void;
-        stop: (ruleName: "whenPropertyChanges") => void;
-        startAll: () => void;
-        stopAll: () => void;
-        ruleNames: "whenPropertyChanges"[];
-        run: (ruleName: "whenPropertyChanges") => void;
-        runAll: () => void;
-    };
-    makeNestedRuleMaker: <T_StoreName1 extends T_ItemType & string, T_StoreItemName1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1] & string, T_PropertyName1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1][T_StoreItemName1] & string, T_StoreName2 extends T_ItemType & string, T_StoreItemName2 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2] & string, T_PropertyName2 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2][T_StoreItemName2] & string, T_StepName_2 extends "default" | T_StepNamesParam[number], T_UsefulParams_2 extends Record<any, any>>(storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1], storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2], stepName?: T_StepName_2, getUsefulParams?: () => T_UsefulParams_2) => (callBacksObject: Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1][T_StoreItemName1][T_PropertyName1], Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2][T_StoreItemName2][T_PropertyName2], (usefulStuff: T_UsefulParams_2) => void>>>>) => {
-        start: (ruleName: "whenPropertyChanges") => void;
-        stop: (ruleName: "whenPropertyChanges") => void;
-        startAll: () => void;
-        stopAll: () => void;
-        ruleNames: "whenPropertyChanges"[];
-        run: (ruleName: "whenPropertyChanges") => void;
-        runAll: () => void;
-    };
-    makeNestedLeaveRuleMaker: <T_StoreName1_1 extends T_ItemType & string, T_StoreItemName1_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1_1] & string, T_PropertyName1_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1_1][T_StoreItemName1_1] & string, T_StoreName2_1 extends T_ItemType & string, T_StoreItemName2_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2_1] & string, T_PropertyName2_1 extends keyof { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2_1][T_StoreItemName2_1] & string, T_UsefulParams_3 extends Record<any, any>>(storeInfo1: [T_StoreName1_1, T_StoreItemName1_1, T_PropertyName1_1], storeInfo2: [T_StoreName2_1, T_StoreItemName2_1, T_PropertyName2_1], stepName?: "default" | T_StepNamesParam[number], getUsefulParams?: () => T_UsefulParams_3) => (callBacksObject: Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName1_1][T_StoreItemName1_1][T_PropertyName1_1], Partial<Record<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[T_StoreName2_1][T_StoreItemName2_1][T_PropertyName2_1], (usefulStuff: T_UsefulParams_3) => void>>>>) => {
-        start: (ruleName: "whenPropertyChanges") => void;
-        stop: (ruleName: "whenPropertyChanges") => void;
-        startAll: () => void;
-        stopAll: () => void;
-        ruleNames: "whenPropertyChanges"[];
-        run: (ruleName: "whenPropertyChanges") => void;
-        runAll: () => void;
-    };
-    startEffect: <K_Type_7 extends T_ItemType>(theEffect: Effect_RuleOptions__NoMeta<K_Type_7, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, "default" | T_StepNamesParam[number]>) => void;
-    startItemEffect: <K_Type_8 extends T_ItemType, K_PropertyName_2 extends KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_8][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_8]>>]>>({ check, run, atStepEnd, name, step, }: ItemEffect_RuleOptions__NoMeta<K_Type_8, K_PropertyName_2, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }, "default" | T_StepNamesParam[number]>) => string;
-    stopEffect: (listenerName: string) => void;
-    useStore: <K_Type_9 extends T_ItemType, T_ReturnedRepondProps>(whatToReturn: (state: DeepReadonly<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => T_ReturnedRepondProps, check: EffectRule_Check<K_Type_9, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, hookDeps?: any[]) => T_ReturnedRepondProps;
-    useStoreEffect: <K_Type_10 extends T_ItemType>(run: EffectCallback<T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, check: EffectRule_Check<K_Type_10, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, hookDeps?: any[]) => void;
-    useStoreItem: <K_Type_11 extends T_ItemType, K_PropertyName_3 extends KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_11][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_11]>>]>, T_ReturnType, T_TheParameters = UseStoreItemParams<K_Type_11, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }>>(itemEffectCallback: (loopedInfo: T_TheParameters) => T_ReturnType, check: OneItem_Check<K_Type_11, K_PropertyName_3, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, hookDeps?: any[]) => T_ReturnType;
-    useStoreItemEffect: <K_Type_12 extends T_ItemType, K_PropertyName_4 extends KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_12][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_12]>>]>, T_ReturnType_1>(run: (loopedInfo: ItemEffectCallbackParams<K_Type_12, K_PropertyName_4, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }>) => T_ReturnType_1, check: ItemEffectRule_Check<K_Type_12, K_PropertyName_4, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, hookDeps?: any[]) => void;
-    useStoreItemPropsEffect: <K_Type_13 extends T_ItemType>(checkItem: {
-        type: K_Type_13;
-        name: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_13]>>;
-        step?: "default" | T_StepNamesParam[number];
-    }, onPropChanges: Partial<{ [K_PropertyName_5 in KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_13][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_13]>>]>]: ItemEffectCallback<K_Type_13, K_PropertyName_5, T_ItemType, { [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }, { [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }>; }>, hookDeps?: any[]) => void;
-    addItem: <K_Type_14 extends T_ItemType>(addItemOptions: {
-        type: K_Type_14;
-        name: string;
-        state?: Partial<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_14][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_14]>>]>;
-        refs?: Partial<{ [K_Type_1 in T_ItemType]: Record<T_AllInfo[K_Type_1]["startStates"] extends Record<string, any> ? keyof T_AllInfo[K_Type_1]["startStates"] : string, ReturnType<T_AllInfo[K_Type_1]["refs"]>>; }[K_Type_14][ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_14]>>]>;
-    }, callback?: any) => void;
-    removeItem: (itemInfo: {
-        type: T_ItemType;
-        name: string;
-    }) => void;
-    makeEmptyPatch: () => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    makeEmptyDiff: () => {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    applyPatch: (patch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => void;
-    applyPatchHere: (newStates: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, patch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => void;
-    getPatch: (prevState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    getPatchAndReversed: (prevState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }[];
-    getReversePatch: (partialState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newPatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    combineTwoPatches: (prevPatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }, newPatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    combinePatches: (patchesArray: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }[]) => {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    makeMinimalPatch: (currentStates: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, thePatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => void;
-    removePartialPatch: (thePatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }, patchToRemove: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => void;
-    getDiff: (prevState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>, newState: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>) => {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    getDiffFromPatches: (forwardPatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }, reversePatch: {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    getPatchesFromDiff: (theDiff: {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => [{
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }, {
-        changed: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }];
-    combineTwoDiffs: (prevDiff: {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }, newDiff: {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }) => {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
-    combineDiffs: (diffsArray: {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    }[]) => {
-        changedNext: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        changedPrev: GetPartialState<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }>;
-        added: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-        removed: Partial<{ [K_Type_15 in T_ItemType]: ExtendsString<KeysOfUnion<{ [K_Type in T_ItemType]: T_AllInfo[K_Type]["startStates"] extends Record<string, any> ? T_AllInfo[K_Type]["startStates"] : Record<string, ReturnType<T_AllInfo[K_Type]["state"]>>; }[K_Type_15]>>[]; }>;
-    };
+    setState: SetRepondState<AllState>;
+    onNextTick: typeof onNextTick;
+    getRefs: () => AllRefs;
+    getItem: typeof getItem;
+    makeRules: typeof makeRules;
+    makeDynamicRules: typeof makeDynamicRules;
+    makeRuleMaker: typeof makeRuleMaker;
+    makeLeaveRuleMaker: typeof makeLeaveRuleMaker;
+    makeNestedRuleMaker: typeof makeNestedRuleMaker;
+    makeNestedLeaveRuleMaker: typeof makeNestedLeaveRuleMaker;
+    startEffect: typeof startEffect;
+    startItemEffect: typeof startItemEffect;
+    stopEffect: typeof stopEffect;
+    useStore: typeof useStore;
+    useStoreEffect: typeof useStoreEffect;
+    useStoreItem: typeof useStoreItem;
+    useStoreItemEffect: typeof useStoreItemEffect;
+    useStoreItemPropsEffect: typeof useStoreItemPropsEffect;
+    addItem: typeof addItem;
+    removeItem: typeof removeItem;
+    makeEmptyPatch: typeof makeEmptyPatch;
+    makeEmptyDiff: typeof makeEmptyDiff;
+    applyPatch: typeof applyPatch;
+    applyPatchHere: typeof applyPatchHere;
+    getPatch: typeof getPatch;
+    getPatchAndReversed: typeof getPatchAndReversed;
+    getReversePatch: typeof getReversePatch;
+    combineTwoPatches: typeof combineTwoPatches;
+    combinePatches: typeof combinePatches;
+    makeMinimalPatch: typeof makeMinimalPatch;
+    removePartialPatch: typeof removePartialPatch;
+    getDiff: typeof getDiff;
+    getDiffFromPatches: typeof getDiffFromPatches;
+    getPatchesFromDiff: typeof getPatchesFromDiff;
+    combineTwoDiffs: typeof combineTwoDiffs;
+    combineDiffs: typeof combineDiffs;
 };
-export {};
+declare const getState: () => DeepReadonly<AllState>;
+declare const setState: SetRepondState<AllState>;
+declare function onNextTick(callback: RepondCallback): void;
+declare const getPreviousState: () => AllState;
+declare const getRefs: () => AllRefs;
+declare function getItem<K_Type extends ItemType, T_ItemName extends ItemName<K_Type, ItemType, AllState>>(type: K_Type, name: T_ItemName): [AllState[K_Type][T_ItemName], AllRefs[K_Type][T_ItemName], AllState[K_Type][T_ItemName]];
+declare function startEffect<K_Type extends ItemType>(theEffect: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>): void;
+declare function startItemEffect<K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>>({ check, run, atStepEnd, name, step, }: ItemEffect_RuleOptions__NoMeta<K_Type, K_PropertyName, ItemType, AllState, AllRefs, StepName>): string;
+declare function stopEffect(listenerName: string): void;
+declare function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(whatToReturn: (state: DeepReadonly<AllState>) => T_ReturnedRepondProps, check: EffectRule_Check<K_Type, ItemType, AllState>, hookDeps?: any[]): T_ReturnedRepondProps;
+declare function useStoreEffect<K_Type extends ItemType>(run: EffectCallback<ItemType, AllState>, check: EffectRule_Check<K_Type, ItemType, AllState>, hookDeps?: any[]): void;
+declare function useStoreItemEffect<K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>, T_ReturnType>(run: (loopedInfo: ItemEffectCallbackParams<K_Type, K_PropertyName, ItemType, AllState, AllRefs>) => T_ReturnType, check: ItemEffectRule_Check<K_Type, K_PropertyName, ItemType, AllState>, hookDeps?: any[]): void;
+declare function useStoreItem<K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>, T_ReturnType, T_TheParameters = UseStoreItemParams<K_Type, ItemType, AllState, AllRefs>>(itemEffectCallback: (loopedInfo: T_TheParameters) => T_ReturnType, check: OneItem_Check<K_Type, K_PropertyName, ItemType, AllState>, hookDeps?: any[]): T_ReturnType;
+declare function useStoreItemPropsEffect<K_Type extends ItemType>(checkItem: {
+    type: K_Type;
+    name: ItemName<K_Type, ItemType, AllState>;
+    step?: StepName;
+}, onPropChanges: Partial<{
+    [K_PropertyName in PropertyName<K_Type, ItemType, AllState>]: ItemEffectCallback<K_Type, K_PropertyName, ItemType, AllState, AllRefs>;
+}>, hookDeps?: any[]): void;
+type AddItemOptions<K_Type extends ItemType> = {
+    type: K_Type;
+    name: string;
+    state?: Partial<AllState[K_Type][ItemName<K_Type, ItemType, AllState>]>;
+    refs?: Partial<AllRefs[K_Type][ItemName<K_Type, ItemType, AllState>]>;
+};
+declare function addItem<K_Type extends ItemType>(addItemOptions: AddItemOptions<K_Type>, callback?: any): void;
+declare function removeItem(itemInfo: {
+    type: ItemType;
+    name: string;
+}): void;
+type MakeEffect = <K_Type extends ItemType>(options: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>) => any;
+type MakeItemEffect = <K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>>(options: ItemEffect_RuleOptions__NoMeta<K_Type, K_PropertyName, ItemType, AllState, AllRefs, StepName>) => any;
+type MakeDynamicEffectInlineFunction = <K_Type extends ItemType, T_Options extends any>(theRule: (options: T_Options) => Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>) => (options: T_Options) => any;
+type MakeDynamicItemEffectInlineFunction = <K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>, T_Options extends any>(theRule: (options: T_Options) => ItemEffect_RuleOptions__NoMeta<K_Type, K_PropertyName, ItemType, AllState, AllRefs, StepName>) => (options: T_Options) => any;
+declare function makeRules<K_RuleName extends string>(rulesToAdd: (arg0: {
+    itemEffect: MakeItemEffect;
+    effect: MakeEffect;
+}) => Record<K_RuleName, MakeRule_Rule<ItemType, AllState, AllRefs, StepName>>): {
+    start: (ruleName: K_RuleName) => void;
+    stop: (ruleName: K_RuleName) => void;
+    startAll: () => void;
+    stopAll: () => void;
+    ruleNames: K_RuleName[];
+    run: (ruleName: K_RuleName) => void;
+    runAll: () => void;
+};
+declare function makeDynamicRules<K_RuleName extends string, T_MakeRule_Function extends (...args: any) => MakeRule_Rule<ItemType, AllState, AllRefs, StepName>, T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>>(rulesToAdd: (arg0: {
+    itemEffect: MakeDynamicItemEffectInlineFunction;
+    effect: MakeDynamicEffectInlineFunction;
+}) => T_RulesToAdd): {
+    start: <K_ChosenRuleName extends keyof T_RulesToAdd & K_RuleName>(ruleName: K_ChosenRuleName, options: Parameters<T_RulesToAdd[K_ChosenRuleName]>[0]) => void;
+    stop: <K_ChosenRuleName_1 extends keyof T_RulesToAdd & K_RuleName>(ruleName: K_ChosenRuleName_1, options: Parameters<T_RulesToAdd[K_ChosenRuleName_1]>[0]) => void;
+    ruleNames: (keyof T_RulesToAdd)[];
+    startAll: (options: Parameters<T_RulesToAdd[keyof T_RulesToAdd]>[0]) => void;
+    stopAll: (options: Parameters<T_RulesToAdd[keyof T_RulesToAdd]>[0]) => void;
+};
+declare function makeRuleMaker<T_StoreName extends ItemType & string, T_StoreItemName extends keyof AllState[T_StoreName] & string, T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string, T_StepName extends StepName, T_UsefulParams extends Record<any, any>>(storeName: T_StoreName, storeItemName: T_StoreItemName, storyProperty: T_PropertyName, stepName?: T_StepName, getUsefulParams?: () => T_UsefulParams): (callBacksObject: Partial<Record<AllState[T_StoreName][T_StoreItemName][T_PropertyName], (usefulStuff: T_UsefulParams) => void>>) => {
+    start: (ruleName: "whenPropertyChanges") => void;
+    stop: (ruleName: "whenPropertyChanges") => void;
+    startAll: () => void;
+    stopAll: () => void;
+    ruleNames: "whenPropertyChanges"[];
+    run: (ruleName: "whenPropertyChanges") => void;
+    runAll: () => void;
+};
+declare function makeLeaveRuleMaker<T_StoreName extends ItemType & string, T_StoreItemName extends keyof AllState[T_StoreName] & string, T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string, T_StepName extends StepName, T_UsefulParams extends Record<any, any>>(storeName: T_StoreName, storeItemName: T_StoreItemName, storyProperty: T_PropertyName, stepName?: T_StepName, getUsefulParams?: () => T_UsefulParams): (callBacksObject: Partial<Record<AllState[T_StoreName][T_StoreItemName][T_PropertyName], (usefulStuff: T_UsefulParams) => void>>) => {
+    start: (ruleName: "whenPropertyChanges") => void;
+    stop: (ruleName: "whenPropertyChanges") => void;
+    startAll: () => void;
+    stopAll: () => void;
+    ruleNames: "whenPropertyChanges"[];
+    run: (ruleName: "whenPropertyChanges") => void;
+    runAll: () => void;
+};
+declare function makeNestedRuleMaker<T_StoreName1 extends ItemType & string, T_StoreItemName1 extends keyof AllState[T_StoreName1] & string, T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] & string, T_StoreName2 extends ItemType & string, T_StoreItemName2 extends keyof AllState[T_StoreName2] & string, T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] & string, T_StepName extends StepName, T_UsefulParams extends Record<any, any>>(storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1], storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2], stepName?: T_StepName, getUsefulParams?: () => T_UsefulParams): (callBacksObject: Partial<Record<AllState[T_StoreName1][T_StoreItemName1][T_PropertyName1], Partial<Record<AllState[T_StoreName2][T_StoreItemName2][T_PropertyName2], (usefulStuff: ReturnType<NonNullable<typeof getUsefulParams>>) => void>>>>) => {
+    start: (ruleName: "whenPropertyChanges") => void;
+    stop: (ruleName: "whenPropertyChanges") => void;
+    startAll: () => void;
+    stopAll: () => void;
+    ruleNames: "whenPropertyChanges"[];
+    run: (ruleName: "whenPropertyChanges") => void;
+    runAll: () => void;
+};
+declare function makeNestedLeaveRuleMaker<T_StoreName1 extends ItemType & string, T_StoreItemName1 extends keyof AllState[T_StoreName1] & string, T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] & string, T_StoreName2 extends ItemType & string, T_StoreItemName2 extends keyof AllState[T_StoreName2] & string, T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] & string, T_UsefulParams extends Record<any, any>>(storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1], storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2], stepName?: StepName, getUsefulParams?: () => T_UsefulParams): (callBacksObject: Partial<Record<AllState[T_StoreName1][T_StoreItemName1][T_PropertyName1], Partial<Record<AllState[T_StoreName2][T_StoreItemName2][T_PropertyName2], (usefulStuff: T_UsefulParams) => void>>>>) => {
+    start: (ruleName: "whenPropertyChanges") => void;
+    stop: (ruleName: "whenPropertyChanges") => void;
+    startAll: () => void;
+    stopAll: () => void;
+    ruleNames: "whenPropertyChanges"[];
+    run: (ruleName: "whenPropertyChanges") => void;
+    runAll: () => void;
+};
+type ItemNamesByType = {
+    [K_Type in ItemType]: ItemName<K_Type, ItemType, AllState>[];
+};
+type StatesPatch = {
+    changed: GetPartialState<AllState>;
+    added: Partial<ItemNamesByType>;
+    removed: Partial<ItemNamesByType>;
+};
+type StatesDiff = {
+    changedNext: GetPartialState<AllState>;
+    changedPrev: GetPartialState<AllState>;
+    added: Partial<ItemNamesByType>;
+    removed: Partial<ItemNamesByType>;
+};
+declare function makeEmptyPatch(): StatesPatch;
+declare function makeEmptyDiff(): StatesDiff;
+declare function applyPatch(patch: StatesPatch): void;
+declare function applyPatchHere(newStates: GetPartialState<AllState>, patch: StatesPatch): void;
+declare function getPatch(prevState: GetPartialState<AllState>, newState: GetPartialState<AllState>): StatesPatch;
+declare function getPatchAndReversed(prevState: GetPartialState<AllState>, newState: GetPartialState<AllState>): StatesPatch[];
+declare function getReversePatch(partialState: GetPartialState<AllState>, newPatch: StatesPatch): StatesPatch;
+declare function combineTwoPatches(prevPatch: StatesPatch, newPatch: StatesPatch): StatesPatch;
+declare function combinePatches(patchesArray: StatesPatch[]): StatesPatch;
+declare function makeMinimalPatch(currentStates: GetPartialState<AllState>, thePatch: StatesPatch): void;
+declare function removePartialPatch(thePatch: StatesPatch, patchToRemove: StatesPatch): void;
+declare function getDiff(prevState: GetPartialState<AllState>, newState: GetPartialState<AllState>): StatesDiff;
+declare function getDiffFromPatches(forwardPatch: StatesPatch, reversePatch: StatesPatch): StatesDiff;
+declare function getPatchesFromDiff(theDiff: StatesDiff): [StatesPatch, StatesPatch];
+declare function combineTwoDiffs(prevDiff: StatesDiff, newDiff: StatesDiff): StatesDiff;
+declare function combineDiffs(diffsArray: StatesDiff[]): StatesDiff;
+export { getPreviousState, getState, setState, onNextTick, getRefs, getItem, makeRules, makeDynamicRules, makeRuleMaker, makeLeaveRuleMaker, makeNestedRuleMaker, makeNestedLeaveRuleMaker, startEffect, startItemEffect, stopEffect, useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect, addItem, removeItem, makeEmptyPatch, makeEmptyDiff, applyPatch, applyPatchHere, getPatch, getPatchAndReversed, getReversePatch, combineTwoPatches, combinePatches, makeMinimalPatch, removePartialPatch, getDiff, getDiffFromPatches, getPatchesFromDiff, combineTwoDiffs, combineDiffs, };

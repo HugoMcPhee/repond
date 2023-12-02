@@ -1,4 +1,6 @@
-import { _createStoreHelpers as createStoreHelpers } from "./create";
+import { initRepond as initRepond } from "./create";
+export * from "./declarations";
+export * from "./create";
 export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
     [itemName: string]: ReturnType<T_defaultStateFunctionType>;
 };
@@ -21,4 +23,4 @@ export declare function makeInitialState({ itemPrefix, itemAmount, defaultState,
     itemAmount: number;
     defaultState: () => any;
 }): any;
-export { createStoreHelpers };
+export { initRepond as makeRepond };
