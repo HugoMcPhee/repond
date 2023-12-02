@@ -1,5 +1,7 @@
 // import meta from "./meta";
-import { _createStoreHelpers as createStoreHelpers } from "./create";
+import { initRepond as initRepond } from "./create";
+export * from "./declarations";
+export * from "./create";
 // for generating items with names
 export function makeInitialState({ itemPrefix, itemAmount, defaultState, }) {
     const newInitialState = {};
@@ -10,7 +12,4 @@ export function makeInitialState({ itemPrefix, itemAmount, defaultState, }) {
     }
     return newInitialState;
 }
-export function exampleStepName(name) {
-    return "default";
-}
-export { createStoreHelpers };
+export { initRepond as makeRepond };

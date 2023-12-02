@@ -54,40 +54,37 @@ can check have single or arrays for every property, or would that widen all type
 */
 
 type StepName = RepondTypes["StepNames"][number];
+type AllStoreInfo = RepondTypes["AllStoreInfo"];
+export type ItemType = keyof AllStoreInfo;
 
-type G_AllInfo = RepondTypes["AllStoreInfo"];
-type G_ItemType = keyof G_AllInfo;
-
-type StoreName = G_ItemType;
-
-type DefaultStates = { [K_Type in StoreName]: G_AllInfo[K_Type]["state"] };
-type DefaultRefs = { [K_Type in StoreName]: G_AllInfo[K_Type]["refs"] };
-type Get_DefaultRefs<K_Type extends keyof G_AllInfo> =
-  G_AllInfo[K_Type]["refs"];
+type DefaultStates = { [K_Type in ItemType]: AllStoreInfo[K_Type]["state"] };
+type DefaultRefs = { [K_Type in ItemType]: AllStoreInfo[K_Type]["refs"] };
+type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> =
+  AllStoreInfo[K_Type]["refs"];
 
 // Make a type that has the start states of all the stores
 type StartStates = {
-  [K_Type in StoreName]: G_AllInfo[K_Type]["startStates"];
+  [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"];
 };
 
-type StartStatesItemName<K_Type extends keyof G_AllInfo> =
-  G_AllInfo[K_Type]["startStates"] extends Record<string, any>
-    ? keyof G_AllInfo[K_Type]["startStates"]
+type StartStatesItemName<K_Type extends keyof AllStoreInfo> =
+  AllStoreInfo[K_Type]["startStates"] extends Record<string, any>
+    ? keyof AllStoreInfo[K_Type]["startStates"]
     : string;
 
 // make an AllState type that conditionally uses the keys and values of startStates if available or otherwise uses string as the key and the return type of the default "state"  (for that store) as the value
 export type AllState = {
-  [K_Type in StoreName]: G_AllInfo[K_Type]["startStates"] extends Record<
+  [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"] extends Record<
     string,
     any
   >
-    ? G_AllInfo[K_Type]["startStates"]
-    : Record<string, ReturnType<G_AllInfo[K_Type]["state"]>>;
+    ? AllStoreInfo[K_Type]["startStates"]
+    : Record<string, ReturnType<AllStoreInfo[K_Type]["state"]>>;
 };
 
 // Make an AllRefs type that uses Get_DefaultRefs for each store
 export type AllRefs = {
-  [K_Type in StoreName]: Record<
+  [K_Type in ItemType]: Record<
     StartStatesItemName<K_Type>,
     ReturnType<Get_DefaultRefs<K_Type>> // NOTE: refs wont be generic typed, generic ReturnType doesn't seem to work with nested generic function types like Blah<_T_Blah>["blah"]<T_Paramter>
   >;
@@ -635,7 +632,7 @@ export function initRepond<
   // type StepName = RepondTypes["StepNames"][number];
 
   // type StoreName = T_ItemType;
-  const itemTypes = Object.keys(allInfo) as unknown as Readonly<StoreName[]>;
+  const itemTypes = Object.keys(allInfo) as unknown as Readonly<ItemType[]>;
 
   const stepNamesUntyped = extraOptions?.stepNames
     ? [...extraOptions.stepNames]
@@ -753,7 +750,7 @@ const getDefaultStates = (): DefaultStates =>
 const getDefaultRefs = (): DefaultRefs =>
   meta.defaultRefsByItemType as DefaultRefs;
 
-const getItemTypes = (): StoreName[] => meta.itemTypeNames;
+const getItemTypes = (): ItemType[] => meta.itemTypeNames;
 
 const getState = (): DeepReadonly<AllState> =>
   meta.currentState as DeepReadonly<AllState>;
@@ -775,7 +772,7 @@ const getRefs = (): AllRefs => meta.currentRefs as AllRefs;
 
 // Convert an itemEffect callback to a regular effect callback
 // NOTE: not typed but only internal
-function itemEffectCallbackToEffectCallback<K_Type extends StoreName>({
+function itemEffectCallbackToEffectCallback<K_Type extends ItemType>({
   theItemType,
   theItemName,
   thePropertyNames,
@@ -783,8 +780,8 @@ function itemEffectCallbackToEffectCallback<K_Type extends StoreName>({
   becomes,
 }: {
   theItemType?: K_Type | K_Type[];
-  theItemName?: ItemName<K_Type, StoreName, AllState>[];
-  thePropertyNames: AllProperties<StoreName, AllState>[];
+  theItemName?: ItemName<K_Type, ItemType, AllState>[];
+  thePropertyNames: AllProperties<ItemType, AllState>[];
   whatToDo: (options: any) => // options: IfPropertyChangedWhatToDoParams<
   //   T_State,
   //   T_ItemType,
@@ -805,7 +802,7 @@ function itemEffectCallbackToEffectCallback<K_Type extends StoreName>({
     });
   }
 
-  return (diffInfo: DiffInfo<StoreName, AllState>, frameDuration: number) => {
+  return (diffInfo: DiffInfo<ItemType, AllState>, frameDuration: number) => {
     forEach(editedItemTypes, (theItemType) => {
       const prevItemsState = getPreviousState()[theItemType] as any;
       const itemsState = (getState() as AllState)[theItemType];
@@ -862,14 +859,14 @@ function itemEffectCallbackToEffectCallback<K_Type extends StoreName>({
 }
 
 // converts a repond effect to a normalised 'listener', where the names are an array instead of one
-function anyChangeRuleACheckToListenerACheck<K_Type extends StoreName>(
-  checkProperty: EffectRule_ACheck<K_Type, StoreName, AllState>
+function anyChangeRuleACheckToListenerACheck<K_Type extends ItemType>(
+  checkProperty: EffectRule_ACheck<K_Type, ItemType, AllState>
 ) {
   return {
     names: toSafeArray(checkProperty.name),
     types: checkProperty.type as Listener_ACheck<
       K_Type,
-      StoreName,
+      ItemType,
       AllState
     >["types"],
     props: checkProperty.prop,
@@ -878,8 +875,8 @@ function anyChangeRuleACheckToListenerACheck<K_Type extends StoreName>(
 }
 
 // converts a conccept effect check to a listener check (where it's an array of checks)
-function anyChangeRuleCheckToListenerCheck<K_Type extends StoreName>(
-  checkProperty: EffectRule_Check<K_Type, StoreName, AllState>
+function anyChangeRuleCheckToListenerCheck<K_Type extends ItemType>(
+  checkProperty: EffectRule_Check<K_Type, ItemType, AllState>
 ) {
   if (Array.isArray(checkProperty)) {
     return checkProperty.map((loopedCheckProperty) =>
@@ -893,13 +890,13 @@ function anyChangeRuleCheckToListenerCheck<K_Type extends StoreName>(
 function convertEffectToListener<
   T_AnyChangeRule extends Effect_RuleOptions_NameRequired<
     any,
-    StoreName,
+    ItemType,
     AllState,
     StepName
   >
 >(
   anyChangeRule: T_AnyChangeRule
-): Listener<StoreName, StoreName, AllState, StepName> {
+): Listener<ItemType, ItemType, AllState, StepName> {
   return {
     changesToCheck: anyChangeRuleCheckToListenerCheck(anyChangeRule.check),
     atStepEnd: !!anyChangeRule.atStepEnd,
@@ -913,9 +910,9 @@ function convertEffectToListener<
 // more utils
 // --------------------------------------------------------------------
 
-function normaliseChangesToCheck<K_Type extends StoreName>(
-  changesToCheck: Listener_Check<K_Type, StoreName, AllState>
-): Listener_ACheck_MultipleItemTypes<StoreName, AllState>[] {
+function normaliseChangesToCheck<K_Type extends ItemType>(
+  changesToCheck: Listener_Check<K_Type, ItemType, AllState>
+): Listener_ACheck_MultipleItemTypes<ItemType, AllState>[] {
   const changesToCheckArray = asArray(changesToCheck);
 
   return changesToCheckArray.map(
@@ -929,18 +926,17 @@ function normaliseChangesToCheck<K_Type extends StoreName>(
   );
 }
 
-function _startRepondListener<K_Type extends StoreName>(
-  newListener: Listener<K_Type, StoreName, AllState, StepName>
+function _startRepondListener<K_Type extends ItemType>(
+  newListener: Listener<K_Type, ItemType, AllState, StepName>
 ) {
   const atStepEnd = !!newListener.atStepEnd;
   const phase: Phase = atStepEnd ? "subscribe" : "derive";
 
-  const editedListener: ListenerAfterNormalising<K_Type, StoreName, AllState> =
-    {
-      name: newListener.name,
-      changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
-      whatToDo: newListener.whatToDo,
-    };
+  const editedListener: ListenerAfterNormalising<K_Type, ItemType, AllState> = {
+    name: newListener.name,
+    changesToCheck: normaliseChangesToCheck(newListener.changesToCheck),
+    whatToDo: newListener.whatToDo,
+  };
   if (atStepEnd) editedListener.atStepEnd = atStepEnd;
   if (newListener.step) editedListener.step = newListener.step;
 
@@ -981,8 +977,8 @@ function _stopRepondListener(listenerName: string) {
 // other functions
 // --------------------------------------------------------------------
 function getItem<
-  K_Type extends StoreName,
-  T_ItemName extends ItemName<K_Type, StoreName, AllState>
+  K_Type extends ItemType,
+  T_ItemName extends ItemName<K_Type, ItemType, AllState>
 >(type: K_Type, name: T_ItemName) {
   return [
     (getState() as any)[type][name],
@@ -995,8 +991,8 @@ function getItem<
   ];
 }
 
-function startEffect<K_Type extends StoreName>(
-  theEffect: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
+function startEffect<K_Type extends ItemType>(
+  theEffect: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>
 ) {
   let listenerName = theEffect.name || toSafeListenerName("effect");
 
@@ -1013,8 +1009,8 @@ function startEffect<K_Type extends StoreName>(
 }
 
 function startItemEffect<
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>
 >({
   check,
   run,
@@ -1024,7 +1020,7 @@ function startItemEffect<
 }: ItemEffect_RuleOptions__NoMeta<
   K_Type,
   K_PropertyName,
-  StoreName,
+  ItemType,
   AllState,
   AllRefs,
   StepName
@@ -1045,7 +1041,7 @@ function startItemEffect<
     theItemType: editedItemTypes,
     theItemName: editedItemNames,
     thePropertyNames:
-      editedPropertyNames ?? ([] as AllProperties<StoreName, AllState>[]),
+      editedPropertyNames ?? ([] as AllProperties<ItemType, AllState>[]),
     whatToDo: run,
     becomes: check.becomes,
   });
@@ -1065,9 +1061,9 @@ function stopEffect(listenerName: string) {
   _stopRepondListener(listenerName);
 }
 
-function useStore<K_Type extends StoreName, T_ReturnedRepondProps>(
+function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(
   whatToReturn: (state: DeepReadonly<AllState>) => T_ReturnedRepondProps,
-  check: EffectRule_Check<K_Type, StoreName, AllState>,
+  check: EffectRule_Check<K_Type, ItemType, AllState>,
   hookDeps: any[] = []
 ): T_ReturnedRepondProps {
   const [, setTick] = useState(0);
@@ -1083,9 +1079,9 @@ function useStore<K_Type extends StoreName, T_ReturnedRepondProps>(
   return whatToReturn(meta.currentState) as T_ReturnedRepondProps;
 }
 
-function useStoreEffect<K_Type extends StoreName>(
-  run: EffectCallback<StoreName, AllState>,
-  check: EffectRule_Check<K_Type, StoreName, AllState>,
+function useStoreEffect<K_Type extends ItemType>(
+  run: EffectCallback<ItemType, AllState>,
+  check: EffectRule_Check<K_Type, ItemType, AllState>,
   hookDeps: any[] = []
 ) {
   useLayoutEffect(() => {
@@ -1097,20 +1093,20 @@ function useStoreEffect<K_Type extends StoreName>(
 }
 
 function useStoreItemEffect<
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>,
   T_ReturnType
 >(
   run: (
     loopedInfo: ItemEffectCallbackParams<
       K_Type,
       K_PropertyName,
-      StoreName,
+      ItemType,
       AllState,
       AllRefs
     >
   ) => T_ReturnType,
-  check: ItemEffectRule_Check<K_Type, K_PropertyName, StoreName, AllState>,
+  check: ItemEffectRule_Check<K_Type, K_PropertyName, ItemType, AllState>,
   hookDeps: any[] = []
 ) {
   useLayoutEffect(() => {
@@ -1124,13 +1120,13 @@ function useStoreItemEffect<
 }
 
 function useStoreItem<
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>,
   T_ReturnType,
-  T_TheParameters = UseStoreItemParams<K_Type, StoreName, AllState, AllRefs>
+  T_TheParameters = UseStoreItemParams<K_Type, ItemType, AllState, AllRefs>
 >(
   itemEffectCallback: (loopedInfo: T_TheParameters) => T_ReturnType,
-  check: OneItem_Check<K_Type, K_PropertyName, StoreName, AllState>,
+  check: OneItem_Check<K_Type, K_PropertyName, ItemType, AllState>,
   hookDeps: any[] = []
 ) {
   const [returnedState, setReturnedState] = useState({
@@ -1164,24 +1160,18 @@ useStoreItemPropsEffect(
 { type: "characters", name: "walker" },
 );
 */
-function useStoreItemPropsEffect<K_Type extends StoreName>(
+function useStoreItemPropsEffect<K_Type extends ItemType>(
   checkItem: {
     type: K_Type;
-    name: ItemName<K_Type, StoreName, AllState>;
+    name: ItemName<K_Type, ItemType, AllState>;
     step?: StepName;
   },
   onPropChanges: Partial<{
     [K_PropertyName in PropertyName<
       K_Type,
-      StoreName,
+      ItemType,
       AllState
-    >]: ItemEffectCallback<
-      K_Type,
-      K_PropertyName,
-      StoreName,
-      AllState,
-      AllRefs
-    >;
+    >]: ItemEffectCallback<K_Type, K_PropertyName, ItemType, AllState, AllRefs>;
   }>,
   hookDeps: any[] = []
 ) {
@@ -1217,13 +1207,13 @@ function useStoreItemPropsEffect<K_Type extends StoreName>(
   }, hookDeps);
 }
 
-type AddItemOptions<K_Type extends StoreName> = {
+type AddItemOptions<K_Type extends ItemType> = {
   type: K_Type;
   name: string;
-  state?: Partial<AllState[K_Type][ItemName<K_Type, StoreName, AllState>]>;
-  refs?: Partial<AllRefs[K_Type][ItemName<K_Type, StoreName, AllState>]>;
+  state?: Partial<AllState[K_Type][ItemName<K_Type, ItemType, AllState>]>;
+  refs?: Partial<AllRefs[K_Type][ItemName<K_Type, ItemType, AllState>]>;
 };
-function addItem<K_Type extends StoreName>(
+function addItem<K_Type extends ItemType>(
   addItemOptions: AddItemOptions<K_Type>,
   callback?: any
 ) {
@@ -1233,7 +1223,7 @@ function addItem<K_Type extends StoreName>(
   );
 }
 
-function removeItem(itemInfo: { type: StoreName; name: string }) {
+function removeItem(itemInfo: { type: ItemType; name: string }) {
   _removeItem(
     itemInfo as {
       type: string;
@@ -1252,20 +1242,20 @@ function removeItem(itemInfo: { type: StoreName; name: string }) {
 
 // NOTE could make options generic and return that
 // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
-type MakeEffect = <K_Type extends StoreName>(
-  options: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
+type MakeEffect = <K_Type extends ItemType>(
+  options: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>
   // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
 ) => any;
 
 // type MakeItemEffect = <K_Type extends T_ItemType, K_PropertyName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropertyName>) => ItemEffect_RuleOptions<K_Type, K_PropertyName>;
 type MakeItemEffect = <
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>
 >(
   options: ItemEffect_RuleOptions__NoMeta<
     K_Type,
     K_PropertyName,
-    StoreName,
+    ItemType,
     AllState,
     AllRefs,
     StepName
@@ -1281,20 +1271,20 @@ type MakeItemEffect = <
 ) => any;
 
 type MakeDynamicEffectInlineFunction = <
-  K_Type extends StoreName,
+  K_Type extends ItemType,
   T_Options extends any
 >(
   theRule: (
     options: T_Options
-  ) => Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
+  ) => Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>
 ) => (
   options: T_Options
   // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
 ) => any;
 
 type MakeDynamicItemEffectInlineFunction = <
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>,
   T_Options extends any
 >(
   theRule: (
@@ -1302,7 +1292,7 @@ type MakeDynamicItemEffectInlineFunction = <
   ) => ItemEffect_RuleOptions__NoMeta<
     K_Type,
     K_PropertyName,
-    StoreName,
+    ItemType,
     AllState,
     AllRefs,
     StepName
@@ -1319,20 +1309,20 @@ type MakeDynamicItemEffectInlineFunction = <
   // >;
 ) => any;
 
-function makeEffect<K_Type extends StoreName>(
-  options: Effect_RuleOptions__NoMeta<K_Type, StoreName, AllState, StepName>
-): Effect_RuleOptions<K_Type, StoreName, AllState, StepName> {
+function makeEffect<K_Type extends ItemType>(
+  options: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>
+): Effect_RuleOptions<K_Type, ItemType, AllState, StepName> {
   return { ...options, _isPerItem: false };
 }
 
 function makeItemEffect<
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>
 >(
   options: ItemEffect_RuleOptions__NoMeta<
     K_Type,
     K_PropertyName,
-    StoreName,
+    ItemType,
     AllState,
     AllRefs,
     StepName
@@ -1340,7 +1330,7 @@ function makeItemEffect<
 ): ItemEffect_RuleOptions<
   K_Type,
   K_PropertyName,
-  StoreName,
+  ItemType,
   AllState,
   AllRefs,
   StepName
@@ -1372,7 +1362,7 @@ function makeRules<K_RuleName extends string>(
     itemEffect: MakeItemEffect;
     effect: MakeEffect;
   }) => // ) => Record<K_RuleName, MakeRule_Rule >
-  Record<K_RuleName, MakeRule_Rule<StoreName, AllState, AllRefs, StepName>>
+  Record<K_RuleName, MakeRule_Rule<ItemType, AllState, AllRefs, StepName>>
 ): {
   start: (ruleName: K_RuleName) => void;
   stop: (ruleName: K_RuleName) => void;
@@ -1426,7 +1416,7 @@ function makeRules<K_RuleName extends string>(
     // maybe it should?
 
     const theRule = editedRulesToAdd[ruleName as any] as MakeRule_Rule<
-      StoreName,
+      ItemType,
       AllState,
       AllRefs,
       StepName
@@ -1435,7 +1425,7 @@ function makeRules<K_RuleName extends string>(
 
     if (theRule._isPerItem) {
       // Run the item rule for each item (and prop)
-      const itemType = theRule.check.type as StoreName;
+      const itemType = theRule.check.type as ItemType;
       const itemNames = meta.itemNamesByItemType[itemType as string];
       const propNames = toSafeArray(theRule.check.prop) ?? [];
       const itemsState = (getState() as AllState)[itemType];
@@ -1487,19 +1477,19 @@ function makeRules<K_RuleName extends string>(
 // make rules dynamic
 
 function makeDynamicEffectInlineFunction<
-  K_Type extends StoreName,
+  K_Type extends ItemType,
   T_Options extends any
 >(
   theRule: (
     options: T_Options
-  ) => Effect_RuleOptions<K_Type, StoreName, AllState, StepName>
+  ) => Effect_RuleOptions<K_Type, ItemType, AllState, StepName>
 ) {
   // return theRule;
   return (options: T_Options) => ({ ...theRule(options), _isPerItem: false });
 }
 function makeDynamicItemEffectInlineFunction<
-  K_Type extends StoreName,
-  K_PropertyName extends PropertyName<K_Type, StoreName, AllState>,
+  K_Type extends ItemType,
+  K_PropertyName extends PropertyName<K_Type, ItemType, AllState>,
   T_Options extends any
 >(
   theRule: (
@@ -1507,7 +1497,7 @@ function makeDynamicItemEffectInlineFunction<
   ) => ItemEffect_RuleOptions<
     K_Type,
     K_PropertyName,
-    StoreName,
+    ItemType,
     AllState,
     AllRefs,
     StepName
@@ -1538,7 +1528,7 @@ function makeDynamicRules<
   K_RuleName extends string,
   T_MakeRule_Function extends (
     ...args: any
-  ) => MakeRule_Rule<StoreName, AllState, AllRefs, StepName>,
+  ) => MakeRule_Rule<ItemType, AllState, AllRefs, StepName>,
   T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
 >(
   rulesToAdd: (arg0: {
@@ -1638,7 +1628,7 @@ function makeDynamicRules<
 // ---------------------------------------------------
 
 function makeRuleMaker<
-  T_StoreName extends StoreName & string,
+  T_StoreName extends ItemType & string,
   T_StoreItemName extends keyof AllState[T_StoreName] & string,
   T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string,
   T_StepName extends StepName,
@@ -1672,7 +1662,7 @@ function makeRuleMaker<
           prop: [storyProperty],
           name: storeItemName,
           type: storeName,
-        } as unknown as EffectRule_Check<T_StoreName, StoreName, AllState>,
+        } as unknown as EffectRule_Check<T_StoreName, ItemType, AllState>,
         step: stepName ?? "default",
         atStepEnd: true,
         name: ruleName,
@@ -1684,7 +1674,7 @@ function makeRuleMaker<
 }
 
 function makeLeaveRuleMaker<
-  T_StoreName extends StoreName & string,
+  T_StoreName extends ItemType & string,
   T_StoreItemName extends keyof AllState[T_StoreName] & string,
   T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string,
   T_StepName extends StepName,
@@ -1718,7 +1708,7 @@ function makeLeaveRuleMaker<
           prop: [storyProperty],
           name: storeItemName,
           type: storeName,
-        } as unknown as EffectRule_Check<T_StoreName, StoreName, AllState>,
+        } as unknown as EffectRule_Check<T_StoreName, ItemType, AllState>,
         step: stepName ?? "default",
         atStepEnd: true,
         name: ruleName,
@@ -1731,11 +1721,11 @@ function makeLeaveRuleMaker<
 
 // makeNestedRuleMaker, similar to makeRuleMaker but accepts parameters for two store properties (can be from different stores) , and the callback fires when properties of both stores change
 function makeNestedRuleMaker<
-  T_StoreName1 extends StoreName & string,
+  T_StoreName1 extends ItemType & string,
   T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
   T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] &
     string,
-  T_StoreName2 extends StoreName & string,
+  T_StoreName2 extends ItemType & string,
   T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
   T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] &
     string,
@@ -1786,7 +1776,7 @@ function makeNestedRuleMaker<
           { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
         ] as unknown as EffectRule_Check<
           T_StoreName1 | T_StoreName2,
-          StoreName,
+          ItemType,
           AllState
         >,
         step: stepName ?? "default",
@@ -1801,11 +1791,11 @@ function makeNestedRuleMaker<
 
 // makeNestedLeaveRuleMaker, the same as makeNestedRuleMaker , but the callback fires when the properties of both stores become NOT the specified values, but were previously
 function makeNestedLeaveRuleMaker<
-  T_StoreName1 extends StoreName & string,
+  T_StoreName1 extends ItemType & string,
   T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
   T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] &
     string,
-  T_StoreName2 extends StoreName & string,
+  T_StoreName2 extends ItemType & string,
   T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
   T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] &
     string,
@@ -1857,7 +1847,7 @@ function makeNestedLeaveRuleMaker<
           { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
         ] as unknown as EffectRule_Check<
           T_StoreName1 | T_StoreName2,
-          StoreName,
+          ItemType,
           AllState
         >,
         step: stepName ?? "default",
@@ -1875,7 +1865,7 @@ function makeNestedLeaveRuleMaker<
 // ---------------------------------------------------
 
 type ItemNamesByType = {
-  [K_Type in StoreName]: ItemName<K_Type, StoreName, AllState>[];
+  [K_Type in ItemType]: ItemName<K_Type, ItemType, AllState>[];
 };
 
 type StatesPatch = {
@@ -1919,7 +1909,7 @@ function makeEmptyDiffInfo() {
     propsChangedBool: {},
     itemsAddedBool: {},
     itemsRemovedBool: {},
-  } as unknown as DiffInfo<StoreName, AllState>;
+  } as unknown as DiffInfo<ItemType, AllState>;
 }
 
 function applyPatch(patch: StatesPatch) {
@@ -2098,7 +2088,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
 
       let propertyNamesForItemType = [] as PropertyName<
         typeof itemType,
-        StoreName,
+        ItemType,
         AllState
       >[];
       let propertyNamesHaveBeenFound = false;
@@ -2109,7 +2099,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
         if (!propertyNamesHaveBeenFound) {
           propertyNamesForItemType = Object.keys(
             defaultItemState
-          ) as PropertyName<typeof itemType, StoreName, AllState>[];
+          ) as PropertyName<typeof itemType, ItemType, AllState>[];
           propertyNamesHaveBeenFound = true;
         }
 
@@ -2176,7 +2166,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
 
       let propertyNamesForItemType = [] as PropertyName<
         typeof itemType,
-        StoreName,
+        ItemType,
         AllState
       >[];
       let propertyNamesHaveBeenFound = false;
@@ -2187,7 +2177,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
         if (!propertyNamesHaveBeenFound) {
           propertyNamesForItemType = Object.keys(
             defaultItemState
-          ) as PropertyName<typeof itemType, StoreName, AllState>[];
+          ) as PropertyName<typeof itemType, ItemType, AllState>[];
           propertyNamesHaveBeenFound = true;
         }
 
@@ -2339,7 +2329,7 @@ function combineTwoPatches(prevPatch: StatesPatch, newPatch: StatesPatch) {
       const allChangedItemNames = Object.keys({
         ...(itemsChangedPrev ?? {}),
         ...(itemsChangedNew ?? {}),
-      }) as ItemName<typeof itemType, StoreName, AllState>[];
+      }) as ItemName<typeof itemType, ItemType, AllState>[];
 
       if (!combinedPatch.changed[itemType]) {
         combinedPatch.changed[itemType] = {};
@@ -2394,13 +2384,13 @@ function makeMinimalPatch(
   forEach(itemTypes, (itemType) => {
     const propertyNames = Object.keys(
       defaultStates[itemType]("anItemName")
-    ) as PropertyName<typeof itemType, StoreName, AllState>[];
+    ) as PropertyName<typeof itemType, ItemType, AllState>[];
 
     const changedForType = minimalPatch.changed[itemType];
     if (changedForType) {
       const changedItemNames = Object.keys(changedForType ?? {}) as ItemName<
         typeof itemType,
-        StoreName,
+        ItemType,
         AllState
       >[];
       forEach(changedItemNames, (itemName) => {
@@ -2450,7 +2440,7 @@ function removePartialPatch(thePatch: StatesPatch, patchToRemove: StatesPatch) {
     }
     // Loop through added in patchToRemove, if it’s in newPatch , remove it
     // Keep track of noLongerAddedItems { itemType: []
-    const noLongerAddedItems: ItemName<StoreName, StoreName, AllState>[] = [];
+    const noLongerAddedItems: ItemName<ItemType, ItemType, AllState>[] = [];
     if (newPatch.added[itemType]) {
       newPatch.added[itemType] = newPatch.added[itemType]!.filter(
         (itemName) => {
@@ -2469,7 +2459,7 @@ function removePartialPatch(thePatch: StatesPatch, patchToRemove: StatesPatch) {
     if (removedPatchChangedForType && newPatchChangedForType) {
       const changedItemNames = Object.keys(
         removedPatchChangedForType ?? {}
-      ) as ItemName<typeof itemType, StoreName, AllState>[];
+      ) as ItemName<typeof itemType, ItemType, AllState>[];
       forEach(changedItemNames, (itemName) => {
         const removedPatchChangedForItem = removedPatchChangedForType[itemName];
         const newPatchChangedForItem = newPatchChangedForType[itemName];

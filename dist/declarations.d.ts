@@ -6,6 +6,7 @@ export interface AllStoreInfoUntyped {
     };
 }
 export interface RepondTypesUntyped {
+    AllStoreInfo: AllStoreInfoUntyped;
     StepNames: string[] | readonly string[];
 }
 export interface CustomRepondTypes {

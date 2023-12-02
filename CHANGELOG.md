@@ -7,7 +7,9 @@ TODO
 v 0.10.0
 
 - exports all helpers from index, no need to get heleprs from makePrendy helpers!
-- renamed createStoreHelpers to makeRepond
+- renamed createStoreHelpers to initRepond
+- exports useful types directly
+- NOTE need to edit tsconfig in projects using repond to get the full types now
 
 v0.9.2
 

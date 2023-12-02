@@ -10,6 +10,7 @@ export type InitialItemsState<
   [itemName: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
 
+// TODO remove these
 export type StoreHelperTypes<
   T_GetState extends () => { [key: string]: { [key: string]: any } },
   T_GetRefs extends () => { [key: string]: { [key: string]: any } },
