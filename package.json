@@ -1,15 +1,15 @@
 {
   "name": "repond",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "respond to items state in realtime",
   "_main": "src/index.tsx",
-  "_types": "src/index.tsx",
+  "types": "src/index.tsx",
   "_files": [
     "dist",
     "src"
   ],
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "_types": "dist/index.d.ts",
   "files": [
     "dist",
     "src"
