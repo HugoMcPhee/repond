@@ -106,7 +106,7 @@ export function createRecordedChanges(recordedChanges) {
             recordedChanges.itemNamesBool[itemType][itemName] = false;
             recordedChanges.itemPropertiesBool[itemType][itemName] = {};
             forEach(meta.propNamesByItemType[itemType], (propName) => {
-                recordedChanges.itemPropertiesBool[itemType][itemName][propName];
+                recordedChanges.itemPropertiesBool[itemType][itemName][propName]; // should have = false here?
             });
         });
     });

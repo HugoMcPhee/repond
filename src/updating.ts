@@ -133,7 +133,7 @@ export function createRecordedChanges(recordedChanges: RecordedChanges) {
       recordedChanges.itemPropertiesBool[itemType][itemName] = {};
 
       forEach(meta.propNamesByItemType[itemType], (propName) => {
-        recordedChanges.itemPropertiesBool[itemType][itemName][propName];
+        recordedChanges.itemPropertiesBool[itemType][itemName][propName]; // should have = false here?
       });
     });
   });

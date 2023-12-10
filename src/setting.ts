@@ -174,6 +174,8 @@ export function _addItem(
 
     meta.diffInfo.propsChanged[type][name] = [];
     meta.diffInfo.propsChangedBool[type][name] = {};
+    meta.recordedSubscribeChanges.itemPropertiesBool[type][name] = {};
+    meta.recordedDeriveChanges.itemPropertiesBool[type][name] = {};
 
     // if (!meta.recordedSubscribeChanges.itemNamesBool[type]) {
     //   meta.recordedSubscribeChanges.itemNamesBool[type] = {};
