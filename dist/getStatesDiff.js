@@ -228,9 +228,7 @@ function clearDiffInfo(diffInfo) {
             diffInfo.itemsChangedBool[itemType][itemName] = false;
             diffInfo.itemsAddedBool[itemType][itemName] = false;
             diffInfo.itemsRemovedBool[itemType][itemName] = false;
-            if (diffInfo.propsChanged[itemType][itemName]?.length) {
-                diffInfo.propsChanged[itemType][itemName].length = 0;
-            }
+            diffInfo.propsChanged[itemType][itemName].length = 0;
             for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
                 const propName = meta.propNamesByItemType[itemType][propIndex];
                 diffInfo.propsChangedBool[itemType][itemName][propName] = false;

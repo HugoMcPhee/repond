@@ -264,9 +264,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
 
       diffInfo.itemsAddedBool[itemType][itemName] = false;
       diffInfo.itemsRemovedBool[itemType][itemName] = false;
-      if (diffInfo.propsChanged[itemType][itemName]?.length) {
-        diffInfo.propsChanged[itemType][itemName].length = 0;
-      }
+      diffInfo.propsChanged[itemType][itemName].length = 0;
 
       for (
         let propIndex = 0;

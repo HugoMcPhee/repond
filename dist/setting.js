@@ -138,6 +138,8 @@ export function _addItem({ type, name, state, refs, }, callback) {
         };
         meta.itemNamesByItemType[type].push(name);
         meta.recordedSubscribeChanges.itemTypesBool[type] = true;
+        meta.diffInfo.propsChanged[type][name] = [];
+        meta.diffInfo.propsChangedBool[type][name] = {};
         // if (!meta.recordedSubscribeChanges.itemNamesBool[type]) {
         //   meta.recordedSubscribeChanges.itemNamesBool[type] = {};
         // }
