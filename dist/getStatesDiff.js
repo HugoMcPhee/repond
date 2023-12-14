@@ -227,7 +227,9 @@ function clearDiffInfo(diffInfo) {
             const itemName = meta.itemNamesByItemType[itemType][nameIndex];
             diffInfo.itemsChangedBool[itemType][itemName] = false;
             diffInfo.itemsAddedBool[itemType][itemName] = false;
+            diffInfo.itemsAddedBool.all__[itemName] = false;
             diffInfo.itemsRemovedBool[itemType][itemName] = false;
+            diffInfo.itemsRemovedBool.all__[itemName] = false;
             diffInfo.propsChanged[itemType][itemName].length = 0;
             for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
                 const propName = meta.propNamesByItemType[itemType][propIndex];
@@ -249,10 +251,14 @@ export default function makeGetStatesDiffFunction() {
             const itemType = itemTypeNames[typeIndex];
             itemTypeAddedToItemsTypesChanged = false;
             if (checkAllChanges || recordedChanges.itemTypesBool[itemType] === true) {
-                const itemNames = meta.itemNamesByItemType[itemType];
-                // TODO repalce this with real previous item names
-                // previousItemNames = Object.keys(prevState[itemType]);
-                const previousItemNames = meta.itemNamesByItemType[itemType];
+                const itemNames = checkAllChanges
+                    ? Object.keys(currentState[itemType])
+                    : meta.itemNamesByItemType[itemType];
+                // TODO repalce this with real previous item names?
+                // NOTE may need to handle added and removed items, when not using checkAllChanges (which is set when getting a patch or diff)
+                const previousItemNames = checkAllChanges
+                    ? Object.keys(prevState[itemType])
+                    : meta.itemNamesByItemType[itemType];
                 // check for items removed from previous object
                 for (let prevNameIndex = 0; prevNameIndex < previousItemNames.length; ++prevNameIndex) {
                     const prevItemName = previousItemNames[prevNameIndex];

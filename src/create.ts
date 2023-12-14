@@ -2,6 +2,7 @@ import meta, {
   toSafeListenerName,
   UntypedListener,
   initialRecordedChanges,
+  UntypedDiffInfo,
 } from "./meta";
 import { getRepondStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
@@ -1898,18 +1899,22 @@ function makeEmptyDiff() {
 }
 
 function makeEmptyDiffInfo() {
-  return {
+  const emptyDiffInfo: UntypedDiffInfo = {
     itemTypesChanged: [],
-    itemsChanged: {},
+    itemsChanged: { all__: [] },
     propsChanged: {},
-    itemsAdded: {},
-    itemsRemoved: {},
+    itemsAdded: { all__: [] },
+    itemsRemoved: { all__: [] },
     itemTypesChangedBool: {},
     itemsChangedBool: {},
     propsChangedBool: {},
     itemsAddedBool: {},
     itemsRemovedBool: {},
-  } as unknown as DiffInfo<ItemType, AllState>;
+  };
+
+  createDiffInfo(emptyDiffInfo);
+
+  return emptyDiffInfo as DiffInfo<ItemType, AllState>;
 }
 
 function applyPatch(patch: StatesPatch) {
@@ -2019,13 +2024,23 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
   const newPatch = makeEmptyPatch();
   const tempDiffInfo = makeEmptyDiffInfo();
   const tempManualUpdateChanges = initialRecordedChanges();
-  meta.getStatesDiff(
-    newState, // currentState
-    prevState, // previousState
-    tempDiffInfo,
-    tempManualUpdateChanges, // manualUpdateChanges
-    true // checkAllChanges
-  );
+  console.log("newPatch here -1");
+
+  try {
+    meta.getStatesDiff(
+      newState, // currentState
+      prevState, // previousState
+      tempDiffInfo,
+      tempManualUpdateChanges, // manualUpdateChanges
+      true // checkAllChanges
+    );
+  } catch (error: any) {
+    console.log("Error");
+    console.log(error);
+  }
+
+  console.log("after getStatesDiff");
+
   // Then can use tempDiffInfo to make the patch (with items removed etc)
   forEach(itemTypes, (itemType) => {
     // Add added and removed with itemsAdded and itemsRemoved

@@ -172,21 +172,18 @@ export function _addItem(
     meta.itemNamesByItemType[type].push(name);
     meta.recordedSubscribeChanges.itemTypesBool[type] = true;
 
-    meta.diffInfo.propsChanged[type][name] = [];
-    meta.diffInfo.propsChangedBool[type][name] = {};
+    // TODO Figure out if adding an item should record the properties as chnaged or not?
+
     meta.recordedSubscribeChanges.itemPropertiesBool[type][name] = {};
     meta.recordedDeriveChanges.itemPropertiesBool[type][name] = {};
 
-    // if (!meta.recordedSubscribeChanges.itemNamesBool[type]) {
-    //   meta.recordedSubscribeChanges.itemNamesBool[type] = {};
-    // }
+    meta.diffInfo.propsChanged[type][name] = [];
+    meta.diffInfo.propsChangedBool[type][name] = {};
+
     meta.recordedSubscribeChanges.itemNamesBool[type][name] = true;
     meta.recordedSubscribeChanges.somethingChanged = true;
     meta.recordedDeriveChanges.itemTypesBool[type] = true;
 
-    // if (!meta.recordedDeriveChanges.itemNamesBool[type]) {
-    //   meta.recordedDeriveChanges.itemNamesBool[type] = {};
-    // }
     meta.recordedDeriveChanges.itemNamesBool[type][name] = true;
     meta.recordedDeriveChanges.somethingChanged = true;
   }, callback);

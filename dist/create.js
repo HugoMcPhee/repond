@@ -730,18 +730,20 @@ function makeEmptyDiff() {
     };
 }
 function makeEmptyDiffInfo() {
-    return {
+    const emptyDiffInfo = {
         itemTypesChanged: [],
-        itemsChanged: {},
+        itemsChanged: { all__: [] },
         propsChanged: {},
-        itemsAdded: {},
-        itemsRemoved: {},
+        itemsAdded: { all__: [] },
+        itemsRemoved: { all__: [] },
         itemTypesChangedBool: {},
         itemsChangedBool: {},
         propsChangedBool: {},
         itemsAddedBool: {},
         itemsRemovedBool: {},
     };
+    createDiffInfo(emptyDiffInfo);
+    return emptyDiffInfo;
 }
 function applyPatch(patch) {
     const itemTypes = getItemTypes();
@@ -811,11 +813,19 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     const newPatch = makeEmptyPatch();
     const tempDiffInfo = makeEmptyDiffInfo();
     const tempManualUpdateChanges = initialRecordedChanges();
-    meta.getStatesDiff(newState, // currentState
-    prevState, // previousState
-    tempDiffInfo, tempManualUpdateChanges, // manualUpdateChanges
-    true // checkAllChanges
-    );
+    console.log("newPatch here -1");
+    try {
+        meta.getStatesDiff(newState, // currentState
+        prevState, // previousState
+        tempDiffInfo, tempManualUpdateChanges, // manualUpdateChanges
+        true // checkAllChanges
+        );
+    }
+    catch (error) {
+        console.log("Error");
+        console.log(error);
+    }
+    console.log("after getStatesDiff");
     // Then can use tempDiffInfo to make the patch (with items removed etc)
     forEach(itemTypes, (itemType) => {
         // Add added and removed with itemsAdded and itemsRemoved
