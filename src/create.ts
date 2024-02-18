@@ -32,7 +32,13 @@ import {
   asArray,
   toSafeArray,
 } from "./utils";
-import { useLayoutEffect, useState, useCallback, useEffect } from "react";
+import {
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   addItemToUniqueArray,
   removeItemFromArray,
@@ -1120,6 +1126,7 @@ function useStoreItemEffect<
   }, hookDeps);
 }
 
+// NOTE it automatically supports changing item name, but not item type or props, that needs custom hookDeps
 function useStoreItem<
   K_Type extends ItemType,
   K_PropertyName extends PropertyName<K_Type, ItemType, AllState>,
@@ -1130,27 +1137,39 @@ function useStoreItem<
   check: OneItem_Check<K_Type, K_PropertyName, ItemType, AllState>,
   hookDeps: any[] = []
 ) {
-  const [returnedState, setReturnedState] = useState({
-    itemName: check.name,
-    prevItemState: getPreviousState()[check.type][check.name],
-    itemState: (getState() as any)[check.type as any][check.name],
-    itemRefs: getRefs()[check.type][check.name],
-  } as unknown as T_TheParameters);
-  // NOTE: could save timeUpdated to state, storing state in a ref, so it could reuse an object? not sure
-  // const [timeUpdated, setTimeUpdated] = useState(Date.now());
+  function getInitialState() {
+    return {
+      itemName: check.name,
+      prevItemState: getPreviousState()[check.type][check.name],
+      itemState: (getState() as any)[check.type as any][check.name],
+      itemRefs: getRefs()[check.type][check.name],
+    } as unknown as T_TheParameters;
+  }
 
-  useLayoutEffect(() => {
-    const name = toSafeListenerName("useStoreItem"); // note could add JSON.stringify(check) for useful listener name
+  const didRender = useRef(false);
 
-    startItemEffect({
-      name,
-      atStepEnd: true,
-      check,
-      run: (theParameters) => setReturnedState(theParameters as any),
-    });
-    return () => stopEffect(name);
+  const [returnedState, setReturnedState] = useState(getInitialState());
+
+  useLayoutEffect(
+    () => {
+      if (didRender.current) {
+        setReturnedState(getInitialState());
+      }
+      const name = toSafeListenerName("useStoreItem"); // note could add JSON.stringify(check) for useful listener name
+
+      startItemEffect({
+        name,
+        atStepEnd: true,
+        check,
+        run: (theParameters) => setReturnedState(theParameters as any),
+      });
+      didRender.current = true;
+
+      return () => stopEffect(name);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, hookDeps);
+    hookDeps.length > 0 ? [...hookDeps, check.name] : [check.name]
+  );
 
   return itemEffectCallback(returnedState);
 }
@@ -1176,36 +1195,41 @@ function useStoreItemPropsEffect<K_Type extends ItemType>(
   }>,
   hookDeps: any[] = []
 ) {
-  useLayoutEffect(() => {
-    type ItemEffect_PropName = keyof typeof onPropChanges;
-    const propNameKeys = Object.keys(onPropChanges) as ItemEffect_PropName[];
-    const namePrefix = toSafeListenerName("useStoreItemPropsEffect"); // note could add checkItem.type and checkItem.name for useful listener name
+  useLayoutEffect(
+    () => {
+      type ItemEffect_PropName = keyof typeof onPropChanges;
+      const propNameKeys = Object.keys(onPropChanges) as ItemEffect_PropName[];
+      const namePrefix = toSafeListenerName("useStoreItemPropsEffect"); // note could add checkItem.type and checkItem.name for useful listener name
 
-    forEach(propNameKeys, (loopedPropKey) => {
-      const name = namePrefix + (loopedPropKey as string);
-
-      const itemEffectCallback = onPropChanges[loopedPropKey];
-      startItemEffect({
-        run: itemEffectCallback as any,
-        name,
-        check: {
-          type: checkItem.type,
-          name: checkItem.name,
-          prop: loopedPropKey,
-        },
-        atStepEnd: true,
-        step: checkItem.step,
-      });
-    });
-
-    return () => {
       forEach(propNameKeys, (loopedPropKey) => {
         const name = namePrefix + (loopedPropKey as string);
-        stopEffect(name);
+
+        const itemEffectCallback = onPropChanges[loopedPropKey];
+        startItemEffect({
+          run: itemEffectCallback as any,
+          name,
+          check: {
+            type: checkItem.type,
+            name: checkItem.name,
+            prop: loopedPropKey,
+          },
+          atStepEnd: true,
+          step: checkItem.step,
+        });
       });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, hookDeps);
+
+      return () => {
+        forEach(propNameKeys, (loopedPropKey) => {
+          const name = namePrefix + (loopedPropKey as string);
+          stopEffect(name);
+        });
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    hookDeps.length > 0
+      ? [...hookDeps, checkItem.name.name]
+      : [checkItem.name.name]
+  );
 }
 
 type AddItemOptions<K_Type extends ItemType> = {
@@ -2024,7 +2048,6 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
   const newPatch = makeEmptyPatch();
   const tempDiffInfo = makeEmptyDiffInfo();
   const tempManualUpdateChanges = initialRecordedChanges();
-  console.log("newPatch here -1");
 
   try {
     meta.getStatesDiff(
@@ -2038,8 +2061,6 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
     console.log("Error");
     console.log(error);
   }
-
-  console.log("after getStatesDiff");
 
   // Then can use tempDiffInfo to make the patch (with items removed etc)
   forEach(itemTypes, (itemType) => {

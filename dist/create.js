@@ -5,7 +5,7 @@ import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import { _addItem, _removeItem, _setState, runWhenStartingRepondListeners, runWhenStoppingRepondListeners, } from "./setting";
 import { makeRefsStructureFromRepondState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
-import { useLayoutEffect, useState, useCallback, useEffect } from "react";
+import { useLayoutEffect, useState, useCallback, useEffect, useRef, } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 import { createRecordedChanges } from "./updating";
 /*
@@ -338,16 +338,22 @@ function useStoreItemEffect(run, check, hookDeps = []) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
 }
+// NOTE it automatically supports changing item name, but not item type or props, that needs custom hookDeps
 function useStoreItem(itemEffectCallback, check, hookDeps = []) {
-    const [returnedState, setReturnedState] = useState({
-        itemName: check.name,
-        prevItemState: getPreviousState()[check.type][check.name],
-        itemState: getState()[check.type][check.name],
-        itemRefs: getRefs()[check.type][check.name],
-    });
-    // NOTE: could save timeUpdated to state, storing state in a ref, so it could reuse an object? not sure
-    // const [timeUpdated, setTimeUpdated] = useState(Date.now());
+    function getInitialState() {
+        return {
+            itemName: check.name,
+            prevItemState: getPreviousState()[check.type][check.name],
+            itemState: getState()[check.type][check.name],
+            itemRefs: getRefs()[check.type][check.name],
+        };
+    }
+    const didRender = useRef(false);
+    const [returnedState, setReturnedState] = useState(getInitialState());
     useLayoutEffect(() => {
+        if (didRender.current) {
+            setReturnedState(getInitialState());
+        }
         const name = toSafeListenerName("useStoreItem"); // note could add JSON.stringify(check) for useful listener name
         startItemEffect({
             name,
@@ -355,9 +361,11 @@ function useStoreItem(itemEffectCallback, check, hookDeps = []) {
             check,
             run: (theParameters) => setReturnedState(theParameters),
         });
+        didRender.current = true;
         return () => stopEffect(name);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, hookDeps);
+    }, 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    hookDeps.length > 0 ? [...hookDeps, check.name] : [check.name]);
     return itemEffectCallback(returnedState);
 }
 /*
@@ -392,7 +400,9 @@ function useStoreItemPropsEffect(checkItem, onPropChanges, hookDeps = []) {
             });
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, hookDeps);
+    }, hookDeps.length > 0
+        ? [...hookDeps, checkItem.name.name]
+        : [checkItem.name.name]);
 }
 function addItem(addItemOptions, callback) {
     _addItem(addItemOptions, callback);
@@ -813,7 +823,6 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     const newPatch = makeEmptyPatch();
     const tempDiffInfo = makeEmptyDiffInfo();
     const tempManualUpdateChanges = initialRecordedChanges();
-    console.log("newPatch here -1");
     try {
         meta.getStatesDiff(newState, // currentState
         prevState, // previousState
@@ -825,7 +834,6 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
         console.log("Error");
         console.log(error);
     }
-    console.log("after getStatesDiff");
     // Then can use tempDiffInfo to make the patch (with items removed etc)
     forEach(itemTypes, (itemType) => {
         // Add added and removed with itemsAdded and itemsRemoved

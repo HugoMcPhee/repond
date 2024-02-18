@@ -4,6 +4,10 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+  0.10.9
+
+- useStoreItem properly returns new state if hookDeps or the item name changes
+
 v 0.10.0
 
 - exports all helpers from index, no need to get heleprs from makePrendy helpers!
