@@ -8,20 +8,6 @@ import { makeRefsStructureFromRepondState, cloneObjectWithJson, asArray, toSafeA
 import { useLayoutEffect, useState, useCallback, useEffect, useRef, } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 import { createRecordedChanges } from "./updating";
-// ChangeToCheck
-/*
-Listener_Check
-AnyChangeRule_Check
-ItemRule_Check
-OneItem_Check
-*/
-/*
-can 'check' get clearer?
-can check have single or arrays for every property, or would that widen all types?
-*/
-console.log("--------------------");
-console.log("=====================");
-console.log("running edited repond");
 /*
 
 , T_ItemType, T_State

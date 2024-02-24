@@ -60,10 +60,6 @@ can 'check' get clearer?
 can check have single or arrays for every property, or would that widen all types?
 */
 
-console.log("--------------------");
-console.log("=====================");
-console.log("running edited repond");
-
 type StepName = RepondTypes["StepNames"][number];
 type AllStoreInfo = RepondTypes["AllStoreInfo"];
 export type ItemType = keyof AllStoreInfo;
