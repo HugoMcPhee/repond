@@ -8,6 +8,20 @@ import { makeRefsStructureFromRepondState, cloneObjectWithJson, asArray, toSafeA
 import { useLayoutEffect, useState, useCallback, useEffect, useRef, } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
 import { createRecordedChanges } from "./updating";
+// ChangeToCheck
+/*
+Listener_Check
+AnyChangeRule_Check
+ItemRule_Check
+OneItem_Check
+*/
+/*
+can 'check' get clearer?
+can check have single or arrays for every property, or would that widen all types?
+*/
+console.log("--------------------");
+console.log("=====================");
+console.log("running edited repond");
 /*
 
 , T_ItemType, T_State
@@ -21,9 +35,6 @@ T_StepName extends string,
 */
 export function initRepond(allInfo, extraOptions) {
     const { dontSetMeta } = extraOptions ?? {};
-    // type StepName = T_StepNamesParam[number] | "default";
-    // type StepName = RepondTypes["StepNames"][number];
-    // type StoreName = T_ItemType;
     const itemTypes = Object.keys(allInfo);
     const stepNamesUntyped = extraOptions?.stepNames
         ? [...extraOptions.stepNames]
@@ -139,18 +150,43 @@ const getRefs = () => meta.currentRefs;
 // -------------------------------------------------------
 // Convert an itemEffect callback to a regular effect callback
 // NOTE: not typed but only internal
-function itemEffectCallbackToEffectCallback({ theItemType, theItemName, thePropertyNames, whatToDo, becomes, }) {
-    const editedItemTypes = asArray(theItemType);
+function itemEffectCallbackToEffectCallback({ itemType, itemNames, propertyNames, whatToDo, becomes, }) {
+    const editedItemTypes = asArray(itemType);
     let allowedItemNames = undefined;
-    if (Array.isArray(theItemName)) {
+    if (itemNames) {
         allowedItemNames = {};
-        forEach(theItemName, (loopedItemName) => {
+        forEach(itemNames, (loopedItemName) => {
             if (allowedItemNames) {
                 allowedItemNames[loopedItemName] = true;
             }
         });
     }
-    return (diffInfo, frameDuration) => {
+    return (diffInfo, frameDuration, skipChangeCheck) => {
+        // if skipChangeCheck is true, it will run the whatToDo function regardless of the changes
+        if (skipChangeCheck) {
+            if (itemNames) {
+                forEach(editedItemTypes, (theItemType) => {
+                    const prevItemsState = getPreviousState()[theItemType];
+                    const itemsState = getState()[theItemType];
+                    const itemsRefs = getRefs()[theItemType];
+                    forEach(itemNames, (loopedItemName) => {
+                        breakableForEach(propertyNames, (thePropertyName) => {
+                            const newValue = itemsState[loopedItemName][thePropertyName];
+                            whatToDo({
+                                itemName: itemNames,
+                                newValue,
+                                previousValue: prevItemsState[loopedItemName][thePropertyName],
+                                itemState: itemsState[loopedItemName],
+                                itemRefs: itemsRefs[loopedItemName],
+                                frameDuration,
+                            });
+                            return true; // break out of the loop, so it only runs once
+                        });
+                    });
+                });
+            }
+            return true; // return early if skipChangeCheck was true
+        }
         forEach(editedItemTypes, (theItemType) => {
             const prevItemsState = getPreviousState()[theItemType];
             const itemsState = getState()[theItemType];
@@ -160,7 +196,7 @@ function itemEffectCallbackToEffectCallback({ theItemType, theItemName, thePrope
                     (allowedItemNames &&
                         allowedItemNames[itemNameThatChanged])))
                     return;
-                breakableForEach(thePropertyNames, (thePropertyName) => {
+                breakableForEach(propertyNames, (thePropertyName) => {
                     if (!diffInfo.propsChangedBool[theItemType][itemNameThatChanged][thePropertyName])
                         return;
                     const newValue = itemsState[itemNameThatChanged][thePropertyName];
@@ -181,9 +217,7 @@ function itemEffectCallbackToEffectCallback({ theItemType, theItemName, thePrope
                         itemState: itemsState[itemNameThatChanged],
                         itemRefs: itemsRefs[itemNameThatChanged],
                         frameDuration,
-                    }
-                    // as IfPropertyChangedWhatToDoParams<T_ItemType>
-                    );
+                    });
                     return true; // break out of the loop, so it only runs once
                 });
             });
@@ -279,23 +313,27 @@ function startEffect(theEffect) {
         run: theEffect.run,
         atStepEnd: theEffect.atStepEnd,
         step: theEffect.step,
+        runAtStart: theEffect.runAtStart,
     };
-    return _startRepondListener(convertEffectToListener(editedEffect));
+    if (theEffect.runAtStart) {
+        const result = theEffect.run(meta.diffInfo, 16.66666, true /* skipChangeCheck */);
+    }
+    _startRepondListener(convertEffectToListener(editedEffect));
 }
-function startItemEffect({ check, run, atStepEnd, name, step, }) {
+function startItemEffect({ check, run, atStepEnd, name, step, runAtStart, }) {
     let listenerName = name || "unnamedEffect" + Math.random();
     const editedItemTypes = toSafeArray(check.type);
-    let editedPropertyNames = toSafeArray(check.prop);
-    let editedItemNames = toSafeArray(check.name);
+    const editedPropertyNames = toSafeArray(check.prop);
+    const editedItemNames = toSafeArray(check.name);
     let editedChangesToCheck = {
         type: editedItemTypes,
         prop: editedPropertyNames,
         name: editedItemNames,
     };
     let runEffect = itemEffectCallbackToEffectCallback({
-        theItemType: editedItemTypes,
-        theItemName: editedItemNames,
-        thePropertyNames: editedPropertyNames ?? [],
+        itemType: editedItemTypes,
+        itemNames: editedItemNames,
+        propertyNames: editedPropertyNames ?? [],
         whatToDo: run,
         becomes: check.becomes,
     });
@@ -305,6 +343,7 @@ function startItemEffect({ check, run, atStepEnd, name, step, }) {
         check: editedChangesToCheck,
         run: runEffect,
         step,
+        runAtStart,
     });
     return listenerName;
 }
@@ -316,7 +355,13 @@ function useStore(whatToReturn, check, hookDeps = []) {
     const rerender = useCallback(() => setTick((tick) => tick + 1), []);
     useEffect(() => {
         const name = toSafeListenerName("reactComponent");
-        startEffect({ atStepEnd: true, name, check, run: rerender });
+        startEffect({
+            atStepEnd: true,
+            name,
+            check,
+            run: rerender,
+            runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
+        });
         return () => stopEffect(name);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -325,7 +370,7 @@ function useStore(whatToReturn, check, hookDeps = []) {
 function useStoreEffect(run, check, hookDeps = []) {
     useLayoutEffect(() => {
         const name = toSafeListenerName("useStoreEffect_"); // note could add JSON.stringify(check) for useful listener name
-        startEffect({ name, atStepEnd: true, check, run });
+        startEffect({ name, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
         return () => stopEffect(name);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
@@ -333,10 +378,9 @@ function useStoreEffect(run, check, hookDeps = []) {
 function useStoreItemEffect(run, check, hookDeps = []) {
     useLayoutEffect(() => {
         const name = toSafeListenerName("useStoreItemEffect_" + JSON.stringify(check));
-        startItemEffect({ name, atStepEnd: true, check, run });
+        startItemEffect({ name, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
         return () => stopEffect(name);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, hookDeps);
+    }, hookDeps.length > 0 ? [...hookDeps, check.name] : [check.name]);
 }
 // NOTE it automatically supports changing item name, but not item type or props, that needs custom hookDeps
 function useStoreItem(itemEffectCallback, check, hookDeps = []) {
@@ -360,6 +404,7 @@ function useStoreItem(itemEffectCallback, check, hookDeps = []) {
             atStepEnd: true,
             check,
             run: (theParameters) => setReturnedState(theParameters),
+            runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
         });
         didRender.current = true;
         return () => stopEffect(name);
@@ -391,6 +436,7 @@ function useStoreItemPropsEffect(checkItem, onPropChanges, hookDeps = []) {
                 },
                 atStepEnd: true,
                 step: checkItem.step,
+                runAtStart: true, // runAtStart true so it works like useEffect
             });
         });
         return () => {

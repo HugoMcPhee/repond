@@ -96,6 +96,7 @@ type ItemEffect_RuleOptions<K_Type extends T_ItemType, K_PropertyName extends Pr
     atStepEnd?: boolean;
     name?: string;
     step?: T_StepName;
+    runAtStart?: boolean;
     _isPerItem?: true;
 };
 type ItemEffect_RuleOptions__NoMeta<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = {
@@ -104,6 +105,7 @@ type ItemEffect_RuleOptions__NoMeta<K_Type extends T_ItemType, K_PropertyName ex
     atStepEnd?: boolean;
     name?: string;
     step?: T_StepName;
+    runAtStart?: boolean;
 };
 type EffectRule_ACheck_OneItemType<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = {
     type?: K_Type;
@@ -121,13 +123,14 @@ type EffectRule_ACheck_MultipleItemTypes<T_ItemType extends string | number | sy
 };
 type EffectRule_ACheck<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck_OneItemType<K_Type, T_ItemType, T_State> | EffectRule_ACheck_MultipleItemTypes<T_ItemType, T_State>;
 type EffectRule_Check<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = EffectRule_ACheck<K_Type, T_ItemType, T_State>[] | EffectRule_ACheck<K_Type, T_ItemType, T_State>;
-type EffectCallback<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = (diffInfo: DiffInfo<T_ItemType, T_State>, frameDuration: number) => void;
+type EffectCallback<T_ItemType extends string | number | symbol, T_State extends Record<any, any>> = (diffInfo: DiffInfo<T_ItemType, T_State>, frameDuration: number, skipChangeCheck?: boolean) => void;
 type Effect_RuleOptions<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
     name?: string;
     check: EffectRule_Check<K_Type, T_ItemType, T_State>;
     run: EffectCallback<T_ItemType, T_State>;
     atStepEnd?: boolean;
     step?: T_StepName;
+    runAtStart?: boolean;
     _isPerItem?: false;
 };
 type Effect_RuleOptions__NoMeta<K_Type extends T_ItemType, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_StepName extends string> = {
@@ -136,6 +139,7 @@ type Effect_RuleOptions__NoMeta<K_Type extends T_ItemType, T_ItemType extends st
     run: EffectCallback<T_ItemType, T_State>;
     atStepEnd?: boolean;
     step?: T_StepName;
+    runAtStart?: boolean;
 };
 type FlexibleRuleOptions<K_Type extends T_ItemType, K_PropertyName extends PropertyName<K_Type, T_ItemType, T_State>, T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = XOR<Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>, ItemEffect_RuleOptions<K_Type, K_PropertyName, T_ItemType, T_State, T_Refs, T_StepName>>;
 type MakeRule_Rule<T_ItemType extends string | number | symbol, T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_StepName extends string> = FlexibleRuleOptions<T_ItemType, PropertyName<T_ItemType, T_ItemType, T_State>, T_ItemType, T_State, T_Refs, T_StepName>;
@@ -209,7 +213,7 @@ declare const getPreviousState: () => AllState;
 declare const getRefs: () => AllRefs;
 declare function getItem<K_Type extends ItemType, T_ItemName extends ItemName<K_Type, ItemType, AllState>>(type: K_Type, name: T_ItemName): [AllState[K_Type][T_ItemName], AllRefs[K_Type][T_ItemName], AllState[K_Type][T_ItemName]];
 declare function startEffect<K_Type extends ItemType>(theEffect: Effect_RuleOptions__NoMeta<K_Type, ItemType, AllState, StepName>): void;
-declare function startItemEffect<K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>>({ check, run, atStepEnd, name, step, }: ItemEffect_RuleOptions__NoMeta<K_Type, K_PropertyName, ItemType, AllState, AllRefs, StepName>): string;
+declare function startItemEffect<K_Type extends ItemType, K_PropertyName extends PropertyName<K_Type, ItemType, AllState>>({ check, run, atStepEnd, name, step, runAtStart, }: ItemEffect_RuleOptions__NoMeta<K_Type, K_PropertyName, ItemType, AllState, AllRefs, StepName>): string;
 declare function stopEffect(listenerName: string): void;
 declare function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(whatToReturn: (state: DeepReadonly<AllState>) => T_ReturnedRepondProps, check: EffectRule_Check<K_Type, ItemType, AllState>, hookDeps?: any[]): T_ReturnedRepondProps;
 declare function useStoreEffect<K_Type extends ItemType>(run: EffectCallback<ItemType, AllState>, check: EffectRule_Check<K_Type, ItemType, AllState>, hookDeps?: any[]): void;

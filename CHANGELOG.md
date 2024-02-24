@@ -4,11 +4,16 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
-  0.10.9
+v0.11.0
+
+- added runAtStart for some hooks and startEffect, to allow running the effect/listener callback when it's first added
+- NOTE TODO may add the same option to rules too
+
+v0.10.9
 
 - useStoreItem properly returns new state if hookDeps or the item name changes
 
-v 0.10.0
+v0.10.0
 
 - exports all helpers from index, no need to get heleprs from makePrendy helpers!
 - renamed createStoreHelpers to initRepond
@@ -107,7 +112,7 @@ v0.5.0
 v0.4.10
 
 - organising
-- some stability stuff resetting recorded-derive-changes and returning early running a flow
+- some stability stuff resetting recorded-derive-changes and returning early running a step
 
 v0.4.9
 
@@ -118,11 +123,11 @@ v0.4.8
 - allows more think listeners to run in a row
 - itemEffects only run once for multiple propties checked
 - think and draw listener types renamed to derive and subscribe to make more sense :)
-- added onNextTick to run something before the first flow runs in the next frame
+- added onNextTick to run something before the first step runs in the next frame
 
 v0.4.7
 
-- changes since the last frame are checked in the first flows think listeners :)
+- changes since the last frame are checked in the first steps think listeners :)
 
 v0.4.6
 
@@ -177,7 +182,7 @@ supports typed itemNames!
 - simplified types and names
 
 v0.22
-added 'flows' so rules can run in a specific order
+added 'steps' so rules can run in a specific order
 
 - now rules can be run in an order,
 - it can be useful for making sure derived state's figured out that's needed for next rules
@@ -189,35 +194,35 @@ v0.201
 allows up to 11 derivers to run (maybe not needed ??)
 
 v0.20
-simplified making item types to { state, scraps, startStates (optional) }
+simplified making item types to { state, refs, startStates (optional) }
 
 v0.19
-scraps get removed automatically after at the end of updateConcepto
+refs get removed automatically after at the end of updateRepond
 based on the removed items diffInfo
-So now scraps would get removed from external state changes (might need to do the same for added too)
+So now refs would get removed from external state changes (might need to do the same for added too)
 
 v0.18
 simplified option names for add and remove item
 
 v.0.17
-simplified a bunch of types (mostly in createStateland) and removed withStateland (HOC)
+simplified a bunch of types (mostly in create) and removed withStateland (HOC)
 
 v.0.16
-added basic version of useStatelandItem
+added basic version of useStoreItem
 
 v.0.15
 changed paths to use libraries/shutils
 
 v0.14
 allowed any return type from useConcepto
-added random number to ruleNames in useStatelandItemEffect
+added random number to ruleNames in useStoreItemEffect
 
 v0.13
-removed import cycles from index and createStateland
+removed import cycles from index and create
 
 v0.12
 added way to react to multiple prop changes for an item with one hook
-(useStatelandItemEffect ---- probably renaming)
+(useStoreItemEffect ---- probably renaming)
 
 v0.11
 made movers simpler to set up
