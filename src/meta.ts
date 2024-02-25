@@ -127,6 +127,7 @@ const repondMeta = {
   currentMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
+  listenersRunAtStartQueue: [] as AFunction[],
   startListenersQue: [] as AFunction[],
   setStatesQue: [] as AFunction[],
   callforwardsQue: [] as AFunction[], // runs at the start of a tick

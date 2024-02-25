@@ -53,6 +53,13 @@ function runAddListeners() {
     }
     meta.startListenersQue.length = 0;
 }
+function runListenersWithRunAtStart() {
+    for (let index = 0; index < meta.listenersRunAtStartQueue.length; index++) {
+        const loopedUpdateFunction = meta.listenersRunAtStartQueue[index];
+        loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
+    }
+    meta.listenersRunAtStartQueue.length = 0;
+}
 function runAddAndRemove() {
     for (let index = 0; index < meta.addAndRemoveItemsQue.length; index++) {
         const loopedUpdateFunction = meta.addAndRemoveItemsQue[index];
@@ -136,6 +143,7 @@ function resetRecordedDeriveChanges() {
 }
 function runDeriveListeners(stepName) {
     resetRecordedDeriveChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
+    runListenersWithRunAtStart(); // run the runAtStart listeners
     runListeners("derive", stepName); //  a running derive-listener can add more to the setStates que (or others)
     runAddListeners(); // add rules / effects
     runAddAndRemove(); // add and remove items

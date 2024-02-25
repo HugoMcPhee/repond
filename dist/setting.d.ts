@@ -1,6 +1,7 @@
 export declare function runNextFrame(): void;
 export declare function runWhenStartingRepondListeners(whatToRun: any): void;
 export declare function runWhenStoppingRepondListeners(whatToRun: any): void;
+export declare function runWhenDoingListenersRunAtStart(whatToRun: any, callback?: any): void;
 export declare function _setState(newState: any, callback?: any): void;
 export declare function _removeItem({ type: itemType, name: itemName }: {
     type: string;

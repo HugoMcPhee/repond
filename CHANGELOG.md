@@ -4,6 +4,10 @@ TODO
 - type "becomes" to the property value
 - maybe a way to type rule objects without starting (like itemEffect() as an import?)
 
+v0.11.2
+
+- fix issue with runAtStart when addign a new item (runAtStart runs at a predictable time now)
+
 v0.11.0
 
 - added runAtStart for some hooks and startEffect, to allow running the effect/listener callback when it's first added

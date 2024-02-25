@@ -57,6 +57,7 @@ const repondMeta = {
     currentMetaPhase: "waitingForFirstUpdate",
     // functions
     addAndRemoveItemsQue: [],
+    listenersRunAtStartQueue: [],
     startListenersQue: [],
     setStatesQue: [],
     callforwardsQue: [], // runs at the start of a tick

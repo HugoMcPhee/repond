@@ -109,6 +109,7 @@ declare const repondMeta: {
     currentRefs: any;
     currentMetaPhase: RepondMetaPhase;
     addAndRemoveItemsQue: AFunction[];
+    listenersRunAtStartQueue: AFunction[];
     startListenersQue: AFunction[];
     setStatesQue: AFunction[];
     callforwardsQue: AFunction[];

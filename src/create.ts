@@ -13,6 +13,7 @@ import {
   _addItem,
   _removeItem,
   _setState,
+  runWhenDoingListenersRunAtStart,
   runWhenStartingRepondListeners,
   runWhenStoppingRepondListeners,
 } from "./setting";
@@ -1042,11 +1043,9 @@ function startEffect<K_Type extends ItemType>(
   };
 
   if (theEffect.runAtStart) {
-    const result = theEffect.run(
-      meta.diffInfo as any,
-      16.66666,
-      true /* skipChangeCheck */
-    );
+    runWhenDoingListenersRunAtStart(() => {
+      theEffect.run(meta.diffInfo as any, 16.66666, true /* skipChangeCheck */);
+    });
   }
 
   _startRepondListener(convertEffectToListener(editedEffect) as any);

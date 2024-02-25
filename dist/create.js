@@ -3,7 +3,7 @@ import { getRepondStructureFromDefaults } from "./getStructureFromDefaults";
 import makeCopyStatesFunction from "./copyStates";
 import makeGetStatesDiffFunction, { createDiffInfo } from "./getStatesDiff";
 import { breakableForEach, forEach } from "chootils/dist/loops";
-import { _addItem, _removeItem, _setState, runWhenStartingRepondListeners, runWhenStoppingRepondListeners, } from "./setting";
+import { _addItem, _removeItem, _setState, runWhenDoingListenersRunAtStart, runWhenStartingRepondListeners, runWhenStoppingRepondListeners, } from "./setting";
 import { makeRefsStructureFromRepondState, cloneObjectWithJson, asArray, toSafeArray, } from "./utils";
 import { useLayoutEffect, useState, useCallback, useEffect, useRef, } from "react";
 import { addItemToUniqueArray, removeItemFromArray, getUniqueArrayItems, } from "chootils/dist/arrays";
@@ -302,7 +302,9 @@ function startEffect(theEffect) {
         runAtStart: theEffect.runAtStart,
     };
     if (theEffect.runAtStart) {
-        const result = theEffect.run(meta.diffInfo, 16.66666, true /* skipChangeCheck */);
+        runWhenDoingListenersRunAtStart(() => {
+            theEffect.run(meta.diffInfo, 16.66666, true /* skipChangeCheck */);
+        });
     }
     _startRepondListener(convertEffectToListener(editedEffect));
 }

@@ -98,6 +98,12 @@ export function runWhenStoppingRepondListeners(whatToRun) {
     // stopping listeners runs instantly
     whatToRun();
 }
+export function runWhenDoingListenersRunAtStart(whatToRun, callback) {
+    meta.listenersRunAtStartQueue.push(whatToRun);
+    if (callback)
+        meta.listenersRunAtStartQueue.push(callback);
+    runNextFrameIfNeeded();
+}
 function runWhenAddingAndRemovingRepond(whatToRun, callback) {
     meta.addAndRemoveItemsQue.push(whatToRun);
     if (callback)
