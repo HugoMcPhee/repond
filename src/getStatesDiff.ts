@@ -1,193 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import meta, { RecordedChanges, UntypedDiffInfo } from "./meta";
 
-// for initialising array or object
-// adds a if () !exists then equals [] etc
-function addIfEmpty(propertyString: string, initialValue: string) {
-  return `if (!${propertyString}) {
-  ${propertyString} = ${initialValue};
-}
-`;
-}
-
-export function makeGetStatesDiffFunction_prev() {
-  const { itemTypeNames, propNamesByItemType } = meta;
-
-  // pre-compile constant iteration over object properties - Domi
-  // https://stackoverflow.com/a/25700742
-
-  let diffFunctionString = `
-    let itemNames = [];
-  let previousItemNames  = [];
-  diffInfo.propsChanged.all__ = [];
-  diffInfo.propsChangedBool.all__ = {};
-  diffInfo.itemsChanged.all__ = [];
-  diffInfo.itemsChangedBool.all__ = {};
-  diffInfo.itemsAdded.all__ = [];
-  diffInfo.itemsAddedBool.all__ = {};
-  diffInfo.itemsRemoved.all__ = [];
-  diffInfo.itemsRemovedBool.all__ = {};
-  let itemTypeAddedToItemsTypesChanged = false;
-  let propAddedToPropsChanged = false;
-  diffInfo.itemTypesChanged = [];
-  diffInfo.itemTypesChangedBool = {};
-
-   `;
-  for (let i = 0; i < itemTypeNames.length; ++i) {
-    const itemType = itemTypeNames[i];
-
-    // it needs to get the item names
-    diffFunctionString += `
-
-
-    itemTypeAddedToItemsTypesChanged = false;
-
-    diffInfo.itemsChanged.${itemType} = [];
-    diffInfo.itemsChangedBool.${itemType} = {};
-
-    diffInfo.itemsAdded.${itemType} = [];
-    diffInfo.itemsAddedBool.${itemType} = {};
-
-    diffInfo.itemsRemoved.${itemType} = [];
-    diffInfo.itemsRemovedBool.${itemType} = {};
-
-     diffInfo.propsChanged.${itemType} = {};
-     diffInfo.propsChangedBool.${itemType} = {};
-
-if (checkAllChanges || recordedChanges.itemTypesBool.${itemType}) {
-
-
-  itemNames = Object.keys(currentState['${itemType}']);
-  previousItemNames = Object.keys(prevState['${itemType}']);
-
-
-
-// check for items removed from previous object
-    for (let jp = 0; jp < previousItemNames.length; ++jp) {
-    const prevItemName = previousItemNames[jp];
-if (currentState['${itemType}'][prevItemName] === undefined) {
-  diffInfo.itemsRemoved.all__.push(prevItemName);
-  diffInfo.itemsRemovedBool.all__[prevItemName] = true;
-  diffInfo.itemsRemoved.${itemType}.push(prevItemName);
-  diffInfo.itemsRemovedBool.${itemType}[prevItemName] = true;
-}
-  }
-
-    for (let j = 0; j < itemNames.length; ++j) {
-      const itemName = itemNames[j];
-
-      if (checkAllChanges || recordedChanges.itemNamesBool.${itemType}?.[ itemName ]) {
-
-
-    // check for items added since previous object
-    if (prevState['${itemType}'][itemName] === undefined) {
-
-      diffInfo.itemsAdded.all__.push(itemName);
-      diffInfo.itemsAddedBool.all__[itemName] = true;
-      diffInfo.itemsAdded.${itemType}.push(itemName);
-      diffInfo.itemsAddedBool.${itemType}[itemName] = true;
-    }
-
-let propChanged = false;
-let itemAddedToItemsChanged = false;
-let itemAddedToItemsRemoved = false;
-let itemAddedToItemsAdded = false;
-
-if ( diffInfo.itemsAddedBool.all__[itemName] ) {
-  // if the item was just added (should it mark all the properties as changed?)
-
-}
-
-if ( !diffInfo.itemsRemovedBool.all__[itemName] && !diffInfo.itemsAddedBool.all__[itemName] ) {
-
-    `;
-
-    for (let k = 0; k < propNamesByItemType[itemType].length; ++k) {
-      const itemPropName = propNamesByItemType[itemType][k];
-      diffFunctionString += `
-      if (checkAllChanges || recordedChanges.itemPropertiesBool.${itemType}?.[itemName]?.${itemPropName}) {
-
-      propAddedToPropsChanged = false;
-      propChanged = currentState.${itemType}[itemName].${itemPropName} !== prevState.${itemType}[itemName].${itemPropName};
-
-
-  if (propChanged) {
-    if (!itemTypeAddedToItemsTypesChanged) {
-      diffInfo.itemTypesChanged.push('${itemType}')
-      diffInfo.itemTypesChangedBool.${itemType} = true;
-      itemTypeAddedToItemsTypesChanged = true;
-      }
-
-    ${addIfEmpty(`diffInfo.itemsChanged.${itemType}`, "[]")}
-    ${addIfEmpty(`diffInfo.itemsChangedBool.${itemType}`, "{}")}
-    ${addIfEmpty(`diffInfo.itemsChanged.all__`, "[]")}
-    ${addIfEmpty(`diffInfo.itemsChangedBool.all__`, "{}")}
-
-  if (!itemAddedToItemsChanged) {
-    diffInfo.itemsChanged.${itemType}.push(itemName);
-    diffInfo.itemsChangedBool.${itemType}[itemName] = true;
-
-    diffInfo.itemsChanged.all__.push(itemName);
-    diffInfo.itemsChangedBool.all__[itemName] = true;
-
-    itemAddedToItemsChanged = true;
-    }
-
-${addIfEmpty(`diffInfo.propsChanged.${itemType}`, "{}")}
-${addIfEmpty(`diffInfo.propsChangedBool.${itemType}`, "{}")}
-${addIfEmpty(`diffInfo.propsChanged.all__`, "[]")}
-${addIfEmpty(`diffInfo.propsChangedBool.all__`, "{}")}
-${addIfEmpty(`diffInfo.propsChanged.${itemType}[itemName]`, "[]")}
-${addIfEmpty(`diffInfo.propsChangedBool.${itemType}[itemName]`, "{}")}
-
-${addIfEmpty(`diffInfo.propsChanged.${itemType}.all__`, "[]")}
-${addIfEmpty(`diffInfo.propsChangedBool.${itemType}.all__`, "{}")}
-
-if (!diffInfo.propsChangedBool.${itemType}[itemName].${itemPropName}) {
-  diffInfo.propsChanged.${itemType}[itemName].push('${itemPropName}')
-  diffInfo.propsChangedBool.${itemType}[itemName].${itemPropName} = true;
-}
-
-if (!diffInfo.propsChangedBool.all__.${itemPropName}) {
-  diffInfo.propsChanged.all__.push('${itemPropName}')
-  diffInfo.propsChangedBool.all__.${itemPropName} = true;
-}
-
-if (!diffInfo.propsChangedBool.${itemType}.all__.${itemPropName}) {
-    diffInfo.propsChanged.${itemType}.all__.push('${itemPropName}')
-    diffInfo.propsChangedBool.${itemType}.all__.${itemPropName} = true;
-}
-
-}
-  }
-`;
-    }
-
-    diffFunctionString += `
-  }
-} // check recordedChanges.itemTypesBool
-}
-}
-`;
-  }
-
-  // eslint-disable-next-line no-new-func
-  return new Function(
-    "currentState",
-    "prevState",
-    "diffInfo",
-    "recordedChanges",
-    "checkAllChanges",
-    diffFunctionString
-  ) as any;
-}
-
-/*
-
-
-
-*/
-
 export function createDiffInfo(diffInfo: UntypedDiffInfo) {
   diffInfo.itemTypesChanged = [];
   diffInfo.itemsChanged.all__ = [];
@@ -253,11 +66,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
     diffInfo.itemsChanged[itemType].length = 0;
     diffInfo.propsChanged[itemType].all__!.length = 0;
 
-    for (
-      let nameIndex = 0;
-      nameIndex < meta.itemNamesByItemType[itemType].length;
-      nameIndex++
-    ) {
+    for (let nameIndex = 0; nameIndex < meta.itemNamesByItemType[itemType].length; nameIndex++) {
       const itemName = meta.itemNamesByItemType[itemType][nameIndex];
 
       diffInfo.itemsChangedBool[itemType][itemName] = false;
@@ -268,11 +77,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
       diffInfo.itemsRemovedBool.all__[itemName] = false;
       diffInfo.propsChanged[itemType][itemName].length = 0;
 
-      for (
-        let propIndex = 0;
-        propIndex < meta.propNamesByItemType[itemType].length;
-        propIndex++
-      ) {
+      for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
         const propName = meta.propNamesByItemType[itemType][propIndex];
 
         diffInfo.propsChangedBool[itemType][itemName][propName] = false;
@@ -282,7 +87,7 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
   }
 }
 
-export default function makeGetStatesDiffFunction() {
+export function makeGetStatesDiffFunction() {
   const { itemTypeNames, propNamesByItemType } = meta;
 
   return function getStatesDiff(
@@ -306,23 +111,15 @@ export default function makeGetStatesDiffFunction() {
       itemTypeAddedToItemsTypesChanged = false;
 
       if (checkAllChanges || recordedChanges.itemTypesBool[itemType] === true) {
-        const itemNames = checkAllChanges
-          ? Object.keys(currentState[itemType])
-          : meta.itemNamesByItemType[itemType];
+        const itemNames = checkAllChanges ? Object.keys(currentState[itemType]) : meta.itemNamesByItemType[itemType];
 
         // TODO repalce this with real previous item names?
         // NOTE may need to handle added and removed items, when not using checkAllChanges (which is set when getting a patch or diff)
-        const previousItemNames = checkAllChanges
-          ? Object.keys(prevState[itemType])
-          : meta.itemNamesByItemType[itemType];
+        const prevItemNames = checkAllChanges ? Object.keys(prevState[itemType]) : meta.itemNamesByItemType[itemType];
 
         // check for items removed from previous object
-        for (
-          let prevNameIndex = 0;
-          prevNameIndex < previousItemNames.length;
-          ++prevNameIndex
-        ) {
-          const prevItemName = previousItemNames[prevNameIndex];
+        for (let prevNameIndex = 0; prevNameIndex < prevItemNames.length; ++prevNameIndex) {
+          const prevItemName = prevItemNames[prevNameIndex];
           if (currentState[itemType][prevItemName] === undefined) {
             diffInfo.itemsRemoved.all__.push(prevItemName);
             diffInfo.itemsRemovedBool.all__[prevItemName] = true;
@@ -333,10 +130,7 @@ export default function makeGetStatesDiffFunction() {
 
         for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
           const itemName = itemNames[nameIndex];
-          if (
-            checkAllChanges ||
-            recordedChanges.itemNamesBool[itemType]?.[itemName] === true
-          ) {
+          if (checkAllChanges || recordedChanges.itemNamesBool[itemType]?.[itemName] === true) {
             // check for items added since previous object
             if (prevState[itemType][itemName] === undefined) {
               diffInfo.itemsAdded.all__.push(itemName);
@@ -354,22 +148,13 @@ export default function makeGetStatesDiffFunction() {
             // if the item was just added (should it mark all the properties as changed?)
             // }
 
-            if (
-              !diffInfo.itemsRemovedBool.all__[itemName] &&
-              !diffInfo.itemsAddedBool.all__[itemName]
-            ) {
-              for (
-                let propIndex = 0;
-                propIndex < propNamesByItemType[itemType].length;
-                ++propIndex
-              ) {
+            if (!diffInfo.itemsRemovedBool.all__[itemName] && !diffInfo.itemsAddedBool.all__[itemName]) {
+              for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; ++propIndex) {
                 const itemPropName = propNamesByItemType[itemType][propIndex];
 
                 if (
                   checkAllChanges ||
-                  recordedChanges.itemPropertiesBool[itemType]?.[itemName]?.[
-                    itemPropName
-                  ] === true
+                  recordedChanges.itemPropertiesBool[itemType]?.[itemName]?.[itemPropName] === true
                 ) {
                   // propAddedToPropsChanged = false;
 
@@ -403,8 +188,7 @@ export default function makeGetStatesDiffFunction() {
                   // }
 
                   propChanged =
-                    currentState[itemType][itemName][itemPropName] !==
-                    prevState[itemType][itemName][itemPropName];
+                    currentState[itemType][itemName][itemPropName] !== prevState[itemType][itemName][itemPropName];
 
                   if (propChanged) {
                     if (!itemTypeAddedToItemsTypesChanged) {
@@ -423,17 +207,9 @@ export default function makeGetStatesDiffFunction() {
                       itemAddedToItemsChanged = true;
                     }
 
-                    if (
-                      !diffInfo.propsChangedBool[itemType][itemName][
-                        itemPropName
-                      ]
-                    ) {
-                      diffInfo.propsChanged[itemType][itemName].push(
-                        itemPropName
-                      );
-                      diffInfo.propsChangedBool[itemType][itemName][
-                        itemPropName
-                      ] = true;
+                    if (!diffInfo.propsChangedBool[itemType][itemName][itemPropName]) {
+                      diffInfo.propsChanged[itemType][itemName].push(itemPropName);
+                      diffInfo.propsChangedBool[itemType][itemName][itemPropName] = true;
                     }
 
                     if (!diffInfo.propsChangedBool.all__[itemPropName]) {
@@ -441,12 +217,9 @@ export default function makeGetStatesDiffFunction() {
                       diffInfo.propsChangedBool.all__[itemPropName] = true;
                     }
 
-                    if (
-                      !diffInfo.propsChangedBool[itemType].all__[itemPropName]
-                    ) {
+                    if (!diffInfo.propsChangedBool[itemType].all__[itemPropName]) {
                       diffInfo.propsChanged[itemType].all__.push(itemPropName);
-                      diffInfo.propsChangedBool[itemType].all__[itemPropName] =
-                        true;
+                      diffInfo.propsChangedBool[itemType].all__[itemPropName] = true;
                     }
                   }
                 }

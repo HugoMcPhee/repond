@@ -1,24 +1,17 @@
 // https://stackoverflow.com/questions/49401866/all-possible-keys-of-an-union-type
 export type KeysOfUnion<T> = T extends any ? keyof T : never;
 
-export type ChangeToCheck<
-  T_State extends { [key: string]: any },
-  T_ItemType extends string
-> =
+export type InnerEffectCheck<T_State extends { [key: string]: any }, T_ItemType extends string> =
   | {
       types?: [T_ItemType];
       names?: string[];
-      props?: KeysOfUnion<
-        NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]
-      >[];
+      props?: KeysOfUnion<NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]>[];
       addedOrRemoved?: boolean;
     }
   | {
       types?: T_ItemType;
       names?: string[];
-      props?: KeysOfUnion<
-        NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]
-      >[];
+      props?: KeysOfUnion<NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]>[];
       addedOrRemoved?: boolean;
     };
 //
@@ -39,14 +32,7 @@ export type DeepReadonly<T> =
     ? DeepReadonlyObject<T>
     : T;
 
-export type Primitive =
-  | null
-  | undefined
-  | string
-  | number
-  | boolean
-  | symbol
-  | bigint;
+export type Primitive = null | undefined | string | number | boolean | symbol | bigint;
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -56,8 +42,7 @@ type DeepReadonlyObject<T> = {
 
 interface IDRMap<K, V> extends ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>> {}
 
-interface ReadonlySetDeep<ItemType>
-  extends ReadonlySet<DeepReadonly<ItemType>> {}
+interface ReadonlySetDeep<ItemType> extends ReadonlySet<DeepReadonly<ItemType>> {}
 //
 
 // ----------------------------
@@ -65,9 +50,7 @@ interface ReadonlySetDeep<ItemType>
 
 // type Without<T, K> = Pick<T, Exclude<keyof T, K>>;
 type WithoutB<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
-export type XOR<T, U> = T | U extends object
-  ? (WithoutB<T, U> & U) | (WithoutB<U, T> & T)
-  : T | U;
+export type XOR<T, U> = T | U extends object ? (WithoutB<T, U> & U) | (WithoutB<U, T> & T) : T | U;
 // NOTE: could use ts-xor package (same)
 
 export type RecursivePartial<T> = { [P in keyof T]?: RecursivePartial<T[P]> };
@@ -99,10 +82,8 @@ export type ExtendsString<T> = T extends string ? T : never;
 export type RepondCallback = (frameDuration: number, frameTime: number) => any;
 
 export type SetRepondState<T_State> = (
-  newState:
-    | GetPartialState<T_State>
-    | ((state: DeepReadonly<T_State>) => GetPartialState<T_State> | undefined),
+  newState: GetPartialState<T_State> | ((state: DeepReadonly<T_State>) => GetPartialState<T_State> | undefined),
   callback?: RepondCallback
 ) => void;
 
-export type Phase = "subscribe" | "derive";
+export type EffectPhase = "duringStep" | "endOfStep";

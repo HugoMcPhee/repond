@@ -15,20 +15,16 @@ function findScreenFramerate() {
   requestAnimationFrame((frameTime1) => {
     requestAnimationFrame((frameTime2) => {
       latestDuration = frameTime2 - frameTime1;
-      if (latestDuration < meta.shortestFrameDuration)
-        meta.shortestFrameDuration = latestDuration;
+      if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
       requestAnimationFrame((frameTime3) => {
         latestDuration = frameTime3 - frameTime2;
-        if (latestDuration < meta.shortestFrameDuration)
-          meta.shortestFrameDuration = latestDuration;
+        if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
         requestAnimationFrame((frameTime4) => {
           latestDuration = frameTime4 - frameTime3;
-          if (latestDuration < meta.shortestFrameDuration)
-            meta.shortestFrameDuration = latestDuration;
+          if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
           requestAnimationFrame((frameTime5) => {
             latestDuration = frameTime5 - frameTime4;
-            if (latestDuration < meta.shortestFrameDuration)
-              meta.shortestFrameDuration = latestDuration;
+            if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
 
             meta.foundScreenFramerate = true;
             runNextFrame();
@@ -41,10 +37,7 @@ function findScreenFramerate() {
 
 function runNextFrameIfNeeded() {
   if (!meta.shouldRunUpdateAtEndOfUpdate) {
-    if (
-      meta.nextFrameIsFirst &&
-      meta.currentMetaPhase === "waitingForFirstUpdate"
-    ) {
+    if (meta.nextFrameIsFirst && meta.currentMetaPhase === "waitingForFirstUpdate") {
       updateRepondNextFrame();
       meta.currentMetaPhase = "waitingForMoreUpdates";
     } else {
@@ -59,8 +52,7 @@ export function runNextFrame() {
       findScreenFramerate();
     }
   } else {
-    const isUnderShortestFrame =
-      meta.latestUpdateDuration < meta.shortestFrameDuration;
+    const isUnderShortestFrame = meta.latestUpdateDuration < meta.shortestFrameDuration;
 
     if (meta.frameRateTypeOption === "auto") {
       if (isUnderShortestFrame) {
@@ -95,26 +87,23 @@ function runWhenUpdatingRepond(whatToRun: any, callback?: any) {
   runNextFrameIfNeeded();
 }
 
-export function runWhenStartingRepondListeners(whatToRun: any) {
-  meta.startListenersQue.push(whatToRun);
+export function runWhenStartingInnerEffects(whatToRun: any) {
+  meta.startInnerEffectsQue.push(whatToRun);
   runNextFrameIfNeeded();
 }
 
-export function runWhenStoppingRepondListeners(whatToRun: any) {
+export function runWhenStoppingInnerEffects(whatToRun: any) {
   // stopping listeners runs instantly
   whatToRun();
 }
 
-export function runWhenDoingListenersRunAtStart(
-  whatToRun: any,
-  callback?: any
-) {
-  meta.listenersRunAtStartQueue.push(whatToRun);
-  if (callback) meta.listenersRunAtStartQueue.push(callback);
+export function runWhenDoingInnerEffectsRunAtStart(whatToRun: any, callback?: any) {
+  meta.innerEffectsRunAtStartQueue.push(whatToRun);
+  if (callback) meta.innerEffectsRunAtStartQueue.push(callback);
   runNextFrameIfNeeded();
 }
 
-function runWhenAddingAndRemovingRepond(whatToRun: any, callback?: any) {
+function runWhenAddingAndRemovingItems(whatToRun: any, callback?: any) {
   meta.addAndRemoveItemsQue.push(whatToRun);
   if (callback) meta.callbacksQue.push(callback);
   runNextFrameIfNeeded();
@@ -122,36 +111,28 @@ function runWhenAddingAndRemovingRepond(whatToRun: any, callback?: any) {
 
 export function _setState(newState: any, callback?: any) {
   runWhenUpdatingRepond(() => {
-    const newStateValue =
-      typeof newState === "function" ? newState(meta.currentState) : newState;
+    const newStateValue = typeof newState === "function" ? newState(meta.currentState) : newState;
 
     if (!newStateValue) return;
     meta.mergeStates(
       newStateValue,
       meta.currentState,
-      meta.currentMetaPhase === "runningDeriveListeners"
-        ? meta.recordedDeriveChanges
-        : meta.recordedSubscribeChanges,
-      meta.recordedSubscribeChanges
+      meta.currentMetaPhase === "runningInnerEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
+      meta.recordedStepEndEffectChanges
     );
   }, callback);
 }
 
-export function _removeItem(
-  { type: itemType, name: itemName }: { type: string; name: string },
-  callback?: any
-) {
-  runWhenAddingAndRemovingRepond(() => {
+export function _removeItem({ type: itemType, name: itemName }: { type: string; name: string }, callback?: any) {
+  runWhenAddingAndRemovingItems(() => {
     // removing itemName
     delete meta.currentState[itemType][itemName];
-    meta.itemNamesByItemType[itemType] = Object.keys(
-      meta.currentState[itemType]
-    );
+    meta.itemNamesByItemType[itemType] = Object.keys(meta.currentState[itemType]);
     // delete meta.currentRefs[itemType][itemName]; // now done at the end of update repond
-    meta.recordedSubscribeChanges.itemTypesBool[itemType] = true;
-    meta.recordedSubscribeChanges.somethingChanged = true;
-    meta.recordedDeriveChanges.itemTypesBool[itemType] = true;
-    meta.recordedDeriveChanges.somethingChanged = true;
+    meta.recordedStepEndEffectChanges.itemTypesBool[itemType] = true;
+    meta.recordedStepEndEffectChanges.somethingChanged = true;
+    meta.recordedEffectChanges.itemTypesBool[itemType] = true;
+    meta.recordedEffectChanges.somethingChanged = true;
   }, callback);
 }
 
@@ -169,7 +150,7 @@ export function _addItem(
   },
   callback?: any
 ) {
-  runWhenAddingAndRemovingRepond(() => {
+  runWhenAddingAndRemovingItems(() => {
     meta.currentState[type][name] = {
       ...meta.defaultStateByItemType[type](name),
       ...(state || {}),
@@ -179,21 +160,21 @@ export function _addItem(
       ...(refs || {}),
     };
     meta.itemNamesByItemType[type].push(name);
-    meta.recordedSubscribeChanges.itemTypesBool[type] = true;
+    meta.recordedStepEndEffectChanges.itemTypesBool[type] = true;
 
     // TODO Figure out if adding an item should record the properties as chnaged or not?
 
-    meta.recordedSubscribeChanges.itemPropertiesBool[type][name] = {};
-    meta.recordedDeriveChanges.itemPropertiesBool[type][name] = {};
+    meta.recordedStepEndEffectChanges.itemPropertiesBool[type][name] = {};
+    meta.recordedEffectChanges.itemPropertiesBool[type][name] = {};
 
     meta.diffInfo.propsChanged[type][name] = [];
     meta.diffInfo.propsChangedBool[type][name] = {};
 
-    meta.recordedSubscribeChanges.itemNamesBool[type][name] = true;
-    meta.recordedSubscribeChanges.somethingChanged = true;
-    meta.recordedDeriveChanges.itemTypesBool[type] = true;
+    meta.recordedStepEndEffectChanges.itemNamesBool[type][name] = true;
+    meta.recordedStepEndEffectChanges.somethingChanged = true;
+    meta.recordedEffectChanges.itemTypesBool[type] = true;
 
-    meta.recordedDeriveChanges.itemNamesBool[type][name] = true;
-    meta.recordedDeriveChanges.somethingChanged = true;
+    meta.recordedEffectChanges.itemNamesBool[type][name] = true;
+    meta.recordedEffectChanges.somethingChanged = true;
   }, callback);
 }
