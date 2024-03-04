@@ -4,9 +4,7 @@ import { RepondTypes } from "./declarations";
 export * from "./declarations";
 export * from "./create";
 
-export type InitialItemsState<
-  T_defaultStateFunctionType extends (...args: any) => any
-> = {
+export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
   [itemName: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
 

@@ -137,6 +137,8 @@ const repondMeta = {
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
   //
+  allGroupedEffects: {} as Record<string, Record<string, UntypedInnerEffect>>,
+  //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
   itemNamesByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
