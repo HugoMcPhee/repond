@@ -2,17 +2,19 @@ TODO
 
 - support nullable types with strictNullchecks
 - type "becomes" to the property value
-- maybe a way to type rule objects without starting (export makeItemEffect()?)
+- maybe a way to type effect objects without starting (exporting makeEffect)
+- add effect option for runOnNewItems, its like run at start, but only when an item is added
+  - hopefully this means the effect will run when loading state from localstorage
 
 v0.12.0
-TODO
 
-- Remove concept of Listeners/Effects/Rules and just have effects
+- Rename Listeners/Effects/Rules to simplified effects and inner effects
+  - And add new helpers for effects
 - register grouped effects to meta, so they can be run with runEffect(”shared”, “ruleName”)
-- update repond to pass runAtStart true if the effect is run with runEffect
-- add option for runOnNewItems to run the effect
-  - hopefully this means the effect will run when loading state from localstorage
 - rename the runAtStart parameter provided to effects to something like ranWithoutChange, to know the prev and current state are the same
+- update repond to pass ranWithoutChange true if the effect is run with runEffect
+- organise exported functions and types to new files
+- Simplify all types to not need global types as generic parameters
 
 v0.11.2
 

@@ -1,7 +1,7 @@
 import meta from "./meta";
 import { forEach } from "chootils/dist/loops";
-import checkListeners from "./checkListeners";
-import { runNextFrame } from "./setting";
+import checkInnerEffects from "./checkInnerEffects";
+import { runNextFrame } from "./settingInternal";
 /*
 
 ohhh, every setState is qued and run when the frame runs, so setState never runs before the frame)
@@ -47,18 +47,18 @@ function runSetStates() {
 function runAddListeners() {
     // adding listeners (rules) are queued and happen here
     // removing listeners happens instantly
-    for (let index = 0; index < meta.startListenersQue.length; index++) {
-        const loopedUpdateFunction = meta.startListenersQue[index];
+    for (let index = 0; index < meta.startInnerEffectsQue.length; index++) {
+        const loopedUpdateFunction = meta.startInnerEffectsQue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
     }
-    meta.startListenersQue.length = 0;
+    meta.startInnerEffectsQue.length = 0;
 }
 function runListenersWithRunAtStart() {
-    for (let index = 0; index < meta.listenersRunAtStartQueue.length; index++) {
-        const loopedUpdateFunction = meta.listenersRunAtStartQueue[index];
+    for (let index = 0; index < meta.innerEffectsRunAtStartQueue.length; index++) {
+        const loopedUpdateFunction = meta.innerEffectsRunAtStartQueue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
     }
-    meta.listenersRunAtStartQueue.length = 0;
+    meta.innerEffectsRunAtStartQueue.length = 0;
 }
 function runAddAndRemove() {
     for (let index = 0; index < meta.addAndRemoveItemsQue.length; index++) {
@@ -68,11 +68,11 @@ function runAddAndRemove() {
     meta.addAndRemoveItemsQue.length = 0;
 }
 function runListeners(phase, stepName) {
-    const listenerNamesToRun = checkListeners(phase, stepName);
+    const listenerNamesToRun = checkInnerEffects(phase, stepName);
     for (let index = 0; index < listenerNamesToRun.length; index++) {
         const name = listenerNamesToRun[index];
-        if (meta.allListeners[name])
-            meta.allListeners[name].whatToDo(meta.diffInfo, meta.latestFrameDuration);
+        if (meta.allInnerEffects[name])
+            meta.allInnerEffects[name].run(meta.diffInfo, meta.latestFrameDuration);
     }
 }
 function runCallbacks(callbacksToRun) {
@@ -129,26 +129,25 @@ function resetRecordedChanges(recordedChanges) {
             recordedChanges.itemNamesBool[itemType][itemName] = false;
             for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
                 const propName = meta.propNamesByItemType[itemType][propIndex];
-                recordedChanges.itemPropertiesBool[itemType][itemName][propName] =
-                    false;
+                recordedChanges.itemPropertiesBool[itemType][itemName][propName] = false;
             }
         }
     }
 }
-function resetRecordedSubscribeChanges() {
-    resetRecordedChanges(meta.recordedSubscribeChanges);
+function resetRecordedStepEndChanges() {
+    resetRecordedChanges(meta.recordedStepEndEffectChanges);
 }
-function resetRecordedDeriveChanges() {
-    resetRecordedChanges(meta.recordedDeriveChanges);
+function resetRecordedStepChanges() {
+    resetRecordedChanges(meta.recordedEffectChanges);
 }
-function runDeriveListeners(stepName) {
-    resetRecordedDeriveChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
+function runStepEffects(stepName) {
+    resetRecordedStepChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
     runListenersWithRunAtStart(); // run the runAtStart listeners
-    runListeners("derive", stepName); //  a running derive-listener can add more to the setStates que (or others)
+    runListeners("duringStep", stepName); //  a running derive-listener can add more to the setStates que (or others)
     runAddListeners(); // add rules / effects
     runAddAndRemove(); // add and remove items
     runSetStates(); // run the qued setStates
-    updateDiffInfo(meta.recordedDeriveChanges);
+    updateDiffInfo(meta.recordedEffectChanges);
 }
 function removeRemovedItemRefs() {
     if (!meta.diffInfo.itemsRemoved)
@@ -161,53 +160,53 @@ function removeRemovedItemRefs() {
         }
     }
 }
-function runSetOfDeriveListeners(stepName) {
-    meta.currentMetaPhase = "runningDeriveListeners";
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+function runSetOfStepEffects(stepName) {
+    meta.currentMetaPhase = "runningInnerEffects";
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    runDeriveListeners(stepName);
-    if (!meta.recordedDeriveChanges.somethingChanged)
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged)
         return;
-    console.warn("running derive listeners a lot :S");
+    console.warn("WARNING: running step effects a lot");
     console.log("step name", meta.currentStepName);
-    console.log("listener names");
-    console.log(JSON.stringify(meta.listenerNamesByPhaseByStep.derive?.[meta.currentStepName], null, 2));
+    console.log("effect names");
+    console.log(JSON.stringify(meta.innerEffectNamesByPhaseByStep.duringStep?.[meta.currentStepName], null, 2));
     console.log("changes");
-    console.log(JSON.stringify(Object.entries(meta.recordedDeriveChanges.itemTypesBool)
+    console.log(JSON.stringify(Object.entries(meta.recordedEffectChanges.itemTypesBool)
         .filter((item) => item[1] === true)
-        .map((item) => Object.values(meta.recordedDeriveChanges.itemPropertiesBool[item[0]]).map((value) => Object.entries(value)
+        .map((item) => Object.values(meta.recordedEffectChanges.itemPropertiesBool[item[0]]).map((value) => Object.entries(value)
         .filter((propEntry) => propEntry[1] === true)
         .map((propEntry) => propEntry[0]))), null, 2));
     // meta.recordedDeriveChanges.itemPropertiesBool
     // );
 }
-function runSubscribeListenersShortcut(stepName) {
-    meta.currentMetaPhase = "runningSubscribeListeners"; // hm not checked anywhere, but checking metaPhase !== "runningDerivers" is
-    updateDiffInfo(meta.recordedSubscribeChanges); // the diff for all the combined derriver changes
-    runListeners("subscribe", stepName); //  Then it runs the subscribers based on the diff
+function runStepEndEffectsShortcut(stepName) {
+    meta.currentMetaPhase = "runningStepEndInnerEffects"; // hm not checked anywhere, but checking metaPhase !== "runningDerivers" is
+    updateDiffInfo(meta.recordedStepEndEffectChanges); // the diff for all the combined derriver changes
+    runListeners("endOfStep", stepName); //  Then it runs the stepEnd effects based on the diff
 }
 function runAStep(stepName) {
-    runSetOfDeriveListeners(stepName);
-    runSubscribeListenersShortcut(stepName);
+    runSetOfStepEffects(stepName);
+    runStepEndEffectsShortcut(stepName);
 }
 function runAStepLoop() {
     runAStep(meta.currentStepName);
@@ -333,7 +332,7 @@ export function _updateRepond(animationFrameTime) {
     // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
     meta.copyStates(meta.currentState, meta.previousState);
     runSetOfStepsLoopShortcut();
-    resetRecordedSubscribeChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
+    resetRecordedStepEndChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
     setMetaPhase("waitingForFirstUpdate");
     runAllCallbacks();
     removeRemovedItemRefs();

@@ -1,8 +1,8 @@
 import meta, { RecordedChanges, RepondMetaPhase } from "./meta";
 import { forEach } from "chootils/dist/loops";
-import checkInnerEffects from "repond/src/checkInnerEffects";
+import checkInnerEffects from "./checkInnerEffects";
 import { EffectPhase } from "./types";
-import { runNextFrame } from "./setting";
+import { runNextFrame } from "./settingInternal";
 
 /*
 

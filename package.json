@@ -1,25 +1,17 @@
 {
   "name": "repond",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "description": "respond to items state in realtime",
-  "main": "src/index.ts",
+  "_main": "src/index.ts",
+  "_types": "src/index.ts",
+  "main": "dist/index.js",
   "types": "src/index.ts",
-  "_files": [
-    "dist",
-    "src"
-  ],
-  "_main": "dist/index.js",
-  "_types": "dist/index.d.ts",
   "files": [
     "dist",
     "src"
   ],
   "scripts": {
     "build": "npx tsc"
-  },
-  "// scripts": {
-    "build": "npx tsc",
-    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",

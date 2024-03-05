@@ -1,5 +1,5 @@
-import meta from "repond/src/meta";
-import { InnerEffectCheck, EffectPhase } from "repond/src/types";
+import meta from "./meta";
+import { InnerEffectCheck, EffectPhase } from "./types";
 
 const effectNamesToUpdate: string[] = [];
 const noEffectNames: string[] = [];
