@@ -1,4 +1,4 @@
-import { ChangeToCheck, Phase } from "./types";
+import { InnerEffectCheck, EffectPhase } from "./types";
 export type RecordedChanges = {
     itemTypesBool: {
         [type: string]: boolean;
@@ -19,10 +19,10 @@ export type RecordedChanges = {
 };
 export declare const initialRecordedChanges: () => RecordedChanges;
 export declare const initialDiffInfo: UntypedDiffInfo;
-export type UntypedListener = {
+export type UntypedInnerEffect = {
     name: string;
-    changesToCheck: ChangeToCheck<any, any>[];
-    whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
+    check: InnerEffectCheck<any, any>[];
+    run: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
     atStepEnd?: boolean;
     step?: string;
 };
@@ -84,10 +84,10 @@ export type UntypedDiffInfo = {
     };
 };
 type AFunction = (...args: any[]) => void;
-export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningDeriveListeners" | "runningSubscribeListeners" | "runningCallbacks";
+export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningInnerEffects" | "runningStepEndInnerEffects" | "runningCallbacks";
 declare const repondMeta: {
-    recordedSubscribeChanges: RecordedChanges;
-    recordedDeriveChanges: RecordedChanges;
+    recordedEffectChanges: RecordedChanges;
+    recordedStepEndEffectChanges: RecordedChanges;
     nextFrameIsFirst: boolean;
     latestFrameId: number;
     previousFrameTime: number;
@@ -109,13 +109,14 @@ declare const repondMeta: {
     currentRefs: any;
     currentMetaPhase: RepondMetaPhase;
     addAndRemoveItemsQue: AFunction[];
-    listenersRunAtStartQueue: AFunction[];
-    startListenersQue: AFunction[];
+    innerEffectsRunAtStartQueue: AFunction[];
+    startInnerEffectsQue: AFunction[];
     setStatesQue: AFunction[];
     callforwardsQue: AFunction[];
     callbacksQue: AFunction[];
-    allListeners: Record<string, UntypedListener>;
-    listenerNamesByPhaseByStep: Record<Phase, Record<string, string[]>>;
+    allInnerEffects: Record<string, UntypedInnerEffect>;
+    innerEffectNamesByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
+    allGroupedEffects: Record<string, Record<string, UntypedInnerEffect>>;
     itemTypeNames: string[];
     propNamesByItemType: {
         [itemTypeName: string]: string[];
@@ -136,11 +137,11 @@ declare const repondMeta: {
     copyStates: (currentObject: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
     mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
     getStatesDiff: (currentObject: any, previousObject: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
-    autoListenerNameCounter: number;
+    autoEffectNameCounter: number;
     stepNames: readonly string[];
     currentStepName: string;
     currentStepIndex: number;
 };
 export type RepondMeta = typeof repondMeta;
 export default repondMeta;
-export declare function toSafeListenerName(prefix?: string): string;
+export declare function toSafeEffectName(prefix?: string): string;

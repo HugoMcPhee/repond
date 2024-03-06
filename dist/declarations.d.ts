@@ -8,6 +8,7 @@ export interface AllStoreInfoUntyped {
 export interface RepondTypesUntyped {
     AllStoreInfo: AllStoreInfoUntyped;
     StepNames: string[] | readonly string[];
+    GroupedEffects: Record<string, Record<string, any>>;
 }
 export interface CustomRepondTypes {
 }

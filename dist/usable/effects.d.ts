@@ -1,0 +1,23 @@
+import { Effect_Options, Effect_Options_NoMeta, ItemEffect_Options, ItemEffect_Options_NoMeta, ItemType, MakeRule_Rule, PropName, RefinedGroupedEffects } from "../types";
+export type MakeEffect = <K_Type extends ItemType>(options: Effect_Options_NoMeta<K_Type>) => any;
+export type MakeItemEffect = <K_Type extends ItemType, K_PropName extends PropName<K_Type>>(options: ItemEffect_Options_NoMeta<K_Type, K_PropName>) => any;
+export type MakeDynamicEffectInlineFunction = <K_Type extends ItemType, T_Options extends any>(theRule: (options: T_Options) => Effect_Options_NoMeta<K_Type>) => (options: T_Options) => any;
+export type MakeDynamicItemEffectInlineFunction = <K_Type extends ItemType, K_PropName extends PropName<K_Type>, T_Options extends any>(theRule: (options: T_Options) => ItemEffect_Options_NoMeta<K_Type, K_PropName>) => (options: T_Options) => any;
+export declare function makeEffect<K_Type extends ItemType>(options: Effect_Options_NoMeta<K_Type>): Effect_Options<K_Type>;
+export declare function makeItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(options: ItemEffect_Options_NoMeta<K_Type, K_PropName>): ItemEffect_Options<K_Type, K_PropName>;
+export declare function startNewEffect<K_Type extends ItemType>(theEffect: Effect_Options_NoMeta<K_Type>): void;
+export declare function startNewItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>({ check, run, atStepEnd, name, step, runAtStart, }: ItemEffect_Options_NoMeta<K_Type, K_PropName>): string;
+export declare function stopNewEffect(effectName: string): void;
+export declare function startEffect<K_EffectGroup extends keyof RefinedGroupedEffects, K_EffectName extends keyof RefinedGroupedEffects[K_EffectGroup] & string>(groupName: K_EffectGroup, effectName: K_EffectName): void;
+export declare function stopEffect<K_EffectGroup extends keyof RefinedGroupedEffects, K_EffectName extends keyof RefinedGroupedEffects[K_EffectGroup] & string>(groupName: K_EffectGroup, effectName: K_EffectName): void;
+export declare function startGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffects>(groupName: K_EffectGroup): void;
+export declare function stopGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffects>(groupName: K_EffectGroup): void;
+export declare function startAllGroupedEffects(): void;
+export declare function stopAllGroupedEffects(): void;
+export declare function runEffect<K_EffectGroup extends keyof RefinedGroupedEffects, K_EffectName extends keyof RefinedGroupedEffects[K_EffectGroup] & string>(groupName: K_EffectGroup, effectName: K_EffectName): void;
+export declare function runGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffects>(groupName: K_EffectGroup): void;
+export declare function makeEffects<K_EffectName extends string, K_EffectGroupName extends string>(rulesToAdd: (arg0: {
+    itemEffect: MakeItemEffect;
+    effect: MakeEffect;
+}) => Record<K_EffectName, MakeRule_Rule>): Record<K_EffectName, MakeRule_Rule>;
+export declare function initGroupedEffects<T extends Record<string, ReturnType<typeof makeEffects>>>(groups: T): T;

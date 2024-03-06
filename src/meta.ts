@@ -1,4 +1,4 @@
-import { ChangeToCheck, Phase } from "./types";
+import { InnerEffectCheck, EffectPhase } from "./types";
 
 export type RecordedChanges = {
   // itemTypesBool: { [type: string]: boolean };
@@ -33,17 +33,15 @@ export const initialDiffInfo: UntypedDiffInfo = {
   itemsRemovedBool: {},
 };
 
-export type UntypedListener = {
+export type UntypedInnerEffect = {
   name: string;
-  changesToCheck: ChangeToCheck<any, any>[];
-  whatToDo: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
+  check: InnerEffectCheck<any, any>[];
+  run: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
   atStepEnd?: boolean;
   step?: string;
 };
 
-type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<
-  T[K]
->[keyof T[keyof T]];
+type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
 
 type DiffInfo_PropertiesChanged<T = any> = {
   [key: string]: { [itemName: string]: PropertiesByItemType<T, any>[] } & {
@@ -81,8 +79,8 @@ export type RepondMetaPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
   | "runningUpdates"
-  | "runningDeriveListeners"
-  | "runningSubscribeListeners"
+  | "runningInnerEffects"
+  | "runningStepEndInnerEffects"
   | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
 
 /*
@@ -97,10 +95,10 @@ const repondMeta = {
   //   default: {},
   // } as Record<string, any>,
   //
-  // this gets reset at the start of a frame, and kept added to throughout the frame
-  recordedSubscribeChanges: initialRecordedChanges(),
   // this gets reset for each step (might not still be true)
-  recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
+  recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
+  // this gets reset at the start of a frame, and kept added to throughout the frame
+  recordedStepEndEffectChanges: initialRecordedChanges(),
   nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
   latestFrameId: 0,
   previousFrameTime: 0,
@@ -127,26 +125,25 @@ const repondMeta = {
   currentMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
-  listenersRunAtStartQueue: [] as AFunction[],
-  startListenersQue: [] as AFunction[],
+  innerEffectsRunAtStartQueue: [] as AFunction[],
+  startInnerEffectsQue: [] as AFunction[],
   setStatesQue: [] as AFunction[],
   callforwardsQue: [] as AFunction[], // runs at the start of a tick
   callbacksQue: [] as AFunction[],
   //
-  allListeners: {} as Record<string, UntypedListener>,
-  listenerNamesByPhaseByStep: { derive: {}, subscribe: {} } as Record<
-    Phase,
+  allInnerEffects: {} as Record<string, UntypedInnerEffect>,
+  innerEffectNamesByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+    EffectPhase,
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
+  //
+  allGroupedEffects: {} as Record<string, Record<string, UntypedInnerEffect>>,
   //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
   itemNamesByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
   defaultRefsByItemType: {} as {
-    [itemTypeName: string]: (
-      itemName?: string,
-      itemState?: any
-    ) => { [itemPropertyName: string]: any };
+    [itemTypeName: string]: (itemName?: string, itemState?: any) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
     [itemTypeName: string]: (itemName?: string) => //   itemName?: string
@@ -173,7 +170,7 @@ const repondMeta = {
     checkAllChanges: boolean
   ) => {},
   // react specific?
-  autoListenerNameCounter: 1,
+  autoEffectNameCounter: 1,
   //
   stepNames: ["default"] as const as Readonly<string[]>,
   currentStepName: "default" as Readonly<string>,
@@ -184,8 +181,8 @@ export type RepondMeta = typeof repondMeta;
 
 export default repondMeta;
 
-export function toSafeListenerName(prefix?: string): string {
-  const theId = repondMeta.autoListenerNameCounter;
-  repondMeta.autoListenerNameCounter += 1;
+export function toSafeEffectName(prefix?: string): string {
+  const theId = repondMeta.autoEffectNameCounter;
+  repondMeta.autoEffectNameCounter += 1;
   return (prefix || "autoListener") + "_" + theId;
 }

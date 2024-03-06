@@ -1,12 +1,57 @@
-// import meta from "./meta";
-import { initRepond as initRepond } from "./create";
-import { RepondTypes } from "./declarations";
 export * from "./declarations";
-export * from "./create";
+export * from "./types";
 
-export type InitialItemsState<
-  T_defaultStateFunctionType extends (...args: any) => any
-> = {
+export { initRepond } from "./usable/create";
+export {
+  applyPatch,
+  applyPatchHere,
+  combineDiffs,
+  combinePatches,
+  combineTwoDiffs,
+  combineTwoPatches,
+  getDiff,
+  getDiffFromPatches,
+  getPatch,
+  getPatchAndReversed,
+  getPatchesFromDiff,
+  getReversePatch,
+  makeEmptyDiff,
+  makeEmptyPatch,
+  makeMinimalPatch,
+  removePartialPatch,
+} from "./usable/compare";
+
+export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
+export { addItem, getItem, getPrevState, getRefs, getState, removeItem, setState, onNextTick } from "./usable/getSet";
+
+export {
+  initGroupedEffects,
+  makeEffects,
+  runEffect,
+  runGroupEffects,
+  startAllGroupedEffects,
+  startEffect,
+  startGroupEffects,
+  startNewEffect,
+  startNewItemEffect,
+  stopAllGroupedEffects,
+  stopEffect,
+  stopGroupEffects,
+  stopNewEffect,
+} from "./usable/effects";
+
+// Unique effects helpers
+// TODO update these, but for now keep these so prendy keeps working?
+export {
+  makeDynamicRules,
+  makeLeaveRuleMaker,
+  makeNestedLeaveRuleMaker,
+  makeNestedRuleMaker,
+  makeRuleMaker,
+  makeRules,
+} from "./usable/deprecatedRules";
+
+export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
   [itemName: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
 
@@ -40,5 +85,3 @@ export function makeInitialState({
   }
   return newInitialState;
 }
-
-export { initRepond as makeRepond };

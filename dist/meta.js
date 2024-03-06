@@ -27,10 +27,10 @@ const repondMeta = {
     //   default: {},
     // } as Record<string, any>,
     //
-    // this gets reset at the start of a frame, and kept added to throughout the frame
-    recordedSubscribeChanges: initialRecordedChanges(),
     // this gets reset for each step (might not still be true)
-    recordedDeriveChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
+    recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
+    // this gets reset at the start of a frame, and kept added to throughout the frame
+    recordedStepEndEffectChanges: initialRecordedChanges(),
     nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
     latestFrameId: 0,
     previousFrameTime: 0,
@@ -57,14 +57,16 @@ const repondMeta = {
     currentMetaPhase: "waitingForFirstUpdate",
     // functions
     addAndRemoveItemsQue: [],
-    listenersRunAtStartQueue: [],
-    startListenersQue: [],
+    innerEffectsRunAtStartQueue: [],
+    startInnerEffectsQue: [],
     setStatesQue: [],
     callforwardsQue: [], // runs at the start of a tick
     callbacksQue: [],
     //
-    allListeners: {},
-    listenerNamesByPhaseByStep: { derive: {}, subscribe: {} },
+    allInnerEffects: {},
+    innerEffectNamesByPhaseByStep: { duringStep: {}, endOfStep: {} },
+    //
+    allGroupedEffects: {},
     //
     itemTypeNames: [],
     propNamesByItemType: {},
@@ -77,15 +79,15 @@ const repondMeta = {
     mergeStates: (newStates, saveToObject, recordedChanges, allRecordedChanges) => { },
     getStatesDiff: (currentObject, previousObject, diffInfo, recordedChanges, checkAllChanges) => { },
     // react specific?
-    autoListenerNameCounter: 1,
+    autoEffectNameCounter: 1,
     //
     stepNames: ["default"],
     currentStepName: "default",
     currentStepIndex: 0,
 };
 export default repondMeta;
-export function toSafeListenerName(prefix) {
-    const theId = repondMeta.autoListenerNameCounter;
-    repondMeta.autoListenerNameCounter += 1;
+export function toSafeEffectName(prefix) {
+    const theId = repondMeta.autoEffectNameCounter;
+    repondMeta.autoEffectNameCounter += 1;
     return (prefix || "autoListener") + "_" + theId;
 }
