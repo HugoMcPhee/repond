@@ -1,50 +1,25 @@
 import { makeCopyStatesFunction } from "../copyStates";
 import { createDiffInfo, makeGetStatesDiffFunction } from "../getStatesDiff";
-import { getRepondStructureFromDefaults } from "../getStructureFromDefaults";
+import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import meta from "../meta";
-import { AllState, DefaultRefs, DefaultStates, ItemType, StartStatesItemName, StepName } from "../types";
+import { AllState, DefaultRefs, DefaultStates, ItemType, StartStatesItemId, StepName } from "../types";
 import { createRecordedChanges } from "../updating";
-import { cloneObjectWithJson, makeRefsStructureFromRepondState } from "../utils";
-
-// ChangeToCheck
-/*
-Listener_Check
-AnyChangeRule_Check
-ItemRule_Check
-OneItem_Check
-*/
+import { cloneObjectWithJson } from "../utils";
 
 /*
 can 'check' get clearer?
 can check have single or arrays for every property, or would that widen all types?
 */
 
-// NOTE could move these types to a types file?
-
-/*
-
-, T_ItemType, T_State
-
-,
-T_ItemType extends string | number | symbol,
-T_State extends Record<any, any>,
-T_Refs extends Record<any, any>,
-T_StepName extends string,
-
-*/
-
 export function initRepond<
   T_AllInfo extends {
     [StoreName: string]: {
-      state: (itemName: any) => any;
-      refs: (itemName: any, type: any) => any;
+      state: (itemId: any) => any;
+      refs: (itemId: any, type: any) => any;
       startStates?: Record<any, any>;
     };
   },
-  T_ItemType extends keyof T_AllInfo,
-  // T_ItemType extends keyof T_AllInfo,
   T_StepNamesParam extends Readonly<string[]>
-  // T_StepNamesParam extends RepondTypes["StepNames"] = RepondTypes["StepNames"]
 >(
   allInfo: T_AllInfo,
   extraOptions?: {
@@ -69,8 +44,8 @@ export function initRepond<
 
   if (!dontSetMeta) {
     meta.stepNames = stepNames;
-    meta.currentStepIndex = 0;
-    meta.currentStepName = stepNames[meta.currentStepIndex];
+    meta.nowStepIndex = 0;
+    meta.nowStepName = stepNames[meta.nowStepIndex];
   }
 
   // ReturnType<T_AllInfo[K_Type]["state"]> //
@@ -85,9 +60,9 @@ export function initRepond<
   }, {});
 
   const initialState: AllState = itemTypes.reduce((prev: any, key) => {
-    prev[key] = allInfo[key].startStates || ({} as StartStatesItemName<typeof key>);
+    prev[key] = allInfo[key].startStates || ({} as StartStatesItemId<typeof key>);
 
-    meta.itemNamesByItemType[key as string] = Object.keys(prev[key]);
+    meta.itemIdsByItemType[key as string] = Object.keys(prev[key]);
 
     return prev;
   }, {});
@@ -97,19 +72,19 @@ export function initRepond<
   // ------------------------------------------------
 
   if (!dontSetMeta) {
-    const currentState: AllState = cloneObjectWithJson(initialState);
-    const previousState: AllState = cloneObjectWithJson(initialState);
+    const nowState: AllState = cloneObjectWithJson(initialState);
+    const prevState: AllState = cloneObjectWithJson(initialState);
     // store initialState and set currentState
     meta.initialState = initialState;
-    meta.currentState = currentState;
-    meta.previousState = previousState;
+    meta.nowState = nowState;
+    meta.prevState = prevState;
     meta.defaultStateByItemType = defaultStates as any;
     meta.defaultRefsByItemType = defaultRefs as any;
 
     getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-    makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemNames from repond state
+    makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemIds from repond state
 
-    meta.copyStates = makeCopyStatesFunction() as any;
+    meta.copyStates = makeCopyStatesFunction("copy") as any;
     meta.getStatesDiff = makeGetStatesDiffFunction();
     meta.mergeStates = makeCopyStatesFunction("merge") as any;
 

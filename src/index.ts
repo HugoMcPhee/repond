@@ -52,7 +52,7 @@ export {
 } from "./usable/deprecatedRules";
 
 export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
-  [itemName: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
+  [itemId: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
 
 // TODO remove these

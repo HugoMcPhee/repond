@@ -6,6 +6,16 @@ TODO
 - add effect option for runOnNewItems, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
 
+v0.13.0
+
+- Rename "name" to "id" for items
+  and make simpler types
+  and rename effects to be 3 things
+  effects easy effects and item effects
+
+and simplify some effects logic
+and store plain effects in group effects
+
 v0.12.0
 
 - Rename Listeners/Effects/Rules to simplified effects and inner effects

@@ -1,22 +1,16 @@
-import { InnerEffectCheck, EffectPhase } from "./types";
+import { EffectPhase, UntypedEffect } from "./types";
 
 export type RecordedChanges = {
-  // itemTypesBool: { [type: string]: boolean };
-  // itemNamesBool: { [itemName: string]: boolean };
-  // itemPropertiesBool: { [itemName: string]: boolean };
-  //
   itemTypesBool: { [type: string]: boolean };
-  itemNamesBool: { [type: string]: { [itemName: string]: boolean } };
-  itemPropertiesBool: {
-    [type: string]: { [itemName: string]: { [itemProp: string]: boolean } };
-  };
+  itemIdsBool: { [type: string]: { [itemId: string]: boolean } };
+  itemPropsBool: { [type: string]: { [itemId: string]: { [itemProp: string]: boolean } } };
   somethingChanged: boolean;
 };
 
 export const initialRecordedChanges: () => RecordedChanges = () => ({
   itemTypesBool: {},
-  itemNamesBool: {},
-  itemPropertiesBool: {},
+  itemIdsBool: {},
+  itemPropsBool: {},
   somethingChanged: false,
 });
 
@@ -33,44 +27,28 @@ export const initialDiffInfo: UntypedDiffInfo = {
   itemsRemovedBool: {},
 };
 
-export type UntypedInnerEffect = {
-  name: string;
-  check: InnerEffectCheck<any, any>[];
-  run: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  atStepEnd?: boolean;
-  step?: string;
-};
+type PropsByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
 
-type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
-
-type DiffInfo_PropertiesChanged<T = any> = {
-  [key: string]: { [itemName: string]: PropertiesByItemType<T, any>[] } & {
-    all__?: PropertiesByItemType<T, any>[];
-  };
-} & {
-  all__?: string[];
-};
-type DiffInfo_PropertiesChangedBool<T = any> = {
+type DiffInfo_PropsChanged<T = any> = {
+  [key: string]: { [itemId: string]: PropsByItemType<T, any>[] } & { all__?: PropsByItemType<T, any>[] };
+} & { all__?: string[] };
+type DiffInfo_PropsChangedBool<T = any> = {
   [K in any]: {
-    [itemName: string]: { [K_P in PropertiesByItemType<T, any>]: boolean };
-  } & {
-    all__?: { [K_P in PropertiesByItemType<T, any>]: boolean };
-  };
-} & {
-  all__?: { [K_P in string]: boolean };
-};
+    [itemId: string]: { [K_P in PropsByItemType<T, any>]: boolean };
+  } & { all__?: { [K_P in PropsByItemType<T, any>]: boolean } };
+} & { all__?: { [K_P in string]: boolean } };
 
 export type UntypedDiffInfo = {
   itemTypesChanged: [];
   itemsChanged: { [type: string]: string[] };
   itemsAdded: { [type: string]: string[] };
   itemsRemoved: { [type: string]: string[] };
-  propsChanged: DiffInfo_PropertiesChanged;
+  propsChanged: DiffInfo_PropsChanged;
   itemTypesChangedBool: { [type: string]: boolean };
-  itemsChangedBool: { [type: string]: { [itemName: string]: boolean } };
-  propsChangedBool: DiffInfo_PropertiesChangedBool;
-  itemsAddedBool: { [type: string]: { [itemName: string]: boolean } };
-  itemsRemovedBool: { [type: string]: { [itemName: string]: boolean } };
+  itemsChangedBool: { [type: string]: { [itemId: string]: boolean } };
+  propsChangedBool: DiffInfo_PropsChangedBool;
+  itemsAddedBool: { [type: string]: { [itemId: string]: boolean } };
+  itemsRemovedBool: { [type: string]: { [itemId: string]: boolean } };
 };
 
 type AFunction = (...args: any[]) => void;
@@ -79,16 +57,9 @@ export type RepondMetaPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
   | "runningUpdates"
-  | "runningInnerEffects"
-  | "runningStepEndInnerEffects"
+  | "runningEffects"
+  | "runningStepEndEffects"
   | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
-
-/*
-
-store all the derive and subscribe changes like normal?
-but then, if setState is run when a step has already run, add it to the
-
-*/
 
 const repondMeta = {
   // prevStatesByStep: {
@@ -117,42 +88,41 @@ const repondMeta = {
   //
   diffInfo: initialDiffInfo,
   // state
-  previousState: {} as any,
-  currentState: {} as any,
+  prevState: {} as any,
+  nowState: {} as any,
   initialState: {} as any,
   // refs
-  currentRefs: {} as any,
-  currentMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
+  nowRefs: {} as any,
+  nowMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   // functions
   addAndRemoveItemsQue: [] as AFunction[],
-  innerEffectsRunAtStartQueue: [] as AFunction[],
-  startInnerEffectsQue: [] as AFunction[],
+  effectsRunAtStartQueue: [] as AFunction[],
+  startEffectsQue: [] as AFunction[],
   setStatesQue: [] as AFunction[],
   callforwardsQue: [] as AFunction[], // runs at the start of a tick
   callbacksQue: [] as AFunction[],
   //
-  allInnerEffects: {} as Record<string, UntypedInnerEffect>,
-  innerEffectNamesByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+  allEffects: {} as Record<string, UntypedEffect>,
+  effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
     EffectPhase,
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
   //
-  allGroupedEffects: {} as Record<string, Record<string, UntypedInnerEffect>>,
+  allGroupedEffects: {} as Record<string, Record<string, UntypedEffect>>,
   //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
-  itemNamesByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
+  itemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
   defaultRefsByItemType: {} as {
-    [itemTypeName: string]: (itemName?: string, itemState?: any) => { [itemPropertyName: string]: any };
+    [itemTypeName: string]: (itemId?: string, itemState?: any) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
-    [itemTypeName: string]: (itemName?: string) => //   itemName?: string
+    [itemTypeName: string]: (itemId?: string) => //   itemId?: string
     { [itemPropertyName: string]: any };
   },
   copyStates: (
-    currentObject: any,
+    nowState: any,
     saveToObject: any,
-
     recordedChanges?: RecordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
     allRecordedChanges?: RecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
   ) => {},
@@ -163,26 +133,20 @@ const repondMeta = {
     allRecordedChanges: RecordedChanges
   ) => {},
   getStatesDiff: (
-    currentObject: any,
-    previousObject: any,
+    nowState: any,
+    prevState: any,
     diffInfo: any,
     recordedChanges: RecordedChanges,
     checkAllChanges: boolean
   ) => {},
   // react specific?
-  autoEffectNameCounter: 1,
+  autoEffectIdCounter: 1,
   //
   stepNames: ["default"] as const as Readonly<string[]>,
-  currentStepName: "default" as Readonly<string>,
-  currentStepIndex: 0,
+  nowStepName: "default" as Readonly<string>,
+  nowStepIndex: 0,
 };
 
 export type RepondMeta = typeof repondMeta;
 
 export default repondMeta;
-
-export function toSafeEffectName(prefix?: string): string {
-  const theId = repondMeta.autoEffectNameCounter;
-  repondMeta.autoEffectNameCounter += 1;
-  return (prefix || "autoListener") + "_" + theId;
-}

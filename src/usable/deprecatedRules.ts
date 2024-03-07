@@ -1,16 +1,17 @@
 import { forEach } from "chootils/dist/loops";
-import meta, { toSafeEffectName } from "../meta";
+import meta from "../meta";
 import {
-  AllRefs,
   AllState,
-  Effect_Check,
-  Effect_Options,
-  ItemEffect_Options,
+  EasyEffect_Check,
+  EasyEffect,
+  ItemEffect,
   ItemType,
-  MakeRule_Rule,
+  MakeEffects_Effect,
   PropName,
   StepName,
 } from "../types";
+import { getPrevState, getRefs, getState } from "../usable/getSet";
+import { toMaybeArray } from "../utils";
 import {
   MakeDynamicEffectInlineFunction,
   MakeDynamicItemEffectInlineFunction,
@@ -21,14 +22,13 @@ import {
   startNewEffect,
   startNewItemEffect,
   stopNewEffect,
-} from "../usable/effects";
-import { getPrevState, getRefs, getState } from "../usable/getSet";
-import { toSafeArray } from "../utils";
+  toSafeEffectId,
+} from "./effects";
 
 /** @deprecated Please use makeEffects instead*/
 export function makeRules<K_EffectName extends string, K_EffectGroupName extends string>(
   rulesToAdd: (arg0: { itemEffect: MakeItemEffect; effect: MakeEffect }) => // ) => Record<K_RuleName, MakeRule_Rule >
-  Record<K_EffectName, MakeRule_Rule>,
+  Record<K_EffectName, MakeEffects_Effect>,
   rulesName?: K_EffectGroupName // TODO register rules to an object in meta
 ): {
   start: (ruleName: K_EffectName) => void;
@@ -45,7 +45,7 @@ export function makeRules<K_EffectName extends string, K_EffectGroupName extends
     effect: makeEffect as any,
   });
   const ruleNames: K_EffectName[] = Object.keys(editedRulesToAdd) as any[];
-  const ruleNamePrefix = rulesName ? `${rulesName}_` : toSafeEffectName("makeRules");
+  const ruleNamePrefix = rulesName ? `${rulesName}_` : toSafeEffectId("makeRules");
 
   // edit the names for each rule
   forEach(ruleNames, (ruleName) => {
@@ -82,26 +82,26 @@ export function makeRules<K_EffectName extends string, K_EffectGroupName extends
     // NOTE this doesn't wait for the step chosen for the rule!
     // maybe it should?
 
-    const theRule = editedRulesToAdd[ruleName as any] as MakeRule_Rule;
+    const theRule = editedRulesToAdd[ruleName as any] as MakeEffects_Effect;
     if (!theRule) return;
 
     if (theRule._isPerItem) {
       // Run the item rule for each item (and prop)
       const itemType = theRule.check.type as ItemType;
-      const itemNames = meta.itemNamesByItemType[itemType as string];
-      const propNames = toSafeArray(theRule.check.prop) ?? [];
+      const itemIds = meta.itemIdsByItemType[itemType as string];
+      const propNames = toMaybeArray(theRule.check.prop) ?? [];
       const itemsState = (getState() as AllState)[itemType];
       const prevItemsState = (getPrevState() as AllState)[itemType];
       const itemsRefs = (getRefs() as AllState)[itemType];
-      forEach(itemNames, (itemName) => {
+      forEach(itemIds, (itemId) => {
         forEach(propNames, (propName) => {
-          const newValue = itemsState[itemName][propName];
+          const newValue = itemsState[itemId][propName];
           theRule.run({
-            itemName: itemName as any,
+            itemId: itemId as any,
             newValue,
-            prevValue: prevItemsState[itemName][propName],
-            itemState: itemsState[itemName],
-            itemRefs: itemsRefs[itemName],
+            prevValue: prevItemsState[itemId][propName],
+            itemState: itemsState[itemId],
+            itemRefs: itemsRefs[itemId],
             frameDuration: 16.66666,
           });
         });
@@ -139,7 +139,7 @@ export function makeRules<K_EffectName extends string, K_EffectGroupName extends
 // make rules dynamic
 
 function makeDynamicEffectInlineFunction<K_Type extends ItemType, T_Options extends any>(
-  theRule: (options: T_Options) => Effect_Options<K_Type>
+  theRule: (options: T_Options) => EasyEffect<K_Type>
 ) {
   // return theRule;
   return (options: T_Options) => ({ ...theRule(options), _isPerItem: false });
@@ -148,7 +148,7 @@ function makeDynamicItemEffectInlineFunction<
   K_Type extends ItemType,
   K_PropName extends PropName<K_Type>,
   T_Options extends any
->(theRule: (options: T_Options) => ItemEffect_Options<K_Type, K_PropName>) {
+>(theRule: (options: T_Options) => ItemEffect<K_Type, K_PropName>) {
   // return theRule;
   return (options: T_Options) => ({ ...theRule(options), _isPerItem: true });
 }
@@ -172,7 +172,7 @@ function makeDynamicItemEffectInlineFunction<
 
 export function makeDynamicRules<
   K_RuleName extends string,
-  T_MakeRule_Function extends (...args: any) => MakeRule_Rule,
+  T_MakeRule_Function extends (...args: any) => MakeEffects_Effect,
   T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
 >(
   rulesToAdd: (arg0: {
@@ -207,8 +207,8 @@ export function makeDynamicRules<
     const theRuleFunction = allRules[ruleName];
     if (theRuleFunction && typeof theRuleFunction === "function") {
       const editedRuleObject = theRuleFunction(options);
-      if (!editedRuleObject.name) {
-        editedRuleObject.name = getWholeRuleName(ruleName, options);
+      if (!editedRuleObject.id) {
+        editedRuleObject.id = getWholeRuleName(ruleName, options);
       }
 
       if (editedRuleObject._isPerItem !== undefined) {
@@ -226,7 +226,7 @@ export function makeDynamicRules<
   ) {
     const theRuleFunction = allRules[ruleName];
     if (theRuleFunction && typeof theRuleFunction === "function") {
-      const foundOrMadeRuleName = theRuleFunction(options)?.name || getWholeRuleName(ruleName, options);
+      const foundOrMadeRuleName = theRuleFunction(options)?.id || getWholeRuleName(ruleName, options);
       stopNewEffect(foundOrMadeRuleName);
     } else {
       console.log("no rule set for ", ruleName);
@@ -270,18 +270,18 @@ export function makeDynamicRules<
 
 export function makeRuleMaker<
   T_StoreName extends ItemType & string,
-  T_StoreItemName extends keyof AllState[T_StoreName] & string,
-  T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string,
+  T_StoreItemId extends keyof AllState[T_StoreName] & string,
+  T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemId] & string,
   T_StepName extends StepName,
   T_UsefulParams extends Record<any, any>
 >(
   storeName: T_StoreName,
-  storeItemName: T_StoreItemName,
+  storeItemId: T_StoreItemId,
   storyProperty: T_PropertyName,
   stepName?: T_StepName,
   getUsefulParams?: () => T_UsefulParams
 ) {
-  type StoreState = AllState[T_StoreName][T_StoreItemName];
+  type StoreState = AllState[T_StoreName][T_StoreItemId];
 
   type PropertyValue = StoreState[T_PropertyName];
   type RulesOptions = Partial<Record<PropertyValue, (usefulStuff: T_UsefulParams) => void>>;
@@ -291,18 +291,14 @@ export function makeRuleMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulStoryStuff = getUsefulParams?.();
-          const latestValue = (getState() as AllState)[storeName][storeItemName][storyProperty] as PropertyValue;
+          const latestValue = (getState() as AllState)[storeName][storeItemId][storyProperty] as PropertyValue;
 
           callBacksObject[latestValue]?.(usefulStoryStuff!);
         },
-        check: {
-          prop: [storyProperty],
-          name: storeItemName,
-          type: storeName,
-        } as unknown as Effect_Check<T_StoreName>,
+        check: { prop: [storyProperty], id: storeItemId, type: storeName } as unknown as EasyEffect_Check<T_StoreName>,
         step: stepName ?? "default",
         atStepEnd: true,
-        name: ruleName,
+        id: ruleName,
       }),
     }));
   }
@@ -312,18 +308,18 @@ export function makeRuleMaker<
 
 export function makeLeaveRuleMaker<
   T_StoreName extends ItemType & string,
-  T_StoreItemName extends keyof AllState[T_StoreName] & string,
-  T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemName] & string,
+  T_StoreItemId extends keyof AllState[T_StoreName] & string,
+  T_PropertyName extends keyof AllState[T_StoreName][T_StoreItemId] & string,
   T_StepName extends StepName,
   T_UsefulParams extends Record<any, any>
 >(
   storeName: T_StoreName,
-  storeItemName: T_StoreItemName,
+  storeItemId: T_StoreItemId,
   storyProperty: T_PropertyName,
   stepName?: T_StepName,
   getUsefulParams?: () => T_UsefulParams
 ) {
-  type StoreState = AllState[T_StoreName][T_StoreItemName];
+  type StoreState = AllState[T_StoreName][T_StoreItemId];
 
   type PropertyValue = StoreState[T_PropertyName];
   type RulesOptions = Partial<Record<PropertyValue, (usefulStuff: T_UsefulParams) => void>>;
@@ -333,18 +329,14 @@ export function makeLeaveRuleMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulStoryStuff = getUsefulParams?.();
-          const prevValue = (getPrevState() as AllState)[storeName][storeItemName][storyProperty] as PropertyValue;
+          const prevValue = (getPrevState() as AllState)[storeName][storeItemId][storyProperty] as PropertyValue;
 
           callBacksObject[prevValue]?.(usefulStoryStuff!);
         },
-        check: {
-          prop: [storyProperty],
-          name: storeItemName,
-          type: storeName,
-        } as unknown as Effect_Check<T_StoreName>,
+        check: { prop: [storyProperty], id: storeItemId, type: storeName } as unknown as EasyEffect_Check<T_StoreName>,
         step: stepName ?? "default",
         atStepEnd: true,
-        name: ruleName,
+        id: ruleName,
       }),
     }));
   }
@@ -355,24 +347,24 @@ export function makeLeaveRuleMaker<
 // makeNestedRuleMaker, similar to makeRuleMaker but accepts parameters for two store properties (can be from different stores) , and the callback fires when properties of both stores change
 export function makeNestedRuleMaker<
   T_StoreName1 extends ItemType & string,
-  T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
-  T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] & string,
+  T_StoreItemId1 extends keyof AllState[T_StoreName1] & string,
+  T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemId1] & string,
   T_StoreName2 extends ItemType & string,
-  T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
-  T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] & string,
+  T_StoreItemId2 extends keyof AllState[T_StoreName2] & string,
+  T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemId2] & string,
   T_StepName extends StepName,
   T_UsefulParams extends Record<any, any>
 >(
-  storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1],
-  storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2],
+  storeInfo1: [T_StoreName1, T_StoreItemId1, T_PropertyName1],
+  storeInfo2: [T_StoreName2, T_StoreItemId2, T_PropertyName2],
   stepName?: T_StepName,
   getUsefulParams?: () => T_UsefulParams
 ) {
-  const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
-  const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+  const [storeName1, storeItemId1, storyProperty1] = storeInfo1;
+  const [storeName2, storeItemId2, storyProperty2] = storeInfo2;
 
-  type StoreState1 = AllState[T_StoreName1][T_StoreItemName1];
-  type StoreState2 = AllState[T_StoreName2][T_StoreItemName2];
+  type StoreState1 = AllState[T_StoreName1][T_StoreItemId1];
+  type StoreState2 = AllState[T_StoreName2][T_StoreItemId2];
 
   type PropertyValue1 = StoreState1[T_PropertyName1];
   type PropertyValue2 = StoreState2[T_PropertyName2];
@@ -388,18 +380,18 @@ export function makeNestedRuleMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulStoryStuff = getUsefulParams?.();
-          const latestValue1 = (getState() as AllState)[storeName1][storeItemName1][storyProperty1] as PropertyValue1;
-          const latestValue2 = (getState() as AllState)[storeName2][storeItemName2][storyProperty2] as PropertyValue2;
+          const latestValue1 = (getState() as AllState)[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
+          const latestValue2 = (getState() as AllState)[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
 
           callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff!);
         },
         check: [
-          { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
-          { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
-        ] as unknown as Effect_Check<T_StoreName1 | T_StoreName2>,
+          { prop: [storyProperty1], id: storeItemId1, type: storeName1 },
+          { prop: [storyProperty2], id: storeItemId2, type: storeName2 },
+        ] as unknown as EasyEffect_Check<T_StoreName1 | T_StoreName2>,
         step: stepName ?? "default",
         atStepEnd: true,
-        name: ruleName,
+        id: ruleName,
       }),
     }));
   }
@@ -410,23 +402,23 @@ export function makeNestedRuleMaker<
 // makeNestedLeaveRuleMaker, the same as makeNestedRuleMaker , but the callback fires when the properties of both stores become NOT the specified values, but were previously
 export function makeNestedLeaveRuleMaker<
   T_StoreName1 extends ItemType & string,
-  T_StoreItemName1 extends keyof AllState[T_StoreName1] & string,
-  T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemName1] & string,
+  T_StoreItemId1 extends keyof AllState[T_StoreName1] & string,
+  T_PropertyName1 extends keyof AllState[T_StoreName1][T_StoreItemId1] & string,
   T_StoreName2 extends ItemType & string,
-  T_StoreItemName2 extends keyof AllState[T_StoreName2] & string,
-  T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemName2] & string,
+  T_StoreItemId2 extends keyof AllState[T_StoreName2] & string,
+  T_PropertyName2 extends keyof AllState[T_StoreName2][T_StoreItemId2] & string,
   T_UsefulParams extends Record<any, any>
 >(
-  storeInfo1: [T_StoreName1, T_StoreItemName1, T_PropertyName1],
-  storeInfo2: [T_StoreName2, T_StoreItemName2, T_PropertyName2],
+  storeInfo1: [T_StoreName1, T_StoreItemId1, T_PropertyName1],
+  storeInfo2: [T_StoreName2, T_StoreItemId2, T_PropertyName2],
   stepName?: StepName,
   getUsefulParams?: () => T_UsefulParams
 ) {
-  const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
-  const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
+  const [storeName1, storeItemId1, storyProperty1] = storeInfo1;
+  const [storeName2, storeItemId2, storyProperty2] = storeInfo2;
 
-  type StoreState1 = AllState[T_StoreName1][T_StoreItemName1];
-  type StoreState2 = AllState[T_StoreName2][T_StoreItemName2];
+  type StoreState1 = AllState[T_StoreName1][T_StoreItemId1];
+  type StoreState2 = AllState[T_StoreName2][T_StoreItemId2];
 
   type PropertyValue1 = StoreState1[T_PropertyName1];
   type PropertyValue2 = StoreState2[T_PropertyName2];
@@ -439,21 +431,21 @@ export function makeNestedLeaveRuleMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulParams = getUsefulParams?.();
-          const latestValue1 = (getState() as AllState)[storeName1][storeItemName1][storyProperty1] as PropertyValue1;
-          const latestValue2 = (getState() as AllState)[storeName2][storeItemName2][storyProperty2] as PropertyValue2;
-          const prevValue1 = getPrevState()[storeName1][storeItemName1][storyProperty1] as PropertyValue1;
-          const prevValue2 = getPrevState()[storeName2][storeItemName2][storyProperty2] as PropertyValue2;
+          const latestValue1 = (getState() as AllState)[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
+          const latestValue2 = (getState() as AllState)[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
+          const prevValue1 = getPrevState()[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
+          const prevValue2 = getPrevState()[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
 
           const callback = callBacksObject[prevValue1]?.[prevValue2];
           if (callback) callback(usefulParams!);
         },
         check: [
-          { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
-          { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
-        ] as unknown as Effect_Check<T_StoreName1 | T_StoreName2>,
+          { prop: [storyProperty1], id: storeItemId1, type: storeName1 },
+          { prop: [storyProperty2], id: storeItemId2, type: storeName2 },
+        ] as unknown as EasyEffect_Check<T_StoreName1 | T_StoreName2>,
         step: stepName ?? "default",
         atStepEnd: true,
-        name: ruleName,
+        id: ruleName,
       }),
     }));
   }
