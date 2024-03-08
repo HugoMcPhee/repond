@@ -1,7 +1,3 @@
-// -----------------------------------------------------------------
-// main functions
-// -----------------------------------------------------------------
-
 import meta from "../meta";
 import { _addItem, _removeItem, _setState } from "../settingInternal";
 import {
@@ -34,8 +30,9 @@ export const getState = (): DeepReadonly<AllState> => meta.nowState as DeepReado
 
 export const setState: SetRepondState<AllState> = (newState, callback) => _setState(newState, callback);
 
+// Good for running things to be sure the state change is seen
 export function onNextTick(callback: RepondCallback) {
-  meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
+  meta.callbacksQue.push(callback);
 }
 
 export const getPrevState = (): AllState => meta.prevState as AllState;

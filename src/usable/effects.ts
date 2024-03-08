@@ -7,103 +7,19 @@ import {
   DiffInfo,
   EasyEffect,
   EasyEffect_Check,
-  Effect,
   EffectPhase,
   ItemEffect,
   ItemType,
-  MakeEffects_Effect,
+  Effect,
   PropName,
   RefinedGroupedEffects,
-  UntypedEffect,
+  ItemId,
 } from "../types";
 import { getPrevState, getRefs, getState } from "../usable/getSet";
 import { toArray, toMaybeArray } from "../utils";
 
-// --------------------------------------------------------------------
-// Effects
-// --------------------------------------------------------------------
-// type MakeRule_Rule = FlexibleRuleOptions<
-//   T_ItemType,
-//   PropertyName<T_ItemType>
-// >;
-
-// NOTE could make options generic and return that
-// type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
-export type MakeEffect = <K_Type extends ItemType>(
-  options: EasyEffect<K_Type>
-  // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
-) => any;
-
-// type MakeItemEffect = <K_Type extends T_ItemType, K_PropName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropName>) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-export type MakeItemEffect = <K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  options: ItemEffect<K_Type, K_PropName>
-  // ) => ItemEffect_RuleOptions<
-  //   K_Type,
-  //   K_PropName,
-  //   T_ItemType,
-  //   T_State,
-  //   T_Refs,
-  //   T_StepName
-  // >;
-) => any;
-
-export type MakeDynamicEffectInlineFunction = <K_Type extends ItemType, T_Options extends any>(
-  theRule: (options: T_Options) => EasyEffect<K_Type>
-) => (
-  options: T_Options
-  // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
-) => any;
-
-export type MakeDynamicItemEffectInlineFunction = <
-  K_Type extends ItemType,
-  K_PropName extends PropName<K_Type>,
-  T_Options extends any
->(
-  theRule: (options: T_Options) => ItemEffect<K_Type, K_PropName>
-) => (
-  options: T_Options
-  // ) => ItemEffect_RuleOptions<
-  //   K_Type,
-  //   K_PropName,
-  //   T_ItemType,
-  //   T_State,
-  //   T_Refs,
-  //   T_StepName
-  // >;
-) => any;
-
-export function makeEffect<K_Type extends ItemType>(easyEffect: EasyEffect<K_Type>): EasyEffect<K_Type> {
-  return easyEffectToEffect(easyEffect);
-}
-
-export function makeItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  itemEffect: ItemEffect<K_Type, K_PropName>
-) {
-  return easyEffectToEffect(itemEffectToEasyEffect(itemEffect));
-}
-//
-// // NOTE could make options generic and return that
-// // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
-// type MakeEffect = <K_Type extends T_ItemType>(
-//   options: Effect_RuleOptions<K_Type>
-// ) => Effect_RuleOptions<K_Type>;
-//
-// // type MakeItemEffect = <K_Type extends T_ItemType, K_PropName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropName>) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-// type MakeItemEffect = <
-//   K_Type extends T_ItemType,
-//   K_PropName extends PropertyName<K_Type>
-// >(
-//   options: ItemEffect_RuleOptions<K_Type, K_PropName>
-// ) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-
-// type MakeRule_Utils = {
-//   itemEffect: MakeItemEffect;
-//   effect: MakeEffect;
-// };
-
-// TODO
 // -------------------------------------------------------
-// utils
+// Converters
 // -------------------------------------------------------
 
 // Convert an itemEffect callback to a regular effect callback
@@ -127,17 +43,19 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
   return (diffInfo: DiffInfo, frameDuration: number, skipChangeCheck?: boolean) => {
     // if skipChangeCheck is true, it will run the run function regardless of the changes
     if (skipChangeCheck) {
-      if (ids) {
+      const idsToRun = ids?.length ? ids : meta.itemIdsByItemType[type];
+
+      if (idsToRun?.length) {
         const prevItemsState = getPrevState()[type] as any;
         const itemsState = (getState() as AllState)[type];
         const itemsRefs = getRefs()[type];
 
-        forEach(ids, (itemId) => {
+        forEach(idsToRun, (itemId) => {
           breakableForEach(props, (propName) => {
             const newValue = itemsState[itemId][propName];
 
             run({
-              itemId: itemId,
+              itemId: itemId as any,
               newValue,
               prevValue: prevItemsState[itemId][propName],
               itemState: itemsState[itemId],
@@ -145,7 +63,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
               frameDuration,
               ranWithoutChange: true,
             });
-            return true; // break out of the loop, so it only runs once
+            // return true; // break out of the loop, so it only runs once
           });
         });
       }
@@ -188,7 +106,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
 }
 
 // converts an easy effect check to a effect check (an array of checks)
-function easyEffectCheckToEffectCheck<K_Type extends ItemType>(effectCheck: EasyEffect_Check<K_Type>) {
+function easyEffectCheckToEffectChecks<K_Type extends ItemType>(effectCheck: EasyEffect_Check<K_Type>) {
   const checksArray = toArray(effectCheck);
 
   return checksArray.map((check) => ({
@@ -200,26 +118,41 @@ function easyEffectCheckToEffectCheck<K_Type extends ItemType>(effectCheck: Easy
 }
 
 // converts an easy effect to an effect
-function easyEffectToEffect<T_EasyEffect extends EasyEffect<any>>(easyEffect: T_EasyEffect): Effect<ItemType> {
+function easyEffectToEffect<T_EasyEffect extends EasyEffect<any>>(easyEffect: T_EasyEffect): Effect {
   return {
+    ...easyEffect,
     id: easyEffect.id ?? toSafeEffectId("effect"),
-    check: easyEffectCheckToEffectCheck(easyEffect.check),
-    atStepEnd: !!easyEffect.atStepEnd,
-    run: easyEffect.run,
-    step: easyEffect.step,
+    checks: easyEffectCheckToEffectChecks(easyEffect.check),
   };
 }
 
+export function itemEffectToEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
+  itemEffect: ItemEffect<K_Type, K_PropName>
+): Effect {
+  let effectName = itemEffect.id || "unnamedItemEffect" + Math.random();
+
+  return easyEffectToEffect({
+    ...itemEffect,
+    id: effectName,
+    check: { ...itemEffect.check, becomes: undefined, prop: toMaybeArray(itemEffect.check.prop) },
+    run: itemEffectRunToEffectRun(itemEffect),
+  });
+}
+
 // --------------------------------------------------------------------
-// more utils
+// Internal functions
 // --------------------------------------------------------------------
 
-function _startEffect<K_Type extends ItemType>(newEffect: Effect<K_Type>) {
+function _startEffect(newEffect: Effect) {
   const phase: EffectPhase = !!newEffect.atStepEnd ? "endOfStep" : "duringStep";
   const step = newEffect.step ?? "default";
 
+  if (newEffect.runAtStart) {
+    runWhenDoingEffectsRunAtStart(() => newEffect.run(meta.diffInfo as any, 16.66666, true /* ranWithoutChange */));
+  }
+
   runWhenStartingEffects(() => {
-    meta.allEffects[newEffect.id] = newEffect as unknown as UntypedEffect;
+    meta.allEffects[newEffect.id] = newEffect as unknown as Effect;
     if (!meta.effectIdsByPhaseByStep[phase][step]) {
       // add the effect to a new array
       meta.effectIdsByPhaseByStep[phase][step] = [newEffect.id];
@@ -245,41 +178,26 @@ function _stopEffect(effectName: string) {
   });
 }
 
+export function toSafeEffectId(prefix?: string): string {
+  const counterNumber = repondMeta.autoEffectIdCounter;
+  repondMeta.autoEffectIdCounter += 1;
+  return (prefix || "autoEffect") + "_" + counterNumber;
+}
+
 // --------------------------------------------------------------------
-// other functions
+// Usable functions
 // --------------------------------------------------------------------
 
 export function startNewEffect<K_Type extends ItemType>(theEffect: EasyEffect<K_Type>) {
-  let effectId = theEffect.id || toSafeEffectId("effect");
-
-  // add the required effectId
-  const editedEffect = { ...theEffect, id: effectId };
-
-  if (theEffect.runAtStart) {
-    runWhenDoingEffectsRunAtStart(() => theEffect.run(meta.diffInfo as any, 16.66666, true /* ranWithoutChange */));
-  }
-
-  _startEffect(easyEffectToEffect(editedEffect) as any);
-}
-
-export function itemEffectToEasyEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  itemEffect: ItemEffect<K_Type, K_PropName>
-): EasyEffect<K_Type> {
-  let effectName = itemEffect.id || "unnamedItemEffect" + Math.random();
-
-  return easyEffectToEffect({
-    ...itemEffect,
-    id: effectName,
-    check: { ...itemEffect.check, becomes: undefined, prop: toMaybeArray(itemEffect.check.prop) },
-    run: itemEffectRunToEffectRun(itemEffect),
-  });
+  _startEffect(easyEffectToEffect(theEffect));
 }
 
 export function startNewItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
   itemEffect: ItemEffect<K_Type, K_PropName>
 ) {
-  const effect = itemEffectToEasyEffect(itemEffect);
-  startNewEffect(effect);
+  const effect = itemEffectToEffect(itemEffect);
+
+  _startEffect(effect);
   return effect.id;
 }
 
@@ -287,27 +205,23 @@ export function stopNewEffect(effectName: string) {
   _stopEffect(effectName);
 }
 
-// ---------------------------------------------------
-// Make Effects
-// ---------------------------------------------------
-
 // This is really startGroupedEffect
 export function startEffect<
   K_EffectGroup extends keyof RefinedGroupedEffects,
   K_EffectName extends keyof RefinedGroupedEffects[K_EffectGroup] & string
 >(groupName: K_EffectGroup, effectName: K_EffectName) {
-  const theEffect = (meta.allGroupedEffects as any)[groupName][effectName] as Effect<ItemType>;
+  const theEffect = (meta.allGroupedEffects as any)[groupName][effectName];
   if (!theEffect) return console.warn("no effect found for ", groupName, effectName);
-  startNewEffect(theEffect);
+  _startEffect(theEffect);
 }
 
 export function stopEffect<
   K_EffectGroup extends keyof RefinedGroupedEffects,
   K_EffectName extends keyof RefinedGroupedEffects[K_EffectGroup] & string
 >(groupName: K_EffectGroup, effectName: K_EffectName) {
-  const theEffect = (meta.allGroupedEffects as any)[groupName][effectName] as Effect<ItemType>;
+  const theEffect = (meta.allGroupedEffects as any)[groupName][effectName];
   if (!theEffect) return console.warn("no effect found for ", groupName, effectName);
-  stopNewEffect(theEffect.id);
+  _stopEffect(theEffect.id);
 }
 
 export function startGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffects>(groupName: K_EffectGroup) {
@@ -320,11 +234,11 @@ export function stopGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffec
   forEach(Object.keys(theGroup), (effectName) => stopEffect(groupName, effectName));
 }
 
-export function startAllGroupedEffects() {
+export function startAllGroupsEffects() {
   forEach(Object.keys(meta.allGroupedEffects), (groupName) => startGroupEffects(groupName));
 }
 
-export function stopAllGroupedEffects() {
+export function stopAllGroupsEffects() {
   forEach(Object.keys(meta.allGroupedEffects), (groupName) => stopGroupEffects(groupName));
 }
 
@@ -342,8 +256,23 @@ export function runGroupEffects<K_EffectGroup extends keyof RefinedGroupedEffect
   forEach(Object.keys(theGroup), (effectName) => runEffect(groupName, effectName));
 }
 
+export type MakeEffect = <K_Type extends ItemType>(easyEffect: EasyEffect<K_Type>) => Effect;
+export type MakeItemEffect = <K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
+  itemEffect: ItemEffect<K_Type, K_PropName>
+) => Effect;
+
+export function makeEffect<K_Type extends ItemType>(easyEffect: EasyEffect<K_Type>): Effect {
+  return easyEffectToEffect(easyEffect);
+}
+
+export function makeItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
+  itemEffect: ItemEffect<K_Type, K_PropName>
+): Effect {
+  return itemEffectToEffect(itemEffect);
+}
+
 export function makeEffects<K_EffectName extends string>(
-  effectsToAdd: (makers: { itemEffect: MakeItemEffect; effect: MakeEffect }) => Record<K_EffectName, MakeEffects_Effect>
+  effectsToAdd: (arg0: { itemEffect: MakeItemEffect; effect: MakeEffect }) => Record<K_EffectName, Effect>
 ) {
   return effectsToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
 }
@@ -373,10 +302,4 @@ export function initGroupedEffects<T extends Record<string, ReturnType<typeof ma
   meta.allGroupedEffects = transformedGroups as any;
 
   return groups;
-}
-
-export function toSafeEffectId(prefix?: string): string {
-  const counterNumber = repondMeta.autoEffectIdCounter;
-  repondMeta.autoEffectIdCounter += 1;
-  return (prefix || "autoEffect") + "_" + counterNumber;
 }

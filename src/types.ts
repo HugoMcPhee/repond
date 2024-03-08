@@ -4,22 +4,6 @@ import { RepondTypes } from "./declarations";
 // https://stackoverflow.com/questions/49401866/all-possible-keys-of-an-union-type
 export type KeysOfUnion<T> = T extends any ? keyof T : never;
 
-// TODO FIXME this type is duplicated in types
-// There should only be one format?
-export type EffectCheck<T_State extends { [key: string]: any }, T_ItemType extends string> =
-  | {
-      types?: [T_ItemType];
-      ids?: string[];
-      props?: KeysOfUnion<NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]>[];
-      addedOrRemoved?: boolean;
-    }
-  | {
-      types?: T_ItemType;
-      ids?: string[];
-      props?: KeysOfUnion<NonNullable<T_State[T_ItemType]>[keyof T_State[T_ItemType]]>[];
-      addedOrRemoved?: boolean;
-    };
-
 // https://stackoverflow.com/a/55930310 Readonly object , Ben Carp
 
 export type DeepReadonly<T> =
@@ -244,6 +228,7 @@ type ItemEffect_Check_MultiProps<K_Type extends ItemType, K_PropName extends Pro
   becomes?: ItemEffect_Check_Becomes;
   addedOrRemoved?: undefined;
 };
+
 export type ItemEffect_Check<K_Type extends ItemType, K_PropName extends PropName<K_Type>> =
   | ItemEffect_Check_OneProp<K_Type, K_PropName>
   | ItemEffect_Check_MultiProps<K_Type, K_PropName>;
@@ -314,59 +299,23 @@ export type EasyEffect<K_Type extends ItemType> = {
   runAtStart?: boolean;
 };
 
-export type MakeEffects_Effect = Effect<ItemType>;
-
 // -----------------
 // Effect
 
-type Effect_OneCheck_OneItemType<K_Type extends ItemType> = {
-  types?: K_Type;
-  ids?: ItemId<K_Type>[];
-  props?: PropName<K_Type>;
-  addedOrRemoved?: boolean;
-};
-
-export type Effect_OneCheck_MultiItemTypes = {
-  types?: (keyof AllState)[];
+export type Effect_OneCheck = {
+  types?: ItemType[];
   ids?: ItemId<ItemType>[];
   props?: AllProps[];
   addedOrRemoved?: boolean;
 };
 
-// NOTE: the type works, but autocomplete doesn't work ATM when
-// trying to make properties/addedOrRemoved exclusive
-// type TestChangeToCheckUnionWithProperties<T, K> = XOR<
-//   Omit<TestChangeToCheckMultiItemTypes<T>, "addedOrRemoved">,
-//   Omit<TestChangeToCheckOneItemType<T, K>, "addedOrRemoved">
-// >;
-// type TestChangeToCheckUnionWithoutProperties<T, K> = XOR<
-//   Omit<TestChangeToCheckMultiItemTypes<T>, "properties">,
-//   Omit<TestChangeToCheckOneItemType<T, K>, "properties">
-// >;
+export type Effect_Checks = Effect_OneCheck[];
 
-// type TestChangeToCheckUnion<T, K> = XOR<
-//   TestChangeToCheckUnionWithProperties<T, K>,
-//   TestChangeToCheckUnionWithoutProperties<T, K>
-// >;
-
-export type Effect_OneCheck<K_Type extends ItemType> =
-  | Effect_OneCheck_OneItemType<K_Type>
-  | Effect_OneCheck_MultiItemTypes;
-
-export type Effect_Check<K_Type extends ItemType> = Effect_OneCheck<K_Type>[];
-
-export type UntypedEffect = {
+export type Effect = {
   id: string;
-  check: EffectCheck<any, any>[];
-  run: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-  atStepEnd?: boolean;
-  step?: string;
-};
-
-export type Effect<K_Type extends ItemType> = {
-  id: string;
-  check: Effect_Check<K_Type>;
-  run: (diffInfo: DiffInfo, frameDuration: number) => void;
+  checks: Effect_Checks;
+  run: (diffInfo: DiffInfo, frameDuration: number, ranWithoutChange?: boolean) => void;
   atStepEnd?: boolean;
   step?: StepName;
+  runAtStart?: boolean;
 };

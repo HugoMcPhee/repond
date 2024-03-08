@@ -1,20 +1,9 @@
 import { forEach } from "chootils/dist/loops";
 import meta from "../meta";
-import {
-  AllState,
-  EasyEffect_Check,
-  EasyEffect,
-  ItemEffect,
-  ItemType,
-  MakeEffects_Effect,
-  PropName,
-  StepName,
-} from "../types";
+import { AllState, EasyEffect_Check, EasyEffect, ItemEffect, ItemType, Effect, PropName, StepName } from "../types";
 import { getPrevState, getRefs, getState } from "../usable/getSet";
 import { toMaybeArray } from "../utils";
 import {
-  MakeDynamicEffectInlineFunction,
-  MakeDynamicItemEffectInlineFunction,
   MakeEffect,
   MakeItemEffect,
   makeEffect,
@@ -25,10 +14,35 @@ import {
   toSafeEffectId,
 } from "./effects";
 
+export type MakeDynamicEffectInlineFunction = <K_Type extends ItemType, T_Options extends any>(
+  theRule: (options: T_Options) => EasyEffect<K_Type>
+) => (
+  options: T_Options
+  // ) => Effect_RuleOptions<K_Type, T_ItemType, T_State, T_StepName>;
+) => any;
+
+export type MakeDynamicItemEffectInlineFunction = <
+  K_Type extends ItemType,
+  K_PropName extends PropName<K_Type>,
+  T_Options extends any
+>(
+  theRule: (options: T_Options) => ItemEffect<K_Type, K_PropName>
+) => (
+  options: T_Options
+  // ) => ItemEffect_RuleOptions<
+  //   K_Type,
+  //   K_PropName,
+  //   T_ItemType,
+  //   T_State,
+  //   T_Refs,
+  //   T_StepName
+  // >;
+) => any;
+
 /** @deprecated Please use makeEffects instead*/
 export function makeRules<K_EffectName extends string, K_EffectGroupName extends string>(
   rulesToAdd: (arg0: { itemEffect: MakeItemEffect; effect: MakeEffect }) => // ) => Record<K_RuleName, MakeRule_Rule >
-  Record<K_EffectName, MakeEffects_Effect>,
+  Record<K_EffectName, Effect>,
   rulesName?: K_EffectGroupName // TODO register rules to an object in meta
 ): {
   start: (ruleName: K_EffectName) => void;
@@ -82,14 +96,14 @@ export function makeRules<K_EffectName extends string, K_EffectGroupName extends
     // NOTE this doesn't wait for the step chosen for the rule!
     // maybe it should?
 
-    const theRule = editedRulesToAdd[ruleName as any] as MakeEffects_Effect;
+    const theRule = editedRulesToAdd[ruleName as any] as Effect;
     if (!theRule) return;
 
     if (theRule._isPerItem) {
       // Run the item rule for each item (and prop)
-      const itemType = theRule.check.type as ItemType;
+      const itemType = theRule.checks.type as ItemType;
       const itemIds = meta.itemIdsByItemType[itemType as string];
-      const propNames = toMaybeArray(theRule.check.prop) ?? [];
+      const propNames = toMaybeArray(theRule.checks.prop) ?? [];
       const itemsState = (getState() as AllState)[itemType];
       const prevItemsState = (getPrevState() as AllState)[itemType];
       const itemsRefs = (getRefs() as AllState)[itemType];
@@ -172,7 +186,7 @@ function makeDynamicItemEffectInlineFunction<
 
 export function makeDynamicRules<
   K_RuleName extends string,
-  T_MakeRule_Function extends (...args: any) => MakeEffects_Effect,
+  T_MakeRule_Function extends (...args: any) => Effect,
   T_RulesToAdd = Record<K_RuleName, T_MakeRule_Function>
 >(
   rulesToAdd: (arg0: {

@@ -78,9 +78,9 @@ export function useStoreItemEffect<K_Type extends ItemType, K_PropName extends P
 ) {
   useLayoutEffect(
     () => {
-      const name = toSafeEffectId("useStoreItemEffect_" + JSON.stringify(check));
-      startNewItemEffect({ id: name, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
-      return () => stopNewEffect(name);
+      const effectId = toSafeEffectId("useStoreItemEffect_" + JSON.stringify(check));
+      startNewItemEffect({ id: effectId, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
+      return () => stopNewEffect(effectId);
     },
     hookDeps.length > 0 ? [...hookDeps, check.id] : [check.id]
   );
@@ -115,10 +115,10 @@ export function useStoreItem<
       if (didRender.current) {
         setReturnedState(getInitialState());
       }
-      const name = toSafeEffectId("useStoreItem"); // note could add JSON.stringify(check) for useful effect name
+      const effectId = toSafeEffectId("useStoreItem"); // note could add JSON.stringify(check) for useful effect name
 
       startNewItemEffect({
-        id: name,
+        id: effectId,
         atStepEnd: true,
         check,
         run: (theParameters) => setReturnedState(theParameters as any),
@@ -126,7 +126,7 @@ export function useStoreItem<
       });
       didRender.current = true;
 
-      return () => stopNewEffect(name);
+      return () => stopNewEffect(effectId);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     hookDeps.length > 0 ? [...hookDeps, check.id] : [check.id]

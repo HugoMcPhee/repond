@@ -1,17 +1,8 @@
 import meta, { RecordedChanges, RepondMetaPhase } from "./meta";
 import { forEach } from "chootils/dist/loops";
-import checkEffects from "repond/src/checkEffects";
+import checkEffects from "./checkEffects";
 import { EffectPhase } from "./types";
 import { runNextFrame } from "./settingInternal";
-
-/*
-
-ohhh, every setState is qued and run when the frame runs, so setState never runs before the frame)
-but they run in a specific order so could get overwritten
-
-and rereunning setState inside listeners is a way to change the values not depending on order
-
-*/
 
 function updateDiffInfo(recordedChanges: RecordedChanges) {
   //  make a diff of the changes
@@ -110,16 +101,6 @@ function runAllCallbacks() {
   copiedCallbacks.length = 0;
 }
 
-function runAllCallfowards() {
-  let copiedCallforwards: any[] = [];
-  if (meta.callforwardsQue.length > 0) {
-    copiedCallforwards = meta.callforwardsQue.slice(0) || [];
-    meta.callforwardsQue.length = 0;
-    meta.callforwardsQue = [];
-  }
-  runCallbacks(copiedCallforwards);
-}
-
 export function createRecordedChanges(recordedChanges: RecordedChanges) {
   recordedChanges.itemTypesBool = {};
   recordedChanges.itemIdsBool = {};
@@ -213,14 +194,12 @@ function runSetOfStepEffects(stepName: string) {
   runStepEffects(stepName);
   if (!meta.recordedEffectChanges.somethingChanged) return;
 
-  console.warn("WARNING: running step effects a lot");
+  console.warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
 
-  console.log("step name", meta.nowStepName);
-  console.log("effect names");
-
+  console.log("Step name: ", meta.nowStepName);
+  console.log("Effect ids:");
   console.log(JSON.stringify(meta.effectIdsByPhaseByStep.duringStep?.[meta.nowStepName], null, 2));
-
-  console.log("changes");
+  console.log("Changes");
   console.log(
     JSON.stringify(
       Object.entries(meta.recordedEffectChanges.itemTypesBool)
@@ -236,9 +215,6 @@ function runSetOfStepEffects(stepName: string) {
       2
     )
   );
-
-  // meta.recordedDeriveChanges.itemPropsBool
-  // );
 }
 
 function runStepEndEffectsShortcut(stepName: string) {
@@ -342,7 +318,7 @@ export function _updateRepond(animationFrameTime: number) {
 
   setMetaPhase("runningUpdates");
   // save previous state, ,
-  // this won't this disreguard all the state stuff from the callbacks
+  // this won't this discard all the setStates from the callbacks
   // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
   meta.copyStates(meta.nowState, meta.prevState);
 
@@ -353,8 +329,6 @@ export function _updateRepond(animationFrameTime: number) {
   setMetaPhase("waitingForFirstUpdate");
   runAllCallbacks();
   removeRemovedItemRefs();
-
-  // runAllCallfowards(); // Moved callforwarsd to end of frame to help frame pacing issue on android? have also moved callforwarsd to inside callbacks
 
   // if theres nothing running on next frame
   meta.nextFrameIsFirst = meta.setStatesQue.length === 0;

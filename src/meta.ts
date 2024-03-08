@@ -1,4 +1,4 @@
-import { EffectPhase, UntypedEffect } from "./types";
+import { DiffInfo, Effect, EffectPhase } from "./types";
 
 export type RecordedChanges = {
   itemTypesBool: { [type: string]: boolean };
@@ -86,7 +86,7 @@ const repondMeta = {
   lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
   shouldRunUpdateAtEndOfUpdate: false,
   //
-  diffInfo: initialDiffInfo,
+  diffInfo: initialDiffInfo as DiffInfo,
   // state
   prevState: {} as any,
   nowState: {} as any,
@@ -99,16 +99,15 @@ const repondMeta = {
   effectsRunAtStartQueue: [] as AFunction[],
   startEffectsQue: [] as AFunction[],
   setStatesQue: [] as AFunction[],
-  callforwardsQue: [] as AFunction[], // runs at the start of a tick
   callbacksQue: [] as AFunction[],
   //
-  allEffects: {} as Record<string, UntypedEffect>,
+  allEffects: {} as Record<string, Effect>,
   effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
     EffectPhase,
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
   //
-  allGroupedEffects: {} as Record<string, Record<string, UntypedEffect>>,
+  allGroupedEffects: {} as Record<string, Record<string, Effect>>,
   //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },

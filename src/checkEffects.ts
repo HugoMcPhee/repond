@@ -1,42 +1,38 @@
-import meta from "repond/src/meta";
-import { EffectCheck, EffectPhase } from "repond/src/types";
+import meta from "./meta";
+import { Effect_OneCheck, EffectPhase } from "./types";
 
 const NO_EFFECT_NAMES: string[] = [];
 const CHECK_ALL_OPTION = ["all__"];
 
 // created once and cleared to avoid making many new arrays each time, to save memory
-const effectNamesToUpdate: string[] = [];
+const changedEffectIds: string[] = [];
 
 export default function checkEffects(phase: EffectPhase = "endOfStep", stepName: string = "default"): string[] {
-  effectNamesToUpdate.length = 0;
+  changedEffectIds.length = 0;
 
-  let foundEffectNames = meta.effectIdsByPhaseByStep[phase][stepName] ?? NO_EFFECT_NAMES;
+  let effectNames = meta.effectIdsByPhaseByStep[phase][stepName] ?? NO_EFFECT_NAMES;
   let allEffects = meta.allEffects;
 
-  for (let nameIndex = 0; nameIndex < foundEffectNames.length; nameIndex++) {
-    const effectName = foundEffectNames[nameIndex];
+  for (let nameIndex = 0; nameIndex < effectNames.length; nameIndex++) {
+    const effectName = effectNames[nameIndex];
 
     const effect = allEffects[effectName];
-    const effectCheck = effect.check;
 
-    for (let checkerIndex = 0; checkerIndex < effectCheck.length; checkerIndex++) {
-      const check = effectCheck[checkerIndex];
+    const effectChecks = effect.checks;
 
-      // NOTE The diff info here could be unique for this step!
-      // ( using the diff found from prevStatesByStep[stepName] )
-      // NOTE the step diffInfo should probably also be passed to the effects when they run
-
-      if (checkForChanges(check, meta.diffInfo)) {
-        effectNamesToUpdate.push(effect.id);
+    for (let checkIndex = 0; checkIndex < effectChecks.length; checkIndex++) {
+      const check = effectChecks[checkIndex];
+      if (checkOneCheckForChanges(check, meta.diffInfo)) {
+        changedEffectIds.push(effect.id);
         break;
       }
     }
   }
 
-  return effectNamesToUpdate;
+  return changedEffectIds;
 }
 
-function checkForChanges(check: EffectCheck<any, any>, diffInfo: typeof meta.diffInfo) {
+function checkOneCheckForChanges(check: Effect_OneCheck, diffInfo: typeof meta.diffInfo) {
   const editedCheck = {
     types: check.types || CHECK_ALL_OPTION,
     ids: check.ids || CHECK_ALL_OPTION,
@@ -76,24 +72,19 @@ function checkForChanges(check: EffectCheck<any, any>, diffInfo: typeof meta.dif
   }
 
   for (let typesIndex = 0; typesIndex < editedCheck.types.length; typesIndex++) {
-    const loopedItemType = editedCheck.types[typesIndex];
+    const itemType = editedCheck.types[typesIndex];
 
-    if (
-      editedCheck.ids[0] === "all__" &&
-      diffInfo.itemsAdded?.[loopedItemType]?.length > 0
-      // diffInfo.itemsRemoved[loopedItemType].length > 0)   // checking itemsRemoved used to cause issues, but doesn't seem to now?
-    ) {
+    // NOTE checking itemsRemoved used to cause issues, but doesn't seem to now?
+    if (editedCheck.ids[0] === "all__" && diffInfo.itemsAdded?.[itemType]?.length > 0) {
       didChange = true;
       break;
     }
 
-    for (let idsIndex = 0; idsIndex < editedCheck.ids.length; idsIndex++) {
-      const loopedItemId = editedCheck.ids[idsIndex];
+    for (let idIndex = 0; idIndex < editedCheck.ids.length; idIndex++) {
+      const itemId = editedCheck.ids[idIndex];
 
-      if (diffInfo.itemsAddedBool[loopedItemType] && diffInfo.itemsAddedBool[loopedItemType][loopedItemId]) {
-        // checking itemsRemoved used to cause issues, but doesn't seem to now?
-        // (diffInfo.itemsRemovedBool[loopedItemType] &&
-        // diffInfo.itemsRemovedBool[loopedItemType][loopedItemId])
+      // used to check itemsRemoved, but not now?
+      if (diffInfo.itemsAddedBool[itemType] && diffInfo.itemsAddedBool[itemType][itemId]) {
         didChange = true;
         break;
       }
@@ -101,10 +92,9 @@ function checkForChanges(check: EffectCheck<any, any>, diffInfo: typeof meta.dif
       for (let propIndex = 0; propIndex < editedCheck.props.length; propIndex++) {
         const loopedPropertyName = editedCheck.props[propIndex];
         if (
-          diffInfo.propsChangedBool[loopedItemType] &&
-          diffInfo.propsChangedBool[loopedItemType][loopedItemId] &&
-          (diffInfo.propsChangedBool[loopedItemType][loopedItemId][loopedPropertyName] === true ||
-            loopedPropertyName === "all__")
+          diffInfo.propsChangedBool[itemType] &&
+          diffInfo.propsChangedBool[itemType][itemId] &&
+          (diffInfo.propsChangedBool[itemType][itemId][loopedPropertyName] === true || loopedPropertyName === "all__")
         ) {
           didChange = true;
           break;
