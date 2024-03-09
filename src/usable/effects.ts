@@ -7,13 +7,12 @@ import {
   DiffInfo,
   EasyEffect,
   EasyEffect_Check,
+  Effect,
   EffectPhase,
   ItemEffect,
   ItemType,
-  Effect,
   PropName,
   RefinedGroupedEffects,
-  ItemId,
 } from "../types";
 import { getPrevState, getRefs, getState } from "../usable/getSet";
 import { toArray, toMaybeArray } from "../utils";
@@ -35,8 +34,8 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
 
   if (ids) {
     allowedIdsMap = {};
-    forEach(ids, (loopedItemId) => {
-      if (allowedIdsMap) allowedIdsMap[loopedItemId as string] = true;
+    forEach(ids, (itemId) => {
+      if (allowedIdsMap) allowedIdsMap[itemId] = true;
     });
   }
 
@@ -63,7 +62,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
               frameDuration,
               ranWithoutChange: true,
             });
-            // return true; // break out of the loop, so it only runs once
+            return true; // break out of the props loop, so it only runs once per item
           });
         });
       }
@@ -105,7 +104,6 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
   };
 }
 
-// converts an easy effect check to a effect check (an array of checks)
 function easyEffectCheckToEffectChecks<K_Type extends ItemType>(effectCheck: EasyEffect_Check<K_Type>) {
   const checksArray = toArray(effectCheck);
 
@@ -117,8 +115,7 @@ function easyEffectCheckToEffectChecks<K_Type extends ItemType>(effectCheck: Eas
   }));
 }
 
-// converts an easy effect to an effect
-function easyEffectToEffect<T_EasyEffect extends EasyEffect<any>>(easyEffect: T_EasyEffect): Effect {
+export function easyEffectToEffect<T_EasyEffect extends EasyEffect<any>>(easyEffect: T_EasyEffect): Effect {
   return {
     ...easyEffect,
     id: easyEffect.id ?? toSafeEffectId("effect"),
@@ -143,7 +140,7 @@ export function itemEffectToEffect<K_Type extends ItemType, K_PropName extends P
 // Internal functions
 // --------------------------------------------------------------------
 
-function _startEffect(newEffect: Effect) {
+export function _startEffect(newEffect: Effect) {
   const phase: EffectPhase = !!newEffect.atStepEnd ? "endOfStep" : "duringStep";
   const step = newEffect.step ?? "default";
 
@@ -165,7 +162,7 @@ function _startEffect(newEffect: Effect) {
   });
 }
 
-function _stopEffect(effectName: string) {
+export function _stopEffect(effectName: string) {
   runWhenStoppingEffects(() => {
     const effect = meta.allEffects[effectName];
     if (!effect) return;
