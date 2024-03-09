@@ -3,18 +3,16 @@ TODO
 - support nullable types with strictNullchecks
 - type "becomes" to the property value
 - maybe a way to type effect objects without starting (exporting makeEffect)
-- add effect option for runOnNewItems, its like run at start, but only when an item is added
+- add runOnNewItems option to effects, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
 
-v0.13.0
+v0.13.0 Simpler ids and types
 
 - Rename "name" to "id" for items
-  and make simpler types
-  and rename effects to be 3 things
-  effects easy effects and item effects
-
-and simplify some effects logic
-and store plain effects in group effects
+- and make simpler types
+- and rename effects to be 3 things
+  - effects, easy effects and item effects
+- and simplify some effects logic
 
 v0.12.0
 
