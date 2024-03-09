@@ -26,15 +26,17 @@ export { addItem, getItem, getPrevState, getRefs, getState, removeItem, setState
 
 export {
   initGroupedEffects,
+  makeEffect,
+  makeItemEffect,
   makeEffects,
   runEffect,
   runGroupEffects,
-  startAllGroupedEffects,
+  startAllGroupsEffects as startAllGroupedEffects,
   startEffect,
   startGroupEffects,
   startNewEffect,
   startNewItemEffect,
-  stopAllGroupedEffects,
+  stopAllGroupsEffects as stopAllGroupedEffects,
   stopEffect,
   stopGroupEffects,
   stopNewEffect,
@@ -52,7 +54,7 @@ export {
 } from "./usable/deprecatedRules";
 
 export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
-  [itemName: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
+  [itemId: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
 
 // TODO remove these

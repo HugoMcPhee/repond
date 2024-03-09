@@ -37,9 +37,9 @@ function findScreenFramerate() {
 
 function runNextFrameIfNeeded() {
   if (!meta.shouldRunUpdateAtEndOfUpdate) {
-    if (meta.nextFrameIsFirst && meta.currentMetaPhase === "waitingForFirstUpdate") {
+    if (meta.nextFrameIsFirst && meta.nowMetaPhase === "waitingForFirstUpdate") {
       updateRepondNextFrame();
-      meta.currentMetaPhase = "waitingForMoreUpdates";
+      meta.nowMetaPhase = "waitingForMoreUpdates";
     } else {
       meta.shouldRunUpdateAtEndOfUpdate = true;
     }
@@ -87,19 +87,19 @@ function runWhenUpdatingRepond(whatToRun: any, callback?: any) {
   runNextFrameIfNeeded();
 }
 
-export function runWhenStartingInnerEffects(whatToRun: any) {
-  meta.startInnerEffectsQue.push(whatToRun);
+export function runWhenStartingEffects(whatToRun: any) {
+  meta.startEffectsQue.push(whatToRun);
   runNextFrameIfNeeded();
 }
 
-export function runWhenStoppingInnerEffects(whatToRun: any) {
+export function runWhenStoppingEffects(whatToRun: any) {
   // stopping listeners runs instantly
   whatToRun();
 }
 
-export function runWhenDoingInnerEffectsRunAtStart(whatToRun: any, callback?: any) {
-  meta.innerEffectsRunAtStartQueue.push(whatToRun);
-  if (callback) meta.innerEffectsRunAtStartQueue.push(callback);
+export function runWhenDoingEffectsRunAtStart(whatToRun: any, callback?: any) {
+  meta.effectsRunAtStartQueue.push(whatToRun);
+  if (callback) meta.effectsRunAtStartQueue.push(callback);
   runNextFrameIfNeeded();
 }
 
@@ -111,24 +111,24 @@ function runWhenAddingAndRemovingItems(whatToRun: any, callback?: any) {
 
 export function _setState(newState: any, callback?: any) {
   runWhenUpdatingRepond(() => {
-    const newStateValue = typeof newState === "function" ? newState(meta.currentState) : newState;
+    const newStateValue = typeof newState === "function" ? newState(meta.nowState) : newState;
 
     if (!newStateValue) return;
     meta.mergeStates(
       newStateValue,
-      meta.currentState,
-      meta.currentMetaPhase === "runningInnerEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
+      meta.nowState,
+      meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
       meta.recordedStepEndEffectChanges
     );
   }, callback);
 }
 
-export function _removeItem({ type: itemType, name: itemName }: { type: string; name: string }, callback?: any) {
+export function _removeItem({ type: itemType, id: itemId }: { type: string; id: string }, callback?: any) {
   runWhenAddingAndRemovingItems(() => {
-    // removing itemName
-    delete meta.currentState[itemType][itemName];
-    meta.itemNamesByItemType[itemType] = Object.keys(meta.currentState[itemType]);
-    // delete meta.currentRefs[itemType][itemName]; // now done at the end of update repond
+    // removing itemId
+    delete meta.nowState[itemType][itemId];
+    meta.itemIdsByItemType[itemType] = Object.keys(meta.nowState[itemType]);
+    // delete meta.currentRefs[itemType][itemId]; // now done at the end of update repond
     meta.recordedStepEndEffectChanges.itemTypesBool[itemType] = true;
     meta.recordedStepEndEffectChanges.somethingChanged = true;
     meta.recordedEffectChanges.itemTypesBool[itemType] = true;
@@ -137,44 +137,34 @@ export function _removeItem({ type: itemType, name: itemName }: { type: string; 
 }
 
 export function _addItem(
-  {
-    type,
-    name,
-    state,
-    refs,
-  }: {
-    type: string;
-    name: string;
-    state?: any;
-    refs?: any;
-  },
+  { type, id, state, refs }: { type: string; id: string; state?: any; refs?: any },
   callback?: any
 ) {
   runWhenAddingAndRemovingItems(() => {
-    meta.currentState[type][name] = {
-      ...meta.defaultStateByItemType[type](name),
+    meta.nowState[type][id] = {
+      ...meta.defaultStateByItemType[type](id),
       ...(state || {}),
     };
-    meta.currentRefs[type][name] = {
-      ...meta.defaultRefsByItemType[type](name, meta.currentState[name]),
+    meta.nowRefs[type][id] = {
+      ...meta.defaultRefsByItemType[type](id, meta.nowState[id]),
       ...(refs || {}),
     };
-    meta.itemNamesByItemType[type].push(name);
+    meta.itemIdsByItemType[type].push(id);
     meta.recordedStepEndEffectChanges.itemTypesBool[type] = true;
 
     // TODO Figure out if adding an item should record the properties as chnaged or not?
 
-    meta.recordedStepEndEffectChanges.itemPropertiesBool[type][name] = {};
-    meta.recordedEffectChanges.itemPropertiesBool[type][name] = {};
+    meta.recordedStepEndEffectChanges.itemPropsBool[type][id] = {};
+    meta.recordedEffectChanges.itemPropsBool[type][id] = {};
 
-    meta.diffInfo.propsChanged[type][name] = [];
-    meta.diffInfo.propsChangedBool[type][name] = {};
+    meta.diffInfo.propsChanged[type][id] = [];
+    meta.diffInfo.propsChangedBool[type][id] = {};
 
-    meta.recordedStepEndEffectChanges.itemNamesBool[type][name] = true;
+    meta.recordedStepEndEffectChanges.itemIdsBool[type][id] = true;
     meta.recordedStepEndEffectChanges.somethingChanged = true;
     meta.recordedEffectChanges.itemTypesBool[type] = true;
 
-    meta.recordedEffectChanges.itemNamesBool[type][name] = true;
+    meta.recordedEffectChanges.itemIdsBool[type][id] = true;
     meta.recordedEffectChanges.somethingChanged = true;
   }, callback);
 }
