@@ -1,15 +1,15 @@
 export declare function runNextFrame(): void;
-export declare function runWhenStartingInnerEffects(whatToRun: any): void;
-export declare function runWhenStoppingInnerEffects(whatToRun: any): void;
-export declare function runWhenDoingInnerEffectsRunAtStart(whatToRun: any, callback?: any): void;
+export declare function runWhenStartingEffects(whatToRun: any): void;
+export declare function runWhenStoppingEffects(whatToRun: any): void;
+export declare function runWhenDoingEffectsRunAtStart(whatToRun: any, callback?: any): void;
 export declare function _setState(newState: any, callback?: any): void;
-export declare function _removeItem({ type: itemType, name: itemName }: {
+export declare function _removeItem({ type: itemType, id: itemId }: {
     type: string;
-    name: string;
+    id: string;
 }, callback?: any): void;
-export declare function _addItem({ type, name, state, refs, }: {
+export declare function _addItem({ type, id, state, refs }: {
     type: string;
-    name: string;
+    id: string;
     state?: any;
     refs?: any;
 }, callback?: any): void;

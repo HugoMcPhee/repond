@@ -37,58 +37,51 @@ function makeEmptyDiffInfo() {
 }
 export function applyPatch(patch) {
     const itemTypes = getItemTypes();
-    forEach(itemTypes, (itemType) => {
-        // Loop through removed items, and run removeRepondItem()
-        forEach(patch.removed[itemType] ?? [], (itemName) => removeItem({ type: itemType, name: itemName }));
-        // Loop through added items and run addRepondItem()
-        forEach(patch.added[itemType] ?? [], (itemName) => addItem({
-            type: itemType,
-            name: itemName,
-            state: patch.changed?.[itemType]?.[itemName],
-        }));
+    forEach(itemTypes, (type) => {
+        forEach(patch.removed[type] ?? [], (id) => removeItem({ type, id }));
+        forEach(patch.added[type] ?? [], (id) => addItem({ type, id, state: patch.changed?.[type]?.[id] }));
     });
-    // run setState(patch.changed)
     setState(patch.changed);
 }
 export function applyPatchHere(newStates, patch) {
     const itemTypes = getItemTypes();
     const defaultStates = getDefaultStates();
-    forEach(itemTypes, (itemType) => {
+    forEach(itemTypes, (type) => {
         // Loop through each removed item, and delete it from newStates
-        forEach(patch.removed[itemType] ?? [], (itemName) => {
-            const itemTypeState = newStates[itemType];
-            if (itemTypeState && itemTypeState[itemName]) {
-                delete itemTypeState[itemName];
+        forEach(patch.removed[type] ?? [], (id) => {
+            const itemTypeState = newStates[type];
+            if (itemTypeState && itemTypeState[id]) {
+                delete itemTypeState[id];
             }
         });
-        // Loop through each new item, and add it to newStates with state(itemName)
-        forEach(patch.added[itemType] ?? [], (itemName) => {
-            if (!newStates[itemType]) {
-                newStates[itemType] = {};
+        // Loop through each new item, and add it to newStates with state(itemId)
+        forEach(patch.added[type] ?? [], (id) => {
+            if (!newStates[type]) {
+                newStates[type] = {};
             }
-            const itemTypeState = newStates[itemType];
+            const itemTypeState = newStates[type];
             if (itemTypeState) {
-                if (itemTypeState[itemName] === undefined) {
-                    itemTypeState[itemName] = defaultStates[itemType](itemName);
+                if (itemTypeState[id] === undefined) {
+                    itemTypeState[id] = defaultStates[type](id); // NOTE maybe no need to add it then delete it?
                 }
             }
-            if (itemTypeState && itemTypeState[itemName]) {
-                delete itemTypeState[itemName];
+            if (itemTypeState && itemTypeState[id]) {
+                delete itemTypeState[id];
             }
         });
         // Loop through each changed items and set the properties in newState
-        const changedItemsForType = patch.changed[itemType];
+        const changedItemsForType = patch.changed[type];
         if (changedItemsForType !== undefined) {
-            const changedItemNames = Object.keys(changedItemsForType);
-            forEach(changedItemNames, (itemName) => {
-                const changedPropertiesForItem = changedItemsForType[itemName];
-                const itemTypeState = newStates[itemType];
-                if (changedPropertiesForItem !== undefined && itemTypeState !== undefined) {
-                    const itemNameState = itemTypeState[itemName];
-                    if (itemNameState !== undefined) {
+            const changedItemIds = Object.keys(changedItemsForType);
+            forEach(changedItemIds, (itemId) => {
+                const changedPropertiesForItem = changedItemsForType[itemId];
+                const storeState = newStates[type];
+                if (changedPropertiesForItem !== undefined && storeState !== undefined) {
+                    const itemState = storeState[itemId];
+                    if (itemState !== undefined) {
                         const changePropertyNames = Object.keys(changedPropertiesForItem);
                         forEach(changePropertyNames, (propertyName) => {
-                            itemTypeState[itemName] = changedPropertiesForItem[propertyName];
+                            storeState[itemId] = changedPropertiesForItem[propertyName];
                         });
                     }
                 }
@@ -124,8 +117,8 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
         }
     });
     // To add changed
-    // Loop through items changes, then itemNamesChanged[itemType] then
-    // propsChanged[itemType][itemName]
+    // Loop through items changes, then itemIdsChanged[itemType] then
+    // propsChanged[itemType][itemId]
     // And set the changed to the value in newState
     forEach(tempDiffInfo.itemTypesChanged, (itemType) => {
         if (!newPatch.changed[itemType]) {
@@ -133,15 +126,15 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
         }
         const patchChangesForItemType = newPatch.changed[itemType];
         if (patchChangesForItemType) {
-            forEach(tempDiffInfo.itemsChanged[itemType], (itemName) => {
-                if (!patchChangesForItemType[itemName]) {
-                    patchChangesForItemType[itemName] = {};
+            forEach(tempDiffInfo.itemsChanged[itemType], (itemId) => {
+                if (!patchChangesForItemType[itemId]) {
+                    patchChangesForItemType[itemId] = {};
                 }
-                const patchChangesForItemName = patchChangesForItemType[itemName];
-                if (patchChangesForItemName) {
+                const patchChangesForItemId = patchChangesForItemType[itemId];
+                if (patchChangesForItemId) {
                     const propsChangedForType = tempDiffInfo.propsChanged[itemType];
-                    forEach(propsChangedForType[itemName], (propertyName) => {
-                        patchChangesForItemName[propertyName] = newState?.[itemType]?.[itemName]?.[propertyName];
+                    forEach(propsChangedForType[itemId], (propertyName) => {
+                        patchChangesForItemId[propertyName] = newState?.[itemType]?.[itemId]?.[propertyName];
                     });
                 }
             });
@@ -149,19 +142,19 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     });
     // Need to also add non-default properties for new items to changed
     // For each item added,
-    // const defaultState = defaultStates[itemType](itemName)
-    // const newState = newState[itemType][itemName]
+    // const defaultState = defaultStates[itemType](itemId)
+    // const newState = newState[itemType][itemId]
     // Loop through each property and compare
     // If they’re different, add it to the changed object
     forEach(itemTypes, (itemType) => {
         if (newPatch?.added[itemType]?.length) {
-            const itemNamesAddedForType = newPatch.added[itemType];
+            const itemIdsAddedForType = newPatch.added[itemType];
             const newItemTypeState = newState[itemType];
             let propertyNamesForItemType = [];
             let propertyNamesHaveBeenFound = false;
-            forEach(itemNamesAddedForType ?? [], (itemName) => {
-                const defaultItemState = defaultStates[itemType](itemName);
-                const addedItemState = newItemTypeState?.[itemName];
+            forEach(itemIdsAddedForType ?? [], (itemId) => {
+                const defaultItemState = defaultStates[itemType](itemId);
+                const addedItemState = newItemTypeState?.[itemId];
                 if (!propertyNamesHaveBeenFound) {
                     propertyNamesForItemType = Object.keys(defaultItemState);
                     propertyNamesHaveBeenFound = true;
@@ -181,12 +174,12 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
                                 }
                                 const newPatchChangedForItemType = newPatch.changed[itemType];
                                 if (newPatchChangedForItemType) {
-                                    if (!newPatchChangedForItemType[itemName]) {
-                                        newPatchChangedForItemType[itemName] = {};
+                                    if (!newPatchChangedForItemType[itemId]) {
+                                        newPatchChangedForItemType[itemId] = {};
                                     }
-                                    const newPatchChangedForItemName = newPatchChangedForItemType[itemName];
-                                    if (newPatchChangedForItemName) {
-                                        newPatchChangedForItemName[propertyName] = newPropertyValue;
+                                    const newPatchChangedForItemId = newPatchChangedForItemType[itemId];
+                                    if (newPatchChangedForItemId) {
+                                        newPatchChangedForItemId[propertyName] = newPropertyValue;
                                     }
                                 }
                             }
@@ -205,20 +198,20 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     newDiff.changedNext = newPatch.changed;
     // Need to also add non-default properties for removed items to changedPrev
     // For each item removed,
-    // const defaultState = defaultStates[itemType](itemName)
-    // const newState = prevState[itemType][itemName]
+    // const defaultState = defaultStates[itemType](itemId)
+    // const newState = prevState[itemType][itemId]
     // Loop through each property and compare
     // If they’re different, add it to the changedPrev object
     // (same as for added, but instead of adding to newPatch.changed, it's to newDiff.changedPrev, and checking the prevState)
     forEach(itemTypes, (itemType) => {
         if (newDiff.removed[itemType]?.length) {
-            const itemNamesRemovedForType = newDiff.removed[itemType];
+            const itemIdsRemovedForType = newDiff.removed[itemType];
             const prevItemTypeState = prevState[itemType];
             let propertyNamesForItemType = [];
             let propertyNamesHaveBeenFound = false;
-            forEach(itemNamesRemovedForType ?? [], (itemName) => {
-                const defaultItemState = defaultStates[itemType](itemName);
-                const removedItemState = prevItemTypeState?.[itemName];
+            forEach(itemIdsRemovedForType ?? [], (itemId) => {
+                const defaultItemState = defaultStates[itemType](itemId);
+                const removedItemState = prevItemTypeState?.[itemId];
                 if (!propertyNamesHaveBeenFound) {
                     propertyNamesForItemType = Object.keys(defaultItemState);
                     propertyNamesHaveBeenFound = true;
@@ -238,12 +231,12 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
                                 }
                                 const newDiffChangedForItemType = newDiff.changedPrev[itemType];
                                 if (newDiffChangedForItemType) {
-                                    if (!newDiffChangedForItemType[itemName]) {
-                                        newDiffChangedForItemType[itemName] = {};
+                                    if (!newDiffChangedForItemType[itemId]) {
+                                        newDiffChangedForItemType[itemId] = {};
                                     }
-                                    const newDiffChangedForItemName = newDiffChangedForItemType[itemName];
-                                    if (newDiffChangedForItemName) {
-                                        newDiffChangedForItemName[propertyName] = newPropertyValue;
+                                    const newDiffChangedForItemId = newDiffChangedForItemType[itemId];
+                                    if (newDiffChangedForItemId) {
+                                        newDiffChangedForItemId[propertyName] = newPropertyValue;
                                     }
                                 }
                             }
@@ -298,8 +291,8 @@ export function combineTwoPatches(prevPatch, newPatch) {
         }
         // Anything in removed in prev that was added in new, removed from removed
         if (itemsRemovedPrev && itemsAddedNew) {
-            combinedPatch.removed[itemType] = combinedPatch.removed[itemType].filter((itemName) => {
-                if (itemsRemovedPrev.includes(itemName) && itemsAddedNew.includes(itemName)) {
+            combinedPatch.removed[itemType] = combinedPatch.removed[itemType].filter((itemId) => {
+                if (itemsRemovedPrev.includes(itemId) && itemsAddedNew.includes(itemId)) {
                     return false;
                 }
                 return true;
@@ -307,8 +300,8 @@ export function combineTwoPatches(prevPatch, newPatch) {
         }
         // Anything in removed in new that was added in prev, removed from added
         if (itemsRemovedNew && itemsAddedPrev) {
-            combinedPatch.added[itemType] = combinedPatch.added[itemType].filter((itemName) => {
-                if (itemsRemovedNew.includes(itemName) && itemsAddedPrev.includes(itemName)) {
+            combinedPatch.added[itemType] = combinedPatch.added[itemType].filter((itemId) => {
+                if (itemsRemovedNew.includes(itemId) && itemsAddedPrev.includes(itemId)) {
                     return false;
                 }
                 return true;
@@ -319,7 +312,7 @@ export function combineTwoPatches(prevPatch, newPatch) {
         const itemsChangedNew = prevPatch.changed[itemType];
         const hasChangedItems = itemsChangedPrev || itemsChangedNew;
         if (hasChangedItems) {
-            const allChangedItemNames = Object.keys({
+            const allChangedItemIds = Object.keys({
                 ...(itemsChangedPrev ?? {}),
                 ...(itemsChangedNew ?? {}),
             });
@@ -328,17 +321,17 @@ export function combineTwoPatches(prevPatch, newPatch) {
             }
             const combinedPatchChangedForItemType = combinedPatch.changed[itemType];
             if (combinedPatchChangedForItemType) {
-                forEach(allChangedItemNames, (itemName) => {
-                    const combinedPatchChangedForItemName = combinedPatchChangedForItemType[itemName];
-                    combinedPatchChangedForItemType[itemName] = {
-                        ...(itemsChangedPrev?.[itemName] ?? {}),
-                        ...(itemsChangedNew?.[itemName] ?? {}),
+                forEach(allChangedItemIds, (itemId) => {
+                    const combinedPatchChangedForItemId = combinedPatchChangedForItemType[itemId];
+                    combinedPatchChangedForItemType[itemId] = {
+                        ...(itemsChangedPrev?.[itemId] ?? {}),
+                        ...(itemsChangedNew?.[itemId] ?? {}),
                     };
                 });
                 // Remove any item changes that are in removed
-                forEach(combinedPatch.removed[itemType] ?? [], (itemName) => {
-                    if (combinedPatchChangedForItemType[itemName]) {
-                        delete combinedPatchChangedForItemType[itemName];
+                forEach(combinedPatch.removed[itemType] ?? [], (itemId) => {
+                    if (combinedPatchChangedForItemType[itemId]) {
+                        delete combinedPatchChangedForItemType[itemId];
                     }
                 });
             }
@@ -363,13 +356,13 @@ export function makeMinimalPatch(currentStates, thePatch) {
     const minimalPatch = cloneObjectWithJson(thePatch);
     // Loop through the changed items, and each changed property
     forEach(itemTypes, (itemType) => {
-        const propertyNames = Object.keys(defaultStates[itemType]("anItemName"));
+        const propertyNames = Object.keys(defaultStates[itemType]("anItemId"));
         const changedForType = minimalPatch.changed[itemType];
         if (changedForType) {
-            const changedItemNames = Object.keys(changedForType ?? {});
-            forEach(changedItemNames, (itemName) => {
-                const changedForItem = changedForType[itemName];
-                const itemState = currentStates?.[itemType]?.[itemName];
+            const changedItemIds = Object.keys(changedForType ?? {});
+            forEach(changedItemIds, (itemId) => {
+                const changedForItem = changedForType[itemId];
+                const itemState = currentStates?.[itemType]?.[itemId];
                 if (changedForItem && itemState) {
                     forEach(propertyNames, (propertyName) => {
                         // If the value’s the same as state, remove that change property
@@ -381,17 +374,17 @@ export function makeMinimalPatch(currentStates, thePatch) {
                 // (if the item has no more properties, remove that changed item)
                 const changedPropertyNames = Object.keys(changedForItem ?? {});
                 if (changedPropertyNames.length === 0) {
-                    delete changedForType[itemName];
+                    delete changedForType[itemId];
                 }
             });
         }
         // Loop through the added items, if the item already exists in state, remove it from added
         if (minimalPatch.added[itemType]) {
-            minimalPatch.added[itemType] = minimalPatch.added[itemType].filter((itemName) => !!currentStates?.[itemType]?.[itemName]);
+            minimalPatch.added[itemType] = minimalPatch.added[itemType].filter((itemId) => !!currentStates?.[itemType]?.[itemId]);
         }
         // Loop through the removed items, if the item doesn’t exist in state, remove it from removed
         if (minimalPatch.removed[itemType]) {
-            minimalPatch.removed[itemType] = minimalPatch.removed[itemType].filter((itemName) => !currentStates?.[itemType]?.[itemName]);
+            minimalPatch.removed[itemType] = minimalPatch.removed[itemType].filter((itemId) => !currentStates?.[itemType]?.[itemId]);
         }
     });
 }
@@ -401,16 +394,16 @@ export function removePartialPatch(thePatch, patchToRemove) {
     forEach(itemTypes, (itemType) => {
         // Loop through removed in patchToRemove, if it’s in newPatch , remove it
         if (newPatch.removed[itemType]) {
-            newPatch.removed[itemType] = newPatch.removed[itemType].filter((itemName) => !patchToRemove.removed[itemType].includes(itemName));
+            newPatch.removed[itemType] = newPatch.removed[itemType].filter((itemId) => !patchToRemove.removed[itemType].includes(itemId));
         }
         // Loop through added in patchToRemove, if it’s in newPatch , remove it
         // Keep track of noLongerAddedItems { itemType: []
         const noLongerAddedItems = [];
         if (newPatch.added[itemType]) {
-            newPatch.added[itemType] = newPatch.added[itemType].filter((itemName) => {
-                const shouldKeep = !patchToRemove.added[itemType].includes(itemName);
+            newPatch.added[itemType] = newPatch.added[itemType].filter((itemId) => {
+                const shouldKeep = !patchToRemove.added[itemType].includes(itemId);
                 if (!shouldKeep) {
-                    noLongerAddedItems.push(itemName);
+                    noLongerAddedItems.push(itemId);
                 }
                 return shouldKeep;
             });
@@ -419,10 +412,10 @@ export function removePartialPatch(thePatch, patchToRemove) {
         const removedPatchChangedForType = patchToRemove.changed[itemType];
         const newPatchChangedForType = newPatch.changed[itemType];
         if (removedPatchChangedForType && newPatchChangedForType) {
-            const changedItemNames = Object.keys(removedPatchChangedForType ?? {});
-            forEach(changedItemNames, (itemName) => {
-                const removedPatchChangedForItem = removedPatchChangedForType[itemName];
-                const newPatchChangedForItem = newPatchChangedForType[itemName];
+            const changedItemIds = Object.keys(removedPatchChangedForType ?? {});
+            forEach(changedItemIds, (itemId) => {
+                const removedPatchChangedForItem = removedPatchChangedForType[itemId];
+                const newPatchChangedForItem = newPatchChangedForType[itemId];
                 if (removedPatchChangedForItem && newPatchChangedForItem) {
                     // (if the item has no more properties, remove that changed item)
                     const removedPatchChangedPropertyNames = Object.keys(removedPatchChangedForItem ?? {});
@@ -436,8 +429,8 @@ export function removePartialPatch(thePatch, patchToRemove) {
                 const changedPropertyNamesB = Object.keys(removedPatchChangedForItem ?? {});
                 // If there's no more property changes for an item name, or that item isn't added anymore, then remove it from changes
                 const noMorePropertyChanges = changedPropertyNamesB.length === 0;
-                if (noMorePropertyChanges || noLongerAddedItems.includes(itemName)) {
-                    delete newPatchChangedForType[itemName];
+                if (noMorePropertyChanges || noLongerAddedItems.includes(itemId)) {
+                    delete newPatchChangedForType[itemId];
                 }
             });
         }

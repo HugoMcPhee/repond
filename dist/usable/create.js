@@ -1,31 +1,12 @@
 import { makeCopyStatesFunction } from "../copyStates";
 import { createDiffInfo, makeGetStatesDiffFunction } from "../getStatesDiff";
-import { getRepondStructureFromDefaults } from "../getStructureFromDefaults";
+import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import meta from "../meta";
 import { createRecordedChanges } from "../updating";
-import { cloneObjectWithJson, makeRefsStructureFromRepondState } from "../utils";
-// ChangeToCheck
-/*
-Listener_Check
-AnyChangeRule_Check
-ItemRule_Check
-OneItem_Check
-*/
+import { cloneObjectWithJson } from "../utils";
 /*
 can 'check' get clearer?
 can check have single or arrays for every property, or would that widen all types?
-*/
-// NOTE could move these types to a types file?
-/*
-
-, T_ItemType, T_State
-
-,
-T_ItemType extends string | number | symbol,
-T_State extends Record<any, any>,
-T_Refs extends Record<any, any>,
-T_StepName extends string,
-
 */
 export function initRepond(allInfo, extraOptions) {
     const { dontSetMeta } = extraOptions ?? {};
@@ -43,8 +24,8 @@ export function initRepond(allInfo, extraOptions) {
         meta.frameRateType = "full";
     if (!dontSetMeta) {
         meta.stepNames = stepNames;
-        meta.currentStepIndex = 0;
-        meta.currentStepName = stepNames[meta.currentStepIndex];
+        meta.nowStepIndex = 0;
+        meta.nowStepName = stepNames[meta.nowStepIndex];
     }
     // ReturnType<T_AllInfo[K_Type]["state"]> //
     const defaultStates = itemTypes.reduce((prev, key) => {
@@ -57,24 +38,24 @@ export function initRepond(allInfo, extraOptions) {
     }, {});
     const initialState = itemTypes.reduce((prev, key) => {
         prev[key] = allInfo[key].startStates || {};
-        meta.itemNamesByItemType[key] = Object.keys(prev[key]);
+        meta.itemIdsByItemType[key] = Object.keys(prev[key]);
         return prev;
     }, {});
     // ------------------------------------------------
     // Setup Repond
     // ------------------------------------------------
     if (!dontSetMeta) {
-        const currentState = cloneObjectWithJson(initialState);
-        const previousState = cloneObjectWithJson(initialState);
+        const nowState = cloneObjectWithJson(initialState);
+        const prevState = cloneObjectWithJson(initialState);
         // store initialState and set currentState
         meta.initialState = initialState;
-        meta.currentState = currentState;
-        meta.previousState = previousState;
+        meta.nowState = nowState;
+        meta.prevState = prevState;
         meta.defaultStateByItemType = defaultStates;
         meta.defaultRefsByItemType = defaultRefs;
         getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-        makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemNames from repond state
-        meta.copyStates = makeCopyStatesFunction();
+        makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemIds from repond state
+        meta.copyStates = makeCopyStatesFunction("copy");
         meta.getStatesDiff = makeGetStatesDiffFunction();
         meta.mergeStates = makeCopyStatesFunction("merge");
         createRecordedChanges(meta.recordedEffectChanges);

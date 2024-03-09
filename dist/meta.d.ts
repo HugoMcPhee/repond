@@ -1,16 +1,16 @@
-import { InnerEffectCheck, EffectPhase } from "./types";
+import { DiffInfo, Effect, EffectPhase } from "./types";
 export type RecordedChanges = {
     itemTypesBool: {
         [type: string]: boolean;
     };
-    itemNamesBool: {
+    itemIdsBool: {
         [type: string]: {
-            [itemName: string]: boolean;
+            [itemId: string]: boolean;
         };
     };
-    itemPropertiesBool: {
+    itemPropsBool: {
         [type: string]: {
-            [itemName: string]: {
+            [itemId: string]: {
                 [itemProp: string]: boolean;
             };
         };
@@ -19,31 +19,24 @@ export type RecordedChanges = {
 };
 export declare const initialRecordedChanges: () => RecordedChanges;
 export declare const initialDiffInfo: UntypedDiffInfo;
-export type UntypedInnerEffect = {
-    name: string;
-    check: InnerEffectCheck<any, any>[];
-    run: (diffInfo: UntypedDiffInfo, frameDuration: number) => void;
-    atStepEnd?: boolean;
-    step?: string;
-};
-type PropertiesByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
-type DiffInfo_PropertiesChanged<T = any> = {
+type PropsByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
+type DiffInfo_PropsChanged<T = any> = {
     [key: string]: {
-        [itemName: string]: PropertiesByItemType<T, any>[];
+        [itemId: string]: PropsByItemType<T, any>[];
     } & {
-        all__?: PropertiesByItemType<T, any>[];
+        all__?: PropsByItemType<T, any>[];
     };
 } & {
     all__?: string[];
 };
-type DiffInfo_PropertiesChangedBool<T = any> = {
+type DiffInfo_PropsChangedBool<T = any> = {
     [K in any]: {
-        [itemName: string]: {
-            [K_P in PropertiesByItemType<T, any>]: boolean;
+        [itemId: string]: {
+            [K_P in PropsByItemType<T, any>]: boolean;
         };
     } & {
         all__?: {
-            [K_P in PropertiesByItemType<T, any>]: boolean;
+            [K_P in PropsByItemType<T, any>]: boolean;
         };
     };
 } & {
@@ -62,29 +55,29 @@ export type UntypedDiffInfo = {
     itemsRemoved: {
         [type: string]: string[];
     };
-    propsChanged: DiffInfo_PropertiesChanged;
+    propsChanged: DiffInfo_PropsChanged;
     itemTypesChangedBool: {
         [type: string]: boolean;
     };
     itemsChangedBool: {
         [type: string]: {
-            [itemName: string]: boolean;
+            [itemId: string]: boolean;
         };
     };
-    propsChangedBool: DiffInfo_PropertiesChangedBool;
+    propsChangedBool: DiffInfo_PropsChangedBool;
     itemsAddedBool: {
         [type: string]: {
-            [itemName: string]: boolean;
+            [itemId: string]: boolean;
         };
     };
     itemsRemovedBool: {
         [type: string]: {
-            [itemName: string]: boolean;
+            [itemId: string]: boolean;
         };
     };
 };
 type AFunction = (...args: any[]) => void;
-export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningInnerEffects" | "runningStepEndInnerEffects" | "runningCallbacks";
+export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningEffects" | "runningStepEndEffects" | "runningCallbacks";
 declare const repondMeta: {
     recordedEffectChanges: RecordedChanges;
     recordedStepEndEffectChanges: RecordedChanges;
@@ -102,46 +95,44 @@ declare const repondMeta: {
     frameRateType: "full" | "half";
     lateFramesAmount: number;
     shouldRunUpdateAtEndOfUpdate: boolean;
-    diffInfo: UntypedDiffInfo;
-    previousState: any;
-    currentState: any;
+    diffInfo: DiffInfo;
+    prevState: any;
+    nowState: any;
     initialState: any;
-    currentRefs: any;
-    currentMetaPhase: RepondMetaPhase;
+    nowRefs: any;
+    nowMetaPhase: RepondMetaPhase;
     addAndRemoveItemsQue: AFunction[];
-    innerEffectsRunAtStartQueue: AFunction[];
-    startInnerEffectsQue: AFunction[];
+    effectsRunAtStartQueue: AFunction[];
+    startEffectsQue: AFunction[];
     setStatesQue: AFunction[];
-    callforwardsQue: AFunction[];
     callbacksQue: AFunction[];
-    allInnerEffects: Record<string, UntypedInnerEffect>;
-    innerEffectNamesByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
-    allGroupedEffects: Record<string, Record<string, UntypedInnerEffect>>;
+    allEffects: Record<string, Effect>;
+    effectIdsByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
+    allGroupedEffects: Record<string, Record<string, Effect>>;
     itemTypeNames: string[];
     propNamesByItemType: {
         [itemTypeName: string]: string[];
     };
-    itemNamesByItemType: {
+    itemIdsByItemType: {
         [itemTypeName: string]: string[];
     };
     defaultRefsByItemType: {
-        [itemTypeName: string]: (itemName?: string, itemState?: any) => {
+        [itemTypeName: string]: (itemId?: string, itemState?: any) => {
             [itemPropertyName: string]: any;
         };
     };
     defaultStateByItemType: {
-        [itemTypeName: string]: (itemName?: string) => {
+        [itemTypeName: string]: (itemId?: string) => {
             [itemPropertyName: string]: any;
         };
     };
-    copyStates: (currentObject: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
+    copyStates: (nowState: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
     mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
-    getStatesDiff: (currentObject: any, previousObject: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
-    autoEffectNameCounter: number;
+    getStatesDiff: (nowState: any, prevState: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
+    autoEffectIdCounter: number;
     stepNames: readonly string[];
-    currentStepName: string;
-    currentStepIndex: number;
+    nowStepName: string;
+    nowStepIndex: number;
 };
 export type RepondMeta = typeof repondMeta;
 export default repondMeta;
-export declare function toSafeEffectName(prefix?: string): string;

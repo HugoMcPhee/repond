@@ -1,319 +1,209 @@
-import { addItemToUniqueArray, removeItemFromArray } from "chootils/dist/arrays";
+import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
 import { breakableForEach, forEach } from "chootils/dist/loops";
-import meta, { toSafeEffectName } from "../meta";
-import { runWhenDoingInnerEffectsRunAtStart, runWhenStartingInnerEffects, runWhenStoppingInnerEffects, } from "../settingInternal";
-import { asArray, toSafeArray } from "../utils";
+import { default as meta, default as repondMeta } from "../meta";
+import { runWhenDoingEffectsRunAtStart, runWhenStartingEffects, runWhenStoppingEffects } from "../settingInternal";
 import { getPrevState, getRefs, getState } from "../usable/getSet";
-export function makeEffect(options) {
-    return { ...options, _isPerItem: false };
-}
-export function makeItemEffect(options) {
-    return { ...options, _isPerItem: true };
-}
-//
-// // NOTE could make options generic and return that
-// // type MakeEffect = <K_Type extends T_ItemType>(options: Effect_RuleOptions<K_Type>) => Effect_RuleOptions<K_Type>;
-// type MakeEffect = <K_Type extends T_ItemType>(
-//   options: Effect_RuleOptions<K_Type>
-// ) => Effect_RuleOptions<K_Type>;
-//
-// // type MakeItemEffect = <K_Type extends T_ItemType, K_PropName extends G_PropertyName[K_Type]>(options: ItemEffect_RuleOptions<K_Type, K_PropName>) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-// type MakeItemEffect = <
-//   K_Type extends T_ItemType,
-//   K_PropName extends PropertyName<K_Type>
-// >(
-//   options: ItemEffect_RuleOptions<K_Type, K_PropName>
-// ) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-// type MakeRule_Utils = {
-//   itemEffect: MakeItemEffect;
-//   effect: MakeEffect;
-// };
-// TODO
+import { toArray, toMaybeArray } from "../utils";
 // -------------------------------------------------------
-// utils
+// Converters
 // -------------------------------------------------------
 // Convert an itemEffect callback to a regular effect callback
-// NOTE: not typed but only internal
-function itemEffectRunToEffectRun({ type, name, prop, run, becomes, }) {
-    const editedItemTypes = asArray(type);
-    let allowedNames = undefined;
-    if (name) {
-        allowedNames = {};
-        forEach(name, (loopedItemName) => {
-            if (allowedNames)
-                allowedNames[loopedItemName] = true;
+function itemEffectRunToEffectRun({ check, run, }) {
+    let allowedIdsMap = undefined;
+    const props = toArray(check.prop);
+    const type = check.type;
+    const ids = toMaybeArray(check.id);
+    const becomes = check.becomes;
+    if (ids) {
+        allowedIdsMap = {};
+        forEach(ids, (itemId) => {
+            if (allowedIdsMap)
+                allowedIdsMap[itemId] = true;
         });
     }
     return (diffInfo, frameDuration, skipChangeCheck) => {
         // if skipChangeCheck is true, it will run the run function regardless of the changes
         if (skipChangeCheck) {
-            if (name) {
-                forEach(editedItemTypes, (theItemType) => {
-                    const prevItemsState = getPrevState()[theItemType];
-                    const itemsState = getState()[theItemType];
-                    const itemsRefs = getRefs()[theItemType];
-                    forEach(name, (loopedItemName) => {
-                        breakableForEach(prop, (thePropertyName) => {
-                            const newValue = itemsState[loopedItemName][thePropertyName];
-                            run({
-                                itemName: name,
-                                newValue,
-                                prevValue: prevItemsState[loopedItemName][thePropertyName],
-                                itemState: itemsState[loopedItemName],
-                                itemRefs: itemsRefs[loopedItemName],
-                                frameDuration,
-                                ranWithoutChange: true,
-                            });
-                            return true; // break out of the loop, so it only runs once
+            const idsToRun = ids?.length ? ids : meta.itemIdsByItemType[type];
+            if (idsToRun?.length) {
+                const prevItemsState = getPrevState()[type];
+                const itemsState = getState()[type];
+                const itemsRefs = getRefs()[type];
+                forEach(idsToRun, (itemId) => {
+                    breakableForEach(props, (propName) => {
+                        const newValue = itemsState[itemId][propName];
+                        run({
+                            itemId: itemId,
+                            newValue,
+                            prevValue: prevItemsState[itemId][propName],
+                            itemState: itemsState[itemId],
+                            itemRefs: itemsRefs[itemId],
+                            frameDuration,
+                            ranWithoutChange: true,
                         });
+                        return true; // break out of the props loop, so it only runs once per item
                     });
                 });
             }
             return true; // return early if skipChangeCheck was true
         }
-        forEach(editedItemTypes, (theItemType) => {
-            const prevItemsState = getPrevState()[theItemType];
-            const itemsState = getState()[theItemType];
-            const itemsRefs = getRefs()[theItemType];
-            forEach(diffInfo.itemsChanged[theItemType], (itemNameThatChanged) => {
-                if (!(!allowedNames || (allowedNames && allowedNames[itemNameThatChanged])))
+        const prevItemsState = getPrevState()[type];
+        const itemsState = getState()[type];
+        const itemsRefs = getRefs()[type];
+        forEach(diffInfo.itemsChanged[type], (itemIdThatChanged) => {
+            if (!(!allowedIdsMap || (allowedIdsMap && allowedIdsMap[itemIdThatChanged])))
+                return;
+            breakableForEach(props, (propName) => {
+                if (!diffInfo.propsChangedBool[type][itemIdThatChanged][propName])
                     return;
-                breakableForEach(prop, (thePropertyName) => {
-                    if (!diffInfo.propsChangedBool[theItemType][itemNameThatChanged][thePropertyName])
-                        return;
-                    const newValue = itemsState[itemNameThatChanged][thePropertyName];
-                    let canRunRun = false;
-                    if (becomes === undefined)
-                        canRunRun = true;
-                    else if (typeof becomes === "function") {
-                        canRunRun = becomes(newValue, prevItemsState[itemNameThatChanged][thePropertyName]);
-                    }
-                    else if (becomes === newValue)
-                        canRunRun = true;
-                    if (!canRunRun)
-                        return;
-                    run({
-                        itemName: itemNameThatChanged,
-                        newValue,
-                        prevValue: prevItemsState[itemNameThatChanged][thePropertyName],
-                        itemState: itemsState[itemNameThatChanged],
-                        itemRefs: itemsRefs[itemNameThatChanged],
-                        frameDuration,
-                        ranWithoutChange: false,
-                    });
-                    return true; // break out of the loop, so it only runs once
+                const newValue = itemsState[itemIdThatChanged][propName];
+                let canRunRun = false;
+                if (becomes === undefined)
+                    canRunRun = true;
+                else if (typeof becomes === "function") {
+                    canRunRun = becomes(newValue, prevItemsState[itemIdThatChanged][propName]);
+                }
+                else if (becomes === newValue)
+                    canRunRun = true;
+                if (!canRunRun)
+                    return;
+                run({
+                    itemId: itemIdThatChanged,
+                    newValue,
+                    prevValue: prevItemsState[itemIdThatChanged][propName],
+                    itemState: itemsState[itemIdThatChanged],
+                    itemRefs: itemsRefs[itemIdThatChanged],
+                    frameDuration,
+                    ranWithoutChange: false,
                 });
+                return true; // break out of the loop, so it only runs once
             });
         });
     };
 }
-// converts a repond effect to a normalised 'inner effect', where the names are an array instead of one
-function effectOneCheckToInnerEffectOneCheck(effectOneCheck) {
-    return {
-        names: toSafeArray(effectOneCheck.name),
-        types: effectOneCheck.type,
-        props: effectOneCheck.prop,
-        addedOrRemoved: effectOneCheck.addedOrRemoved,
-    };
-}
-// converts a effect check to a innerEffect check (where it's an array of checks)
-function effectCheckToInnerEffectCheck(effectCheck) {
-    if (Array.isArray(effectCheck)) {
-        return effectCheck.map((loopedCheckProperty) => effectOneCheckToInnerEffectOneCheck(loopedCheckProperty));
-    }
-    return effectOneCheckToInnerEffectOneCheck(effectCheck);
-}
-// converts a effect to an innerEffect
-function convertEffectToInnerEffect(effectOptions) {
-    return {
-        check: effectCheckToInnerEffectCheck(effectOptions.check),
-        atStepEnd: !!effectOptions.atStepEnd,
-        name: effectOptions.name,
-        run: effectOptions.run,
-        step: effectOptions.step,
-    };
-}
-// --------------------------------------------------------------------
-// more utils
-// --------------------------------------------------------------------
-function normaliseInnerEffectCheck(check) {
-    const checksArray = asArray(check);
+function easyEffectCheckToEffectChecks(effectCheck) {
+    const checksArray = toArray(effectCheck);
     return checksArray.map((check) => ({
-        types: toSafeArray(check.types),
-        names: check.names,
-        props: check.props,
+        types: toMaybeArray(check.type),
+        names: toMaybeArray(check.id),
+        props: toMaybeArray(check.prop),
         addedOrRemoved: check.addedOrRemoved,
     }));
 }
-function _startInnerEffect(newListener) {
-    const atStepEnd = !!newListener.atStepEnd;
-    const phase = atStepEnd ? "endOfStep" : "duringStep";
-    const editedListener = {
-        name: newListener.name,
-        check: normaliseInnerEffectCheck(newListener.check),
-        run: newListener.run,
+export function easyEffectToEffect(easyEffect) {
+    return {
+        ...easyEffect,
+        id: easyEffect.id ?? toSafeEffectId("effect"),
+        checks: easyEffectCheckToEffectChecks(easyEffect.check),
     };
-    if (atStepEnd)
-        editedListener.atStepEnd = atStepEnd;
-    if (newListener.step)
-        editedListener.step = newListener.step;
-    runWhenStartingInnerEffects(() => {
-        // add the new innerEffect to all innerEffects and update innerEffectNamesByPhaseByStep
-        meta.allInnerEffects[editedListener.name] = editedListener;
-        meta.innerEffectNamesByPhaseByStep[phase][editedListener.step ?? "default"] = addItemToUniqueArray(meta.innerEffectNamesByPhaseByStep[phase][editedListener.step ?? "default"] ?? [], editedListener.name);
-    });
 }
-function _stopInnerEffect(effectName) {
-    runWhenStoppingInnerEffects(() => {
-        const theListener = meta.allInnerEffects[effectName];
-        if (!theListener)
-            return;
-        const atStepEnd = !!theListener.atStepEnd;
-        const phase = atStepEnd ? "endOfStep" : "duringStep";
-        const step = theListener.step ?? "default";
-        meta.innerEffectNamesByPhaseByStep[phase][step] = removeItemFromArray(meta.innerEffectNamesByPhaseByStep[phase][step] ?? [], theListener.name);
-        delete meta.allInnerEffects[effectName];
+export function itemEffectToEffect(itemEffect) {
+    let effectName = itemEffect.id || "unnamedItemEffect" + Math.random();
+    return easyEffectToEffect({
+        ...itemEffect,
+        id: effectName,
+        check: { ...itemEffect.check, becomes: undefined, prop: toMaybeArray(itemEffect.check.prop) },
+        run: itemEffectRunToEffectRun(itemEffect),
     });
 }
 // --------------------------------------------------------------------
-// other functions
+// Internal functions
+// --------------------------------------------------------------------
+export function _startEffect(newEffect) {
+    const phase = !!newEffect.atStepEnd ? "endOfStep" : "duringStep";
+    const step = newEffect.step ?? "default";
+    if (newEffect.runAtStart) {
+        runWhenDoingEffectsRunAtStart(() => newEffect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */));
+    }
+    runWhenStartingEffects(() => {
+        meta.allEffects[newEffect.id] = newEffect;
+        if (!meta.effectIdsByPhaseByStep[phase][step]) {
+            // add the effect to a new array
+            meta.effectIdsByPhaseByStep[phase][step] = [newEffect.id];
+        }
+        else {
+            if (!meta.effectIdsByPhaseByStep[phase][step]?.includes(newEffect.id)) {
+                // add the effect to the array if it's not already there
+                meta.effectIdsByPhaseByStep[phase][step].push(newEffect.id);
+            }
+        }
+    });
+}
+export function _stopEffect(effectName) {
+    runWhenStoppingEffects(() => {
+        const effect = meta.allEffects[effectName];
+        if (!effect)
+            return;
+        const phase = !!effect.atStepEnd ? "endOfStep" : "duringStep";
+        const step = effect.step ?? "default";
+        removeItemFromArrayInPlace(meta.effectIdsByPhaseByStep[phase][step] ?? [], effect.id);
+        delete meta.allEffects[effectName];
+    });
+}
+export function toSafeEffectId(prefix) {
+    const counterNumber = repondMeta.autoEffectIdCounter;
+    repondMeta.autoEffectIdCounter += 1;
+    return (prefix || "autoEffect") + "_" + counterNumber;
+}
+// --------------------------------------------------------------------
+// Usable functions
 // --------------------------------------------------------------------
 export function startNewEffect(theEffect) {
-    let innerEffectName = theEffect.name || toSafeEffectName("effect");
-    // add the required effectName
-    const editedEffect = {
-        check: theEffect.check,
-        name: innerEffectName,
-        run: theEffect.run,
-        atStepEnd: theEffect.atStepEnd,
-        step: theEffect.step,
-        runAtStart: theEffect.runAtStart,
-    };
-    if (theEffect.runAtStart) {
-        runWhenDoingInnerEffectsRunAtStart(() => {
-            theEffect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
-        });
-    }
-    _startInnerEffect(convertEffectToInnerEffect(editedEffect));
+    _startEffect(easyEffectToEffect(theEffect));
 }
-export function startNewItemEffect({ check, run, atStepEnd, name, step, runAtStart, }) {
-    let effectName = name || "unnamedEffect" + Math.random();
-    const editedItemTypes = toSafeArray(check.type);
-    const editedPropertyNames = toSafeArray(check.prop);
-    const editedItemNames = toSafeArray(check.name);
-    let editedCheck = {
-        type: editedItemTypes,
-        prop: editedPropertyNames,
-        name: editedItemNames,
-    };
-    let runEffect = itemEffectRunToEffectRun({
-        type: editedItemTypes,
-        name: editedItemNames,
-        prop: editedPropertyNames ?? [],
-        run: run,
-        becomes: check.becomes,
-    });
-    startNewEffect({
-        atStepEnd,
-        name: effectName,
-        check: editedCheck,
-        run: runEffect,
-        step,
-        runAtStart,
-    });
-    return effectName;
+export function startNewItemEffect(itemEffect) {
+    const effect = itemEffectToEffect(itemEffect);
+    _startEffect(effect);
+    return effect.id;
 }
 export function stopNewEffect(effectName) {
-    _stopInnerEffect(effectName);
+    _stopEffect(effectName);
 }
-// ---------------------------------------------------
-// Make Effects
-// ---------------------------------------------------
+// This is really startGroupedEffect
 export function startEffect(groupName, effectName) {
     const theEffect = meta.allGroupedEffects[groupName][effectName];
-    if (!theEffect) {
-        console.warn("no effect found for ", groupName, effectName);
-        return;
-    }
-    if (theEffect._isPerItem) {
-        startNewItemEffect(theEffect);
-    }
-    else {
-        startNewEffect(theEffect);
-    }
+    if (!theEffect)
+        return console.warn("no effect found for ", groupName, effectName);
+    _startEffect(theEffect);
 }
 export function stopEffect(groupName, effectName) {
     const theEffect = meta.allGroupedEffects[groupName][effectName];
-    if (!theEffect) {
-        console.warn("no effect found for ", groupName, effectName);
-        return;
-    }
-    stopNewEffect(theEffect.name);
+    if (!theEffect)
+        return console.warn("no effect found for ", groupName, effectName);
+    _stopEffect(theEffect.id);
 }
 export function startGroupEffects(groupName) {
     const theGroup = meta.allGroupedEffects[groupName];
-    forEach(Object.keys(theGroup), (effectName) => {
-        startEffect(groupName, effectName);
-    });
+    forEach(Object.keys(theGroup), (effectName) => startEffect(groupName, effectName));
 }
 export function stopGroupEffects(groupName) {
     const theGroup = meta.allGroupedEffects[groupName];
-    forEach(Object.keys(theGroup), (effectName) => {
-        stopEffect(groupName, effectName);
-    });
+    forEach(Object.keys(theGroup), (effectName) => stopEffect(groupName, effectName));
 }
-export function startAllGroupedEffects() {
-    forEach(Object.keys(meta.allGroupedEffects), (groupName) => {
-        startGroupEffects(groupName);
-    });
+export function startAllGroupsEffects() {
+    forEach(Object.keys(meta.allGroupedEffects), (groupName) => startGroupEffects(groupName));
 }
-export function stopAllGroupedEffects() {
-    forEach(Object.keys(meta.allGroupedEffects), (groupName) => {
-        stopGroupEffects(groupName);
-    });
+export function stopAllGroupsEffects() {
+    forEach(Object.keys(meta.allGroupedEffects), (groupName) => stopGroupEffects(groupName));
 }
 export function runEffect(groupName, effectName) {
     const theEffect = meta.allGroupedEffects[groupName][effectName];
-    if (!theEffect) {
-        console.warn("no effect found for ", groupName, effectName);
-        return;
-    }
-    if (theEffect._isPerItem) {
-        // Run the item rule for each item (and prop)
-        const itemType = theEffect.check.type;
-        const itemNames = meta.itemNamesByItemType[itemType];
-        const propNames = toSafeArray(theEffect.check.prop) ?? [];
-        const itemsState = getState()[itemType];
-        const prevItemsState = getPrevState()[itemType];
-        const itemsRefs = getRefs()[itemType];
-        forEach(itemNames, (itemName) => {
-            forEach(propNames, (propName) => {
-                const newValue = itemsState[itemName][propName];
-                theEffect.run({
-                    itemName: itemName,
-                    newValue,
-                    prevValue: prevItemsState[itemName][propName],
-                    itemState: itemsState[itemName],
-                    itemRefs: itemsRefs[itemName],
-                    frameDuration: 16.66666,
-                    ranWithoutChange: true,
-                });
-            });
-        });
-    }
-    else {
-        // Run the rule once
-        theEffect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
-    }
+    if (!theEffect)
+        return console.warn("no effect found for ", groupName, effectName);
+    theEffect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
 }
 export function runGroupEffects(groupName) {
     const theGroup = meta.allGroupedEffects[groupName];
-    forEach(Object.keys(theGroup), (effectName) => {
-        runEffect(groupName, effectName);
-    });
+    forEach(Object.keys(theGroup), (effectName) => runEffect(groupName, effectName));
 }
-export function makeEffects(rulesToAdd) {
-    return rulesToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
+export function makeEffect(easyEffect) {
+    return easyEffectToEffect(easyEffect);
+}
+export function makeItemEffect(itemEffect) {
+    return itemEffectToEffect(itemEffect);
+}
+export function makeEffects(effectsToAdd) {
+    return effectsToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
 }
 export function initGroupedEffects(groups) {
     const transformedGroups = {};
@@ -329,7 +219,7 @@ export function initGroupedEffects(groups) {
         const effectNames = Object.keys(theGroup);
         forEach(effectNames, (effectName) => {
             const theEffect = theGroup[effectName];
-            theEffect.name = `${groupName}_${effectName}`;
+            theEffect.id = `${groupName}_${effectName}`;
         });
     });
     // Store the transformed groups

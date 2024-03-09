@@ -1,21 +1,19 @@
-// -----------------------------------------------------------------
-// main functions
-// -----------------------------------------------------------------
 import meta from "../meta";
 import { _addItem, _removeItem, _setState } from "../settingInternal";
 export const getDefaultStates = () => meta.defaultStateByItemType;
 export const getDefaultRefs = () => meta.defaultRefsByItemType;
 export const getItemTypes = () => meta.itemTypeNames;
-export function getItem(type, name) {
-    return [getState()[type][name], getRefs()[type][name], getPrevState()[type][name]];
+export function getItem(type, id) {
+    return [getState()[type][id], getRefs()[type][id], getPrevState()[type][id]];
 }
-export const getState = () => meta.currentState;
+export const getState = () => meta.nowState;
 export const setState = (newState, callback) => _setState(newState, callback);
+// Good for running things to be sure the state change is seen
 export function onNextTick(callback) {
-    meta.callbacksQue.push(callback); // NOTE WARNING This used to be callforwardsQue
+    meta.callbacksQue.push(callback);
 }
-export const getPrevState = () => meta.previousState;
-export const getRefs = () => meta.currentRefs;
+export const getPrevState = () => meta.prevState;
+export const getRefs = () => meta.nowRefs;
 export function addItem(addItemOptions, callback) {
     _addItem(addItemOptions, callback);
 }

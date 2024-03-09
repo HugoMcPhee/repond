@@ -1,237 +1,110 @@
 import { forEach } from "chootils/dist/loops";
-import meta, { toSafeEffectName } from "../meta";
-import { makeEffect, makeItemEffect, startNewEffect, startNewItemEffect, stopNewEffect, } from "../usable/effects";
-import { getPrevState, getRefs, getState } from "../usable/getSet";
-import { toSafeArray } from "../utils";
+import meta from "../meta";
+import { getPrevState, getState } from "../usable/getSet";
+import { _startEffect, easyEffectToEffect, itemEffectToEffect, makeEffect, makeItemEffect, stopNewEffect, toSafeEffectId, } from "./effects";
 /** @deprecated Please use makeEffects instead*/
-export function makeRules(rulesToAdd, rulesName // TODO register rules to an object in meta
+export function makeRules(getEffectsToAdd, rulesName // TODO register rules to an object in meta
 ) {
-    // type RuleName = keyof ReturnType<typeof rulesToAdd>;
-    const editedRulesToAdd = rulesToAdd({
-        itemEffect: makeItemEffect,
-        effect: makeEffect,
-    });
-    const ruleNames = Object.keys(editedRulesToAdd);
-    const ruleNamePrefix = rulesName ? `${rulesName}_` : toSafeEffectName("makeRules");
-    // edit the names for each rule
-    forEach(ruleNames, (ruleName) => {
-        const loopedRule = editedRulesToAdd[ruleName];
-        if (loopedRule) {
-            loopedRule.name = ruleNamePrefix + ruleName;
-        }
-    });
-    // maybe startRule so it can be {startRule} =
-    function start(ruleName) {
-        const theRule = editedRulesToAdd[ruleName];
-        if (!theRule)
-            return;
-        if (theRule._isPerItem) {
-            startNewItemEffect(theRule);
-        }
-        else {
-            startNewEffect(theRule);
-        }
-    }
-    function stop(ruleName) {
-        if (editedRulesToAdd[ruleName]) {
-            stopNewEffect(ruleNamePrefix + ruleName);
-        }
-    }
-    // type EditedRulesToAdd = typeof editedRulesToAdd;
-    // type EditedRulesToAdd222 = EditedRulesToAdd[K_RuleName]["check"];
-    // run the rule directly
-    function run(ruleName) {
-        // NOTE this doesn't wait for the step chosen for the rule!
-        // maybe it should?
-        const theRule = editedRulesToAdd[ruleName];
-        if (!theRule)
-            return;
-        if (theRule._isPerItem) {
-            // Run the item rule for each item (and prop)
-            const itemType = theRule.check.type;
-            const itemNames = meta.itemNamesByItemType[itemType];
-            const propNames = toSafeArray(theRule.check.prop) ?? [];
-            const itemsState = getState()[itemType];
-            const prevItemsState = getPrevState()[itemType];
-            const itemsRefs = getRefs()[itemType];
-            forEach(itemNames, (itemName) => {
-                forEach(propNames, (propName) => {
-                    const newValue = itemsState[itemName][propName];
-                    theRule.run({
-                        itemName: itemName,
-                        newValue,
-                        prevValue: prevItemsState[itemName][propName],
-                        itemState: itemsState[itemName],
-                        itemRefs: itemsRefs[itemName],
-                        frameDuration: 16.66666,
-                    });
-                });
-            });
-        }
-        else {
-            // Run the rule once
-            theRule.run(meta.diffInfo, 16.66666);
-        }
-    }
-    function runAll() {
-        forEach(ruleNames, (ruleName) => run(ruleName));
-    }
-    function startAll() {
-        forEach(ruleNames, (ruleName) => start(ruleName));
-    }
-    function stopAll() {
-        forEach(ruleNames, (ruleName) => stop(ruleName));
-    }
-    return {
-        start,
-        stop,
-        startAll,
-        stopAll,
-        ruleNames: ruleNames,
-        run,
-        runAll,
-    };
+    const effectsToAdd = getEffectsToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
+    const effectNames = Object.keys(effectsToAdd);
+    const effectIdPrefix = rulesName ? `${rulesName}_` : toSafeEffectId("makeRules");
+    // edit the ids for each rule
+    forEach(effectNames, (effectName) => (effectsToAdd[effectName].id = effectIdPrefix + effectName));
+    const start = (effectName) => _startEffect(effectsToAdd[effectName]);
+    const stop = (effectName) => stopNewEffect(effectIdPrefix + effectName);
+    // NOTE wont wait for the effects step
+    const run = (effectName) => effectsToAdd[effectName].run(meta.diffInfo, 16.66666, true); // true = ranWithoutChange
+    const runAll = () => forEach(effectNames, (effectName) => run(effectName));
+    const startAll = () => forEach(effectNames, (effectName) => start(effectName));
+    const stopAll = () => forEach(effectNames, (effectName) => stop(effectName));
+    return { start, stop, startAll, stopAll, effectNames, run, runAll };
 }
 // -----------------
-// make rules dynamic
-function makeDynamicEffectInlineFunction(theRule) {
-    // return theRule;
-    return (options) => ({ ...theRule(options), _isPerItem: false });
+// Make and remake rules with params
+function makeDynamicEffect(easyEffectGetter) {
+    return (params) => easyEffectToEffect({ ...easyEffectGetter(params) });
 }
-function makeDynamicItemEffectInlineFunction(theRule) {
-    // return theRule;
-    return (options) => ({ ...theRule(options), _isPerItem: true });
+function makeDynamicItemEffect(itemEffectGetter) {
+    return (params) => itemEffectToEffect(itemEffectGetter(params));
 }
-//
-// type MakeDynamicEffectInlineFunction = <
-//   K_Type extends T_ItemType,
-//   T_Options extends any
-// >(
-//   theRule: (options: T_Options) => Effect_RuleOptions<K_Type>
-// ) => (options: T_Options) => Effect_RuleOptions<K_Type>;
-//
-// type MakeDynamicItemEffectInlineFunction = <
-//   K_Type extends T_ItemType,
-//   K_PropName extends PropertyName<K_Type>,
-//   T_Options extends any
-// >(
-//   theRule: (
-//     options: T_Options
-//   ) => ItemEffect_RuleOptions<K_Type, K_PropName>
-// ) => (options: T_Options) => ItemEffect_RuleOptions<K_Type, K_PropName>;
-export function makeDynamicRules(rulesToAdd) {
-    const allRules = rulesToAdd({
-        itemEffect: makeDynamicItemEffectInlineFunction,
-        effect: makeDynamicEffectInlineFunction,
+/** @deprecated This may change to a way to define paramed effects*/
+export function makeDynamicRules(getEffectGetters) {
+    const allEffectGetters = getEffectGetters({
+        itemEffect: makeDynamicItemEffect,
+        effect: makeDynamicEffect,
     });
-    const ruleNames = Object.keys(allRules);
-    const ruleNamePrefix = `${ruleNames.map((loopedName) => loopedName.charAt(0)).join("")}`;
-    // .join("")}${Math.random()}`;
-    function ruleNamePostfixFromOptions(theOptions) {
-        return JSON.stringify(theOptions);
+    const effectNames = Object.keys(allEffectGetters);
+    const effectIdPrefix = toSafeEffectId("makeDynamicRules");
+    function ruleNamePostfixFromParams(params) {
+        return JSON.stringify(params);
     }
-    function getWholeRuleName(ruleName, options) {
-        return `${ruleNamePrefix}${ruleName}${ruleNamePostfixFromOptions(options)}`;
+    function getEffectId(effectName, params) {
+        return `${effectIdPrefix}${effectName}${ruleNamePostfixFromParams(params)}`;
     }
-    function start(ruleName, 
-    // @ts-ignore
-    options) {
-        const theRuleFunction = allRules[ruleName];
-        if (theRuleFunction && typeof theRuleFunction === "function") {
-            const editedRuleObject = theRuleFunction(options);
-            if (!editedRuleObject.name) {
-                editedRuleObject.name = getWholeRuleName(ruleName, options);
-            }
-            if (editedRuleObject._isPerItem !== undefined) {
-                startNewItemEffect(editedRuleObject);
-            }
-            else {
-                startNewEffect(editedRuleObject);
-            }
+    function start(ruleName, params) {
+        const effectGetter = allEffectGetters[ruleName];
+        if (effectGetter && typeof effectGetter === "function") {
+            const effect = effectGetter(params);
+            if (!effect.id)
+                effect.id = getEffectId(ruleName, params);
+            _startEffect(effect);
         }
     }
-    function stop(ruleName, 
-    // @ts-ignore
-    options) {
-        const theRuleFunction = allRules[ruleName];
-        if (theRuleFunction && typeof theRuleFunction === "function") {
-            const foundOrMadeRuleName = theRuleFunction(options)?.name || getWholeRuleName(ruleName, options);
+    function stop(ruleName, params) {
+        const effectGetter = allEffectGetters[ruleName];
+        if (effectGetter && typeof effectGetter === "function") {
+            const foundOrMadeRuleName = effectGetter(params)?.id || getEffectId(ruleName, params);
             stopNewEffect(foundOrMadeRuleName);
         }
         else {
             console.log("no rule set for ", ruleName);
         }
     }
-    // NOTE Experimental, if all the rules have the same options (BUT not typesafe at the moment)
-    // ideally it can set startAll type as never if any of the options are different
-    function startAll(
-    // @ts-ignore
-    options) {
-        forEach(ruleNames, (ruleName) => {
-            // @ts-ignore
-            start(ruleName, options);
-        });
+    // NOTE Experimental, if all the rules have the same params
+    function startAll(params) {
+        forEach(effectNames, (ruleName) => start(ruleName, params));
     }
-    function stopAll(
-    // @ts-ignore
-    options) {
-        forEach(ruleNames, (ruleName) => {
-            // @ts-ignore
-            stop(ruleName, options);
-        });
+    function stopAll(params) {
+        forEach(effectNames, (ruleName) => stop(ruleName, params));
     }
-    return {
-        start,
-        stop,
-        ruleNames,
-        startAll,
-        stopAll,
-    };
+    return { start, stop, effectNames, startAll, stopAll };
 }
 // ---------------------------------------------------
 // Make Rule Makers
 // ---------------------------------------------------
-export function makeRuleMaker(storeName, storeItemName, storyProperty, stepName, getUsefulParams) {
-    const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
-    function newRuleMaker(callBacksObject) {
+export function makeRuleMaker(storeName, storeItemId, storyProperty, stepName, getUsefulParams) {
+    const effectId = toSafeEffectId(`customEffectFor_${storeName}_${storyProperty}`);
+    function newRuleMaker(callbacksMap) {
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
-                    const usefulStoryStuff = getUsefulParams?.();
-                    const latestValue = getState()[storeName][storeItemName][storyProperty];
-                    callBacksObject[latestValue]?.(usefulStoryStuff);
+                    const usefulParams = getUsefulParams?.();
+                    const latestValue = getState()[storeName][storeItemId][storyProperty];
+                    callbacksMap[latestValue]?.(usefulParams);
                 },
-                check: {
-                    prop: [storyProperty],
-                    name: storeItemName,
-                    type: storeName,
-                },
+                check: { prop: [storyProperty], id: storeItemId, type: storeName },
                 step: stepName ?? "default",
                 atStepEnd: true,
-                name: ruleName,
+                id: effectId,
             }),
         }));
     }
     return newRuleMaker;
 }
-export function makeLeaveRuleMaker(storeName, storeItemName, storyProperty, stepName, getUsefulParams) {
+export function makeLeaveRuleMaker(storeName, storeItemId, storyProperty, stepName, getUsefulParams) {
     const ruleName = `customRuleFor_${storeName}_${storyProperty}${Math.random()}`;
     function newRuleMaker(callBacksObject) {
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
                     const usefulStoryStuff = getUsefulParams?.();
-                    const prevValue = getPrevState()[storeName][storeItemName][storyProperty];
+                    const prevValue = getPrevState()[storeName][storeItemId][storyProperty];
                     callBacksObject[prevValue]?.(usefulStoryStuff);
                 },
-                check: {
-                    prop: [storyProperty],
-                    name: storeItemName,
-                    type: storeName,
-                },
+                check: { prop: [storyProperty], id: storeItemId, type: storeName },
                 step: stepName ?? "default",
                 atStepEnd: true,
-                name: ruleName,
+                id: ruleName,
             }),
         }));
     }
@@ -239,25 +112,25 @@ export function makeLeaveRuleMaker(storeName, storeItemName, storyProperty, step
 }
 // makeNestedRuleMaker, similar to makeRuleMaker but accepts parameters for two store properties (can be from different stores) , and the callback fires when properties of both stores change
 export function makeNestedRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulParams) {
-    const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
-    const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
-    const ruleName = `customRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+    const [storeName1, storeItemId1, storyProp1] = storeInfo1;
+    const [storeName2, storeItemId2, storyProp2] = storeInfo2;
+    const ruleName = toSafeEffectId(`customRuleFor_${storeName1}_${storyProp1}_${storeName2}_${storyProp2}`);
     function newRuleMaker(callBacksObject) {
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
                     const usefulStoryStuff = getUsefulParams?.();
-                    const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
-                    const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
+                    const latestValue1 = getState()[storeName1][storeItemId1][storyProp1];
+                    const latestValue2 = getState()[storeName2][storeItemId2][storyProp2];
                     callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff);
                 },
                 check: [
-                    { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
-                    { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+                    { prop: [storyProp1], id: storeItemId1, type: storeName1 },
+                    { prop: [storyProp2], id: storeItemId2, type: storeName2 },
                 ],
                 step: stepName ?? "default",
                 atStepEnd: true,
-                name: ruleName,
+                id: ruleName,
             }),
         }));
     }
@@ -265,29 +138,29 @@ export function makeNestedRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulP
 }
 // makeNestedLeaveRuleMaker, the same as makeNestedRuleMaker , but the callback fires when the properties of both stores become NOT the specified values, but were previously
 export function makeNestedLeaveRuleMaker(storeInfo1, storeInfo2, stepName, getUsefulParams) {
-    const [storeName1, storeItemName1, storyProperty1] = storeInfo1;
-    const [storeName2, storeItemName2, storyProperty2] = storeInfo2;
-    const ruleName = `customLeaveRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}${Math.random()}`;
+    const [storeName1, storeItemId1, storyProperty1] = storeInfo1;
+    const [storeName2, storeItemId2, storyProperty2] = storeInfo2;
+    const ruleName = toSafeEffectId(`customLeaveRuleFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}`);
     function newRuleMaker(callBacksObject) {
         return makeRules(({ effect }) => ({
             whenPropertyChanges: effect({
                 run(_diffInfo) {
                     const usefulParams = getUsefulParams?.();
-                    const latestValue1 = getState()[storeName1][storeItemName1][storyProperty1];
-                    const latestValue2 = getState()[storeName2][storeItemName2][storyProperty2];
-                    const prevValue1 = getPrevState()[storeName1][storeItemName1][storyProperty1];
-                    const prevValue2 = getPrevState()[storeName2][storeItemName2][storyProperty2];
+                    const latestValue1 = getState()[storeName1][storeItemId1][storyProperty1];
+                    const latestValue2 = getState()[storeName2][storeItemId2][storyProperty2];
+                    const prevValue1 = getPrevState()[storeName1][storeItemId1][storyProperty1];
+                    const prevValue2 = getPrevState()[storeName2][storeItemId2][storyProperty2];
                     const callback = callBacksObject[prevValue1]?.[prevValue2];
                     if (callback)
                         callback(usefulParams);
                 },
                 check: [
-                    { prop: [storyProperty1], name: storeItemName1, type: storeName1 },
-                    { prop: [storyProperty2], name: storeItemName2, type: storeName2 },
+                    { prop: [storyProperty1], id: storeItemId1, type: storeName1 },
+                    { prop: [storyProperty2], id: storeItemId2, type: storeName2 },
                 ],
                 step: stepName ?? "default",
                 atStepEnd: true,
-                name: ruleName,
+                id: ruleName,
             }),
         }));
     }

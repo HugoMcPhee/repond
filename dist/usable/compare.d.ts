@@ -1,17 +1,14 @@
-import { AllState, GetPartialState, ItemName, ItemType } from "../types";
-type ItemNamesByType = {
-    [K_Type in ItemType]: ItemName<K_Type>[];
-};
+import { AllState, GetPartialState, ItemIdsByType } from "../types";
 type StatesPatch = {
     changed: GetPartialState<AllState>;
-    added: Partial<ItemNamesByType>;
-    removed: Partial<ItemNamesByType>;
+    added: Partial<ItemIdsByType>;
+    removed: Partial<ItemIdsByType>;
 };
 type StatesDiff = {
     changedNext: GetPartialState<AllState>;
     changedPrev: GetPartialState<AllState>;
-    added: Partial<ItemNamesByType>;
-    removed: Partial<ItemNamesByType>;
+    added: Partial<ItemIdsByType>;
+    removed: Partial<ItemIdsByType>;
 };
 export declare function makeEmptyPatch(): StatesPatch;
 export declare function makeEmptyDiff(): StatesDiff;

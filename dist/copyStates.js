@@ -1,23 +1,20 @@
 import meta from "./meta";
-export function makeCopyStatesFunction(copyType = "copy") {
+export function makeCopyStatesFunction(copyType) {
     if (copyType === "copy") {
         return function copyStates(currentObject, saveToObject) {
-            const { itemTypeNames, propNamesByItemType, itemNamesByItemType } = meta;
+            const { itemTypeNames, propNamesByItemType, itemIdsByItemType } = meta;
             for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
                 const itemType = itemTypeNames[typeIndex];
-                if (copyType === "copy") {
-                    saveToObject[itemType] = {};
-                }
+                saveToObject[itemType] = {};
                 if (currentObject[itemType]) {
-                    const itemNames = itemNamesByItemType[itemType];
-                    for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
-                        const itemName = itemNames[nameIndex];
-                        if (!saveToObject[itemType][itemName]) {
-                            saveToObject[itemType][itemName] = {};
-                        }
+                    const itemIds = itemIdsByItemType[itemType];
+                    for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
+                        const itemId = itemIds[idIndex];
+                        if (!saveToObject[itemType][itemId])
+                            saveToObject[itemType][itemId] = {};
                         for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
                             const itemProp = propNamesByItemType[itemType][propIndex];
-                            saveToObject[itemType][itemName][itemProp] = currentObject[itemType][itemName][itemProp];
+                            saveToObject[itemType][itemId][itemProp] = currentObject[itemType][itemId][itemProp];
                         }
                     }
                 }
@@ -26,27 +23,27 @@ export function makeCopyStatesFunction(copyType = "copy") {
     }
     else if (copyType === "merge") {
         return function mergeStates(currentObject, saveToObject, recordedChanges, allRecordedChanges) {
-            const { itemTypeNames, propNamesByItemType, itemNamesByItemType } = meta;
+            const { itemTypeNames, propNamesByItemType, itemIdsByItemType } = meta;
             for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
                 const itemType = itemTypeNames[typeIndex];
                 if (currentObject[itemType]) {
-                    const itemNames = itemNamesByItemType[itemType];
-                    for (let nameIndex = 0; nameIndex < itemNames.length; ++nameIndex) {
-                        const itemName = itemNames[nameIndex];
+                    const itemIds = itemIdsByItemType[itemType];
+                    for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
+                        const itemId = itemIds[idIndex];
                         for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
                             const itemProp = propNamesByItemType[itemType][propIndex];
                             // check if the item exists before copying
-                            if (saveToObject[itemType][itemName] !== undefined &&
+                            if (saveToObject[itemType][itemId] !== undefined &&
                                 currentObject[itemType] &&
-                                currentObject[itemType][itemName] !== undefined &&
-                                currentObject[itemType][itemName][itemProp] !== undefined) {
-                                saveToObject[itemType][itemName][itemProp] = currentObject[itemType][itemName][itemProp];
+                                currentObject[itemType][itemId] !== undefined &&
+                                currentObject[itemType][itemId][itemProp] !== undefined) {
+                                saveToObject[itemType][itemId][itemProp] = currentObject[itemType][itemId][itemProp];
                                 recordedChanges.itemTypesBool[itemType] = true;
-                                recordedChanges.itemNamesBool[itemType][itemName] = true;
-                                recordedChanges.itemPropertiesBool[itemType][itemName][itemProp] = true;
+                                recordedChanges.itemIdsBool[itemType][itemId] = true;
+                                recordedChanges.itemPropsBool[itemType][itemId][itemProp] = true;
                                 allRecordedChanges.itemTypesBool[itemType] = true;
-                                allRecordedChanges.itemNamesBool[itemType][itemName] = true;
-                                allRecordedChanges.itemPropertiesBool[itemType][itemName][itemProp] = true;
+                                allRecordedChanges.itemIdsBool[itemType][itemId] = true;
+                                allRecordedChanges.itemPropsBool[itemType][itemId][itemProp] = true;
                                 recordedChanges.somethingChanged = true;
                                 allRecordedChanges.somethingChanged = true;
                             }

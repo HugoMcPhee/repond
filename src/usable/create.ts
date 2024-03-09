@@ -1,7 +1,7 @@
 import { makeCopyStatesFunction } from "../copyStates";
 import { createDiffInfo, makeGetStatesDiffFunction } from "../getStatesDiff";
 import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
-import meta from "../meta";
+import meta, { UntypedDiffInfo } from "../meta";
 import { AllState, DefaultRefs, DefaultStates, ItemType, StartStatesItemId, StepName } from "../types";
 import { createRecordedChanges } from "../updating";
 import { cloneObjectWithJson } from "../utils";
@@ -90,6 +90,6 @@ export function initRepond<
 
     createRecordedChanges(meta.recordedEffectChanges);
     createRecordedChanges(meta.recordedStepEndEffectChanges);
-    createDiffInfo(meta.diffInfo);
+    createDiffInfo(meta.diffInfo as unknown as UntypedDiffInfo);
   }
 }

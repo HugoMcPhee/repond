@@ -4,10 +4,10 @@ export { initRepond } from "./usable/create";
 export { applyPatch, applyPatchHere, combineDiffs, combinePatches, combineTwoDiffs, combineTwoPatches, getDiff, getDiffFromPatches, getPatch, getPatchAndReversed, getPatchesFromDiff, getReversePatch, makeEmptyDiff, makeEmptyPatch, makeMinimalPatch, removePartialPatch, } from "./usable/compare";
 export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
 export { addItem, getItem, getPrevState, getRefs, getState, removeItem, setState, onNextTick } from "./usable/getSet";
-export { initGroupedEffects, makeEffects, runEffect, runGroupEffects, startAllGroupedEffects, startEffect, startGroupEffects, startNewEffect, startNewItemEffect, stopAllGroupedEffects, stopEffect, stopGroupEffects, stopNewEffect, } from "./usable/effects";
+export { initGroupedEffects, makeEffect, makeItemEffect, makeEffects, runEffect, runGroupEffects, startAllGroupsEffects as startAllGroupedEffects, startEffect, startGroupEffects, startNewEffect, startNewItemEffect, stopAllGroupsEffects as stopAllGroupedEffects, stopEffect, stopGroupEffects, stopNewEffect, } from "./usable/effects";
 export { makeDynamicRules, makeLeaveRuleMaker, makeNestedLeaveRuleMaker, makeNestedRuleMaker, makeRuleMaker, makeRules, } from "./usable/deprecatedRules";
 export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
-    [itemName: string]: ReturnType<T_defaultStateFunctionType>;
+    [itemId: string]: ReturnType<T_defaultStateFunctionType>;
 };
 export type StoreHelperTypes<T_GetState extends () => {
     [key: string]: {

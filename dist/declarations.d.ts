@@ -1,7 +1,7 @@
 export interface AllStoreInfoUntyped {
     [StoreName: string]: {
-        state: (itemName: any) => any;
-        refs: (itemName: any, type: any) => any;
+        state: (itemId: any) => any;
+        refs: (itemId: any, type: any) => any;
         startStates?: Record<any, any>;
     };
 }

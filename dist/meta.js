@@ -1,7 +1,7 @@
 export const initialRecordedChanges = () => ({
     itemTypesBool: {},
-    itemNamesBool: {},
-    itemPropertiesBool: {},
+    itemIdsBool: {},
+    itemPropsBool: {},
     somethingChanged: false,
 });
 export const initialDiffInfo = {
@@ -16,12 +16,6 @@ export const initialDiffInfo = {
     itemsAddedBool: {},
     itemsRemovedBool: {},
 };
-/*
-
-store all the derive and subscribe changes like normal?
-but then, if setState is run when a step has already run, add it to the
-
-*/
 const repondMeta = {
     // prevStatesByStep: {
     //   default: {},
@@ -49,45 +43,39 @@ const repondMeta = {
     //
     diffInfo: initialDiffInfo,
     // state
-    previousState: {},
-    currentState: {},
+    prevState: {},
+    nowState: {},
     initialState: {},
     // refs
-    currentRefs: {},
-    currentMetaPhase: "waitingForFirstUpdate",
+    nowRefs: {},
+    nowMetaPhase: "waitingForFirstUpdate",
     // functions
     addAndRemoveItemsQue: [],
-    innerEffectsRunAtStartQueue: [],
-    startInnerEffectsQue: [],
+    effectsRunAtStartQueue: [],
+    startEffectsQue: [],
     setStatesQue: [],
-    callforwardsQue: [], // runs at the start of a tick
     callbacksQue: [],
     //
-    allInnerEffects: {},
-    innerEffectNamesByPhaseByStep: { duringStep: {}, endOfStep: {} },
+    allEffects: {},
+    effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} },
     //
     allGroupedEffects: {},
     //
     itemTypeNames: [],
     propNamesByItemType: {},
-    itemNamesByItemType: {}, // current item names only, not previous..
+    itemIdsByItemType: {}, // current item names only, not previous..
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
-    copyStates: (currentObject, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
+    copyStates: (nowState, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
     allRecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
     ) => { },
     mergeStates: (newStates, saveToObject, recordedChanges, allRecordedChanges) => { },
-    getStatesDiff: (currentObject, previousObject, diffInfo, recordedChanges, checkAllChanges) => { },
+    getStatesDiff: (nowState, prevState, diffInfo, recordedChanges, checkAllChanges) => { },
     // react specific?
-    autoEffectNameCounter: 1,
+    autoEffectIdCounter: 1,
     //
     stepNames: ["default"],
-    currentStepName: "default",
-    currentStepIndex: 0,
+    nowStepName: "default",
+    nowStepIndex: 0,
 };
 export default repondMeta;
-export function toSafeEffectName(prefix) {
-    const theId = repondMeta.autoEffectNameCounter;
-    repondMeta.autoEffectNameCounter += 1;
-    return (prefix || "autoListener") + "_" + theId;
-}
