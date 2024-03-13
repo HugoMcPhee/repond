@@ -14,6 +14,27 @@ Respond fast to item states
 
 - Update components with state changes
 
+## Effects
+
+### How to use
+
+Effects can be made in three main ways
+
+**1. Declarative**
+
+- with makeEffects(EffectMap) + initEffectGroups - for static effects that can be started and stopped, thi sis the most common way
+- with makeParamEffects + initParamEffectGroups - for making a group of effects that can differ based on parameters, for example effects that listen to changes from both a parent and a child item, where the parent and child ids can change
+- Note the "id" prop is overwritten for the declarative ways of making effects, since the id is created from the groupName + effect name (+ params for paramEffects)
+
+  **2. Imperative**
+
+- with startNewEffect(Effect) - for runtime decided effects, these are good for temporary listeners, like a listener that listens to a child item, and is removed when the child is removed
+
+  **3. React**
+
+  - with useStoreEffect or useStoreItemEffect - for making effects that are tied to a component, and are removed when the component is removed
+  - there are others hooks for getting state like useStore and useStoreItem, which make an effect that returns the state
+
 ## More
 
 ### Set state run order

@@ -1,5 +1,5 @@
+import { _setState, _addItem, _removeItem } from "../helpers/setting";
 import meta from "../meta";
-import { _addItem, _removeItem, _setState } from "../settingInternal";
 import {
   AllRefs,
   AllState,

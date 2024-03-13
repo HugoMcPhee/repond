@@ -1,4 +1,5 @@
 import { DiffInfo, Effect, EffectPhase } from "./types";
+import { ParamEffectsGroup } from "./usable/paramEffects";
 
 export type RecordedChanges = {
   itemTypesBool: { [type: string]: boolean };
@@ -106,8 +107,9 @@ const repondMeta = {
     EffectPhase,
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
-  //
-  allGroupedEffects: {} as Record<string, Record<string, Effect>>,
+  allEffectGroups: {} as Record<string, Record<string, Effect>>,
+  allParamEffectGroups: {} as Record<string, ParamEffectsGroup<any, any>>,
+  paramEffectIdsByGroupPlusParamKey: {} as Record<string, string[]>, // effectGroup: {paramKey: [effectId]}
   //
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },

@@ -16,9 +16,6 @@ export function createDiffInfo(diffInfo: UntypedDiffInfo) {
   diffInfo.itemsAddedBool.all__ = {};
   diffInfo.itemsRemovedBool.all__ = {};
 
-  // let itemTypeAddedToItemsTypesChanged = false;
-  // let propAddedToPropsChanged = false;
-
   forEach(meta.itemTypeNames, (itemType) => {
     diffInfo.itemTypesChangedBool[itemType] = false;
     diffInfo.itemsChangedBool[itemType] = {};
@@ -53,9 +50,6 @@ function clearDiffInfo(diffInfo: UntypedDiffInfo) {
 
   diffInfo.itemsAdded.all__.length = 0;
   diffInfo.itemsRemoved.all__.length = 0;
-
-  // let itemTypeAddedToItemsTypesChanged = false;
-  // let propAddedToPropsChanged = false;
 
   for (let typeIndex = 0; typeIndex < meta.itemTypeNames.length; typeIndex++) {
     const itemType = meta.itemTypeNames[typeIndex];
@@ -223,7 +217,4 @@ export function makeGetStatesDiffFunction() {
       }
     }
   };
-
-  // pre-compile constant iteration over object properties - Domi
-  // https://stackoverflow.com/a/25700742
 }
