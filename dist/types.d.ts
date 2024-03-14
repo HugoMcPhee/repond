@@ -56,10 +56,6 @@ export type AllProps = {
 export type ItemIdsByType = {
     [K_Type in ItemType]: ItemId<K_Type>[];
 };
-type RemoveEffectsSuffix<T extends string> = T extends `${infer Prefix}Effects` ? Prefix : T;
-export type RefinedGroupedEffects = {
-    [K in keyof RepondTypes["GroupedEffects"] as RemoveEffectsSuffix<K>]: RepondTypes["GroupedEffects"][K];
-};
 type DiffInfo_PropsChanged = {
     [K_Type in ItemType]: Record<ItemId<K_Type>, PropName<K_Type>[]> & {
         all__: PropName<K_Type>[];
@@ -104,21 +100,6 @@ export type ItemEffect_Run_Params<K_Type extends ItemType, K_PropName extends Pr
     ranWithoutChange?: boolean;
 };
 export type ItemEffect_Check_Becomes = undefined | string | number | boolean | ((theValue: any, prevValue: any) => boolean);
-type UseStoreItem_Check_OneItem_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
-    prop?: K_PropName;
-    type: K_Type;
-    id: ItemId<K_Type>;
-    becomes?: ItemEffect_Check_Becomes;
-    addedOrRemoved?: undefined;
-};
-type UseStoreItem_Check_OneItem_MultiProps<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
-    prop?: K_PropName[];
-    type: K_Type;
-    id: ItemId<K_Type>;
-    becomes?: ItemEffect_Check_Becomes;
-    addedOrRemoved?: undefined;
-};
-export type UseStoreItem_Check_OneItem<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = UseStoreItem_Check_OneItem_OneProp<K_Type, K_PropName> | UseStoreItem_Check_OneItem_MultiProps<K_Type, K_PropName>;
 type ItemEffect_Check_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
     prop?: K_PropName;
     type: K_Type;
@@ -143,6 +124,13 @@ export type ItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Ty
     step?: StepName;
     runAtStart?: boolean;
 };
+export type UseStoreItem_Check_OneItem_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = Omit<ItemEffect_Check_OneProp<K_Type, K_PropName>, "id"> & {
+    id: ItemId<K_Type>;
+};
+export type UseStoreItem_Check_OneItem_MultiProps<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = Omit<ItemEffect_Check_MultiProps<K_Type, K_PropName>, "id"> & {
+    id: ItemId<K_Type>;
+};
+export type UseStoreItem_Check_OneItem<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = UseStoreItem_Check_OneItem_OneProp<K_Type, K_PropName> | UseStoreItem_Check_OneItem_MultiProps<K_Type, K_PropName>;
 type EasyEffect_Check_OneItemType<K_Type extends ItemType> = {
     type?: K_Type;
     id?: ItemId<K_Type> | ItemId<K_Type>[];

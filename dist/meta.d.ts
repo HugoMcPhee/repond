@@ -1,4 +1,5 @@
 import { DiffInfo, Effect, EffectPhase } from "./types";
+import { ParamEffectsGroup } from "./usable/paramEffects";
 export type RecordedChanges = {
     itemTypesBool: {
         [type: string]: boolean;
@@ -108,7 +109,9 @@ declare const repondMeta: {
     callbacksQue: AFunction[];
     allEffects: Record<string, Effect>;
     effectIdsByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
-    allGroupedEffects: Record<string, Record<string, Effect>>;
+    allEffectGroups: Record<string, Record<string, Effect>>;
+    allParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;
+    paramEffectIdsByGroupPlusParamKey: Record<string, string[]>;
     itemTypeNames: string[];
     propNamesByItemType: {
         [itemTypeName: string]: string[];

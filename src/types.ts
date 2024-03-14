@@ -1,4 +1,3 @@
-import { UntypedDiffInfo } from "./meta";
 import { RepondTypes } from "./declarations";
 
 // https://stackoverflow.com/questions/49401866/all-possible-keys-of-an-union-type
@@ -125,16 +124,6 @@ export type ItemIdsByType = {
   [K_Type in ItemType]: ItemId<K_Type>[];
 };
 
-type OriginalGroupNames = keyof RepondTypes["GroupedEffects"];
-type RefinedGroupNames = RemoveEffectsSuffix<OriginalGroupNames>;
-
-// Helper type to strip "Effects" suffix from group names
-type RemoveEffectsSuffix<T extends string> = T extends `${infer Prefix}Effects` ? Prefix : T;
-
-export type RefinedGroupedEffects = {
-  [K in keyof RepondTypes["GroupedEffects"] as RemoveEffectsSuffix<K>]: RepondTypes["GroupedEffects"][K];
-};
-
 // ------------------------------------------------------------
 // DiffInfo
 
@@ -173,6 +162,9 @@ export type DiffInfo = {
 
 // ------------------------------------------------------------
 
+// -----------------
+// Item Effect
+
 export type ItemEffect_Run_Params<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
   itemId: ItemId<K_Type>;
   newValue: AllState[K_Type][ItemId<K_Type>][K_PropName];
@@ -192,28 +184,6 @@ export type ItemEffect_Check_Becomes =
   | boolean
   | ((theValue: any, prevValue: any) => boolean);
 
-// -----------------
-// Use Store Item NOTE may be able to reuse some of the ItemEffect check?
-type UseStoreItem_Check_OneItem_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
-  prop?: K_PropName;
-  type: K_Type;
-  id: ItemId<K_Type>;
-  becomes?: ItemEffect_Check_Becomes;
-  addedOrRemoved?: undefined;
-};
-type UseStoreItem_Check_OneItem_MultiProps<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
-  prop?: K_PropName[];
-  type: K_Type; // maybe ideally optional (and handle adding effect with any item type)
-  id: ItemId<K_Type>;
-  becomes?: ItemEffect_Check_Becomes;
-  addedOrRemoved?: undefined;
-};
-export type UseStoreItem_Check_OneItem<K_Type extends ItemType, K_PropName extends PropName<K_Type>> =
-  | UseStoreItem_Check_OneItem_OneProp<K_Type, K_PropName>
-  | UseStoreItem_Check_OneItem_MultiProps<K_Type, K_PropName>;
-
-// -----------------
-// Item Effect
 type ItemEffect_Check_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = {
   prop?: K_PropName;
   type: K_Type;
@@ -246,10 +216,22 @@ export type ItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Ty
   step?: StepName;
   runAtStart?: boolean;
 };
-// export type ItemEffect_ForGroup<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = ItemEffect<
-//   K_Type,
-//   K_PropName
-// > & { _isPerItem?: true };
+
+// -----------------
+// Use Store Item
+export type UseStoreItem_Check_OneItem_OneProp<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = Omit<
+  ItemEffect_Check_OneProp<K_Type, K_PropName>,
+  "id"
+> & { id: ItemId<K_Type> };
+
+export type UseStoreItem_Check_OneItem_MultiProps<K_Type extends ItemType, K_PropName extends PropName<K_Type>> = Omit<
+  ItemEffect_Check_MultiProps<K_Type, K_PropName>,
+  "id"
+> & { id: ItemId<K_Type> };
+
+export type UseStoreItem_Check_OneItem<K_Type extends ItemType, K_PropName extends PropName<K_Type>> =
+  | UseStoreItem_Check_OneItem_OneProp<K_Type, K_PropName>
+  | UseStoreItem_Check_OneItem_MultiProps<K_Type, K_PropName>;
 
 // -----------------
 // Easy Effect
@@ -270,6 +252,8 @@ type EasyEffect_Check_OneItemType<K_Type extends ItemType> = {
   // "characters" and "global" need to be in array array so
   // the MultiItemTypes type's chosen
   */
+// TODO FIXME? is it possible to have multiple item types with an array of EasyEffect_Check_OneItemType checks?
+
 type EasyEffect_Check_MultiItemTypes = {
   type?: ItemType[];
   id?: ItemId<ItemType> | ItemId<ItemType>[];

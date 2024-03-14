@@ -6,6 +6,13 @@ TODO
 - add runOnNewItems option to effects, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
 
+v0.14.0
+
+- Update dynamic rules to paramEffects
+- Update rule makers to effect makers
+- Reorganise some files
+- Rename GroupedEffects to EffectGroups
+
 v0.13.0 Simpler ids and types
 
 - Rename "name" to "id" for items

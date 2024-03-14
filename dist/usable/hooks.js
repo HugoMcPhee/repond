@@ -1,7 +1,8 @@
 import { forEach } from "chootils/dist/loops";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { toSafeEffectId } from "../helpers/effects/internal";
 import meta from "../meta";
-import { startNewEffect, startNewItemEffect, stopNewEffect, toSafeEffectId } from "./effects";
+import { startNewEffect, startNewItemEffect, stopNewEffect } from "./effects";
 import { getPrevState, getRefs, getState } from "./getSet";
 export function useStore(whatToReturn, check, hookDeps = []) {
     const [, setTick] = useState(0);

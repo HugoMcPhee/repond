@@ -1,4 +1,4 @@
-import { AllRefs, AllState, DeepReadonly, EasyEffect_Check, EasyEffect_Run, ItemEffect_Check, ItemEffect_Run, ItemEffect_Run_Params, ItemId, ItemType, UseStoreItem_Check_OneItem, PropName, StepName } from "../types";
+import { AllRefs, AllState, DeepReadonly, EasyEffect_Check, EasyEffect_Run, ItemEffect_Check, ItemEffect_Run, ItemEffect_Run_Params, ItemId, ItemType, PropName, StepName, UseStoreItem_Check_OneItem } from "../types";
 export type UseStoreItem_Params<K_Type extends ItemType> = {
     itemId: ItemId<K_Type>;
     prevItemState: AllState[K_Type][ItemId<K_Type>];

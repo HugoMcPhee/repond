@@ -1,3 +1,4 @@
+import { ParamEffectsGroup } from "./usable/paramEffects";
 export interface AllStoreInfoUntyped {
     [StoreName: string]: {
         state: (itemId: any) => any;
@@ -8,7 +9,8 @@ export interface AllStoreInfoUntyped {
 export interface RepondTypesUntyped {
     AllStoreInfo: AllStoreInfoUntyped;
     StepNames: string[] | readonly string[];
-    GroupedEffects: Record<string, Record<string, any>>;
+    EffectGroups: Record<string, Record<string, any>>;
+    ParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;
 }
 export interface CustomRepondTypes {
 }
