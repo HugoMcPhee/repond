@@ -42,7 +42,16 @@ export {
   stopNewEffect,
 } from "./usable/effects";
 
-export { makeParamEffects } from "./usable/paramEffects";
+export {
+  makeParamEffects,
+  startParamEffectsGroup,
+  runParamEffect,
+  initParamEffectGroups,
+  runParamEffectsGroup,
+  startParamEffect,
+  stopParamEffect,
+  stopParamEffectsGroup,
+} from "./usable/paramEffects";
 
 export {
   makeNestedEffectsMaker,
