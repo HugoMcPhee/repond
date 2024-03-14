@@ -58,8 +58,9 @@ const repondMeta = {
     //
     allEffects: {},
     effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} },
-    //
-    allGroupedEffects: {},
+    allEffectGroups: {},
+    allParamEffectGroups: {},
+    paramEffectIdsByGroupPlusParamKey: {}, // effectGroup: {paramKey: [effectId]}
     //
     itemTypeNames: [],
     propNamesByItemType: {},

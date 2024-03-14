@@ -1,5 +1,5 @@
+import { _setState, _addItem, _removeItem } from "../helpers/setting";
 import meta from "../meta";
-import { _addItem, _removeItem, _setState } from "../settingInternal";
 export const getDefaultStates = () => meta.defaultStateByItemType;
 export const getDefaultRefs = () => meta.defaultRefsByItemType;
 export const getItemTypes = () => meta.itemTypeNames;

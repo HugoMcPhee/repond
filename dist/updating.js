@@ -1,7 +1,7 @@
 import meta from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
-import { runNextFrame } from "./settingInternal";
+import { runNextFrame } from "./helpers/frames";
 function updateDiffInfo(recordedChanges) {
     //  make a diff of the changes
     meta.getStatesDiff(meta.nowState, meta.prevState, meta.diffInfo, recordedChanges, false /* checkAllChanges */);
@@ -35,7 +35,7 @@ function runSetStates() {
     }
     meta.setStatesQue.length = 0;
 }
-function runAddListeners() {
+function runAddEffects() {
     // adding listeners (rules) are queued and happen here
     // removing listeners happens instantly
     for (let index = 0; index < meta.startEffectsQue.length; index++) {
@@ -44,7 +44,7 @@ function runAddListeners() {
     }
     meta.startEffectsQue.length = 0;
 }
-function runListenersWithRunAtStart() {
+function runEffectsWithRunAtStart() {
     for (let index = 0; index < meta.effectsRunAtStartQueue.length; index++) {
         const loopedUpdateFunction = meta.effectsRunAtStartQueue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
@@ -124,9 +124,9 @@ function resetRecordedStepChanges() {
 }
 function runStepEffects(stepName) {
     resetRecordedStepChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
-    runListenersWithRunAtStart(); // run the runAtStart listeners
+    runEffectsWithRunAtStart(); // run the runAtStart listeners
     runEffects("duringStep", stepName); //  a running derive-listener can add more to the setStates que (or others)
-    runAddListeners(); // add rules / effects
+    runAddEffects(); // add rules / effects
     runAddAndRemove(); // add and remove items
     runSetStates(); // run the qued setStates
     updateDiffInfo(meta.recordedEffectChanges);

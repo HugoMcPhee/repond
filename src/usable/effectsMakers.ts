@@ -1,5 +1,6 @@
+import { toSafeEffectId } from "../helpers/effects/internal";
 import { AllState, EasyEffect_Check, ItemType, StepName } from "../types";
-import { makeEffects, toSafeEffectId } from "./effects";
+import { makeEffects } from "./effects";
 import { getPrevState, getState } from "./getSet";
 
 export function makeEffectsMaker<
