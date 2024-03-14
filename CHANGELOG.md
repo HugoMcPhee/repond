@@ -6,9 +6,10 @@ TODO
 - add runOnNewItems option to effects, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
 
-v0.14.1
+v0.14.2
 
 - Fix exporting Param effects stuff from index
+- Fix returning void instead of undefined in makeAndStoreParamEffectsForGroup
 
 v0.14.0
 

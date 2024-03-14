@@ -93,7 +93,7 @@ function makeAndStoreParamEffectsForGroup<
     params,
   });
 
-  if (!madeParamEffects) return console.warn("no param effects stored for ", groupName);
+  if (!madeParamEffects) return console.warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
 
   const effectIds: string[] = [];
   // paramEffectIdsByGroupPlusParamKey
