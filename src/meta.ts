@@ -62,7 +62,7 @@ export type RepondMetaPhase =
   | "runningStepEndEffects"
   | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
 
-const repondMeta = {
+export const repondMeta = {
   // prevStatesByStep: {
   //   default: {},
   // } as Record<string, any>,
@@ -149,5 +149,3 @@ const repondMeta = {
 };
 
 export type RepondMeta = typeof repondMeta;
-
-export default repondMeta;

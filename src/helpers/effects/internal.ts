@@ -1,5 +1,5 @@
 import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
-import meta from "../../meta";
+import { repondMeta as meta } from "../../meta";
 import { runWhenDoingEffectsRunAtStart, runWhenStartingEffects, runWhenStoppingEffects } from "../runWhens";
 import { Effect, EffectPhase } from "../../types";
 

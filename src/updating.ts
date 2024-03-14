@@ -1,4 +1,4 @@
-import meta, { RecordedChanges, RepondMetaPhase } from "./meta";
+import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
 import { EffectPhase } from "./types";

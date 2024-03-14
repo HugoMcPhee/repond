@@ -16,7 +16,7 @@ export const initialDiffInfo = {
     itemsAddedBool: {},
     itemsRemovedBool: {},
 };
-const repondMeta = {
+export const repondMeta = {
     // prevStatesByStep: {
     //   default: {},
     // } as Record<string, any>,
@@ -79,4 +79,3 @@ const repondMeta = {
     nowStepName: "default",
     nowStepIndex: 0,
 };
-export default repondMeta;

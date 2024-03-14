@@ -1,4 +1,4 @@
-import meta, { RecordedChanges } from "./meta";
+import { repondMeta as meta, RecordedChanges } from "./meta";
 
 export function makeCopyStatesFunction(copyType: "copy" | "merge") {
   if (copyType === "copy") {

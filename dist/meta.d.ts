@@ -79,7 +79,7 @@ export type UntypedDiffInfo = {
 };
 type AFunction = (...args: any[]) => void;
 export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningEffects" | "runningStepEndEffects" | "runningCallbacks";
-declare const repondMeta: {
+export declare const repondMeta: {
     recordedEffectChanges: RecordedChanges;
     recordedStepEndEffectChanges: RecordedChanges;
     nextFrameIsFirst: boolean;
@@ -138,4 +138,4 @@ declare const repondMeta: {
     nowStepIndex: number;
 };
 export type RepondMeta = typeof repondMeta;
-export default repondMeta;
+export {};

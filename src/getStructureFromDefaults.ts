@@ -1,5 +1,5 @@
 import { forEach } from "chootils/dist/loops";
-import meta from "./meta";
+import { repondMeta as meta } from "./meta";
 
 const validItemIdByType = {} as Record<string, string>;
 

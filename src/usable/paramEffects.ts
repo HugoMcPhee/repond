@@ -1,6 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import { Effect } from "../types";
 import { MakeEffect, MakeItemEffect, makeEffect, makeItemEffect } from "./effects";
 import { _startEffect, _stopEffect } from "../helpers/effects/internal";

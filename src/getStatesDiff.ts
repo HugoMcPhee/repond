@@ -1,5 +1,5 @@
 import { forEach } from "chootils/dist/loops";
-import meta, { RecordedChanges, UntypedDiffInfo } from "./meta";
+import { repondMeta as meta, RecordedChanges, UntypedDiffInfo } from "./meta";
 
 export function createDiffInfo(diffInfo: UntypedDiffInfo) {
   diffInfo.itemTypesChanged = [];

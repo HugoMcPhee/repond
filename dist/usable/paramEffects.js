@@ -1,5 +1,5 @@
 import { forEach } from "chootils/dist/loops";
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import { makeEffect, makeItemEffect } from "./effects";
 import { _startEffect, _stopEffect } from "../helpers/effects/internal";
 export function makeParamEffects(defaultParams, effectsToAdd) {

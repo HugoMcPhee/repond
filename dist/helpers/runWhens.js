@@ -1,4 +1,4 @@
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import { runNextFrameIfNeeded } from "./frames";
 // Only runs when calling  _setState
 export function runWhenUpdatingRepond(whatToRun, callback) {

@@ -1,7 +1,7 @@
 import { makeCopyStatesFunction } from "../copyStates";
 import { createDiffInfo, makeGetStatesDiffFunction } from "../getStatesDiff";
 import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import { createRecordedChanges } from "../updating";
 import { cloneObjectWithJson } from "../utils";
 /*

@@ -1,7 +1,7 @@
 import { forEach } from "chootils/dist/loops";
 import { easyEffectToEffect, itemEffectToEffect } from "../helpers/effects/converters";
 import { _startEffect, _stopEffect } from "../helpers/effects/internal";
-import { default as meta } from "../meta";
+import { repondMeta as meta } from "../meta";
 import { EasyEffect, Effect, ItemEffect, ItemType, PropName } from "../types";
 import { RepondTypes } from "../declarations";
 

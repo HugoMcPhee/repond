@@ -1,4 +1,4 @@
-import meta from "./meta";
+import { repondMeta as meta } from "./meta";
 export function makeCopyStatesFunction(copyType) {
     if (copyType === "copy") {
         return function copyStates(currentObject, saveToObject) {

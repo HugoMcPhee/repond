@@ -2,7 +2,7 @@ import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
 import { addItem, getDefaultStates, getItemTypes, removeItem, setState } from "./getSet";
 import { createDiffInfo } from "../getStatesDiff";
-import meta, { initialRecordedChanges } from "../meta";
+import { repondMeta as meta, initialRecordedChanges } from "../meta";
 import { cloneObjectWithJson } from "../utils";
 export function makeEmptyPatch() {
     return {

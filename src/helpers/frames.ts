@@ -1,4 +1,4 @@
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import { _updateRepond } from "../updating";
 
 function updateRepondNextFrame() {

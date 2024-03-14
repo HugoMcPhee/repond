@@ -1,4 +1,4 @@
-import meta from "./meta";
+import { repondMeta as meta } from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
 import { runNextFrame } from "./helpers/frames";

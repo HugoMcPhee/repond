@@ -1,5 +1,5 @@
 import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
-import meta from "../../meta";
+import { repondMeta as meta } from "../../meta";
 import { runWhenDoingEffectsRunAtStart, runWhenStartingEffects, runWhenStoppingEffects } from "../runWhens";
 export function _startEffect(newEffect) {
     const phase = !!newEffect.atStepEnd ? "endOfStep" : "duringStep";

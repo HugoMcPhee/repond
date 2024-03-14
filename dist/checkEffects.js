@@ -1,4 +1,4 @@
-import meta from "./meta";
+import { repondMeta as meta } from "./meta";
 const NO_EFFECT_NAMES = [];
 const CHECK_ALL_OPTION = ["all__"];
 // created once and cleared to avoid making many new arrays each time, to save memory

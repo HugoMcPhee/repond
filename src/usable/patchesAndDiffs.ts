@@ -2,7 +2,7 @@ import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
 import { addItem, getDefaultStates, getItemTypes, removeItem, setState } from "./getSet";
 import { createDiffInfo } from "../getStatesDiff";
-import meta, { UntypedDiffInfo, initialRecordedChanges } from "../meta";
+import { repondMeta as meta, UntypedDiffInfo, initialRecordedChanges } from "../meta";
 import { AllState, DiffInfo, GetPartialState, ItemIdsByType, ItemId, ItemType, PropName } from "../types";
 import { cloneObjectWithJson } from "../utils";
 

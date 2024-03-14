@@ -1,7 +1,7 @@
 import { forEach } from "chootils/dist/loops";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toSafeEffectId } from "../helpers/effects/internal";
-import meta from "../meta";
+import { repondMeta as meta } from "../meta";
 import {
   AllRefs,
   AllState,

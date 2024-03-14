@@ -1,5 +1,5 @@
 import { breakableForEach, forEach } from "chootils/dist/loops";
-import meta from "../../meta";
+import { repondMeta as meta } from "../../meta";
 import { getPrevState, getRefs, getState } from "../../usable/getSet";
 import { toArray, toMaybeArray } from "../../utils";
 import { toSafeEffectId } from "./internal";

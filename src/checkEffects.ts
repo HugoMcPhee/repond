@@ -1,4 +1,4 @@
-import meta from "./meta";
+import { repondMeta as meta } from "./meta";
 import { Effect_OneCheck, EffectPhase } from "./types";
 
 const NO_EFFECT_NAMES: string[] = [];
