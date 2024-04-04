@@ -19,4 +19,7 @@ export declare function removeItem(itemInfo: {
     type: ItemType;
     id: string;
 }): void;
+export declare function getItemWillBeAdded<K_Type extends ItemType>(type: K_Type, id: string): boolean;
+export declare function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: string): boolean;
+export declare function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string): boolean;
 export {};

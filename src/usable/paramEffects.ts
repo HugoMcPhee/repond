@@ -50,7 +50,7 @@ export function initParamEffectGroups<T extends Record<string, ParamEffectsGroup
 }
 
 // Helper type to strip "Effects" suffix from group names
-type RemoveParamEffectsSuffix<T extends string> = T extends `${infer Prefix}Effects` ? Prefix : T;
+type RemoveParamEffectsSuffix<T extends string> = T extends `${infer Prefix}ParamEffects` ? Prefix : T;
 export type RefinedParamEffectGroups = {
   [K in keyof RepondTypes["ParamEffectGroups"] as RemoveParamEffectsSuffix<K>]: RepondTypes["ParamEffectGroups"][K];
 };

@@ -214,7 +214,7 @@ export type ItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Ty
   atStepEnd?: boolean;
   id?: string;
   step?: StepName;
-  runAtStart?: boolean;
+  runAtStart?: boolean; // if it should run when the effect is added, NOTE effects already run when items are added if the props changed from the items default props
 };
 
 // -----------------

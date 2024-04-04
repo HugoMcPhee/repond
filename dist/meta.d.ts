@@ -129,6 +129,16 @@ export declare const repondMeta: {
             [itemPropertyName: string]: any;
         };
     };
+    willAddItemsInfo: {
+        [itemTypeName: string]: {
+            [itemId: string]: any;
+        };
+    };
+    willRemoveItemsInfo: {
+        [itemTypeName: string]: {
+            [itemId: string]: any;
+        };
+    };
     copyStates: (nowState: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
     mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
     getStatesDiff: (nowState: any, prevState: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;

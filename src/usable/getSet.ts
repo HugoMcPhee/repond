@@ -59,3 +59,15 @@ export function addItem<K_Type extends ItemType>(addItemOptions: AddItem_Options
 export function removeItem(itemInfo: { type: ItemType; id: string }) {
   _removeItem(itemInfo as { type: string; id: string });
 }
+
+export function getItemWillBeAdded<K_Type extends ItemType>(type: K_Type, id: string) {
+  return !!meta.willAddItemsInfo[type]?.[id];
+}
+
+export function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: string) {
+  return !!meta.willRemoveItemsInfo[type]?.[id];
+}
+
+export function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string) {
+  return getItemWillBeAdded(type, id) || !!(getState() as any)[type][id];
+}

@@ -1,5 +1,5 @@
 export declare function _setState(newState: any, callback?: any): void;
-export declare function _removeItem({ type: itemType, id: itemId }: {
+export declare function _removeItem({ type, id }: {
     type: string;
     id: string;
 }, callback?: any): void;

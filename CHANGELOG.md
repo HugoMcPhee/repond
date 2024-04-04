@@ -5,6 +5,13 @@ TODO
 - maybe a way to type effect objects without starting (exporting makeEffect)
 - add runOnNewItems option to effects, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
+- look into addItem doing a setState if the item was already added
+
+v0.15.0
+
+- New added items now run effects if their props changes from the default props
+- added new functions getItemWillBeAdded, getItemWillBeRemoved, getItemWillExist to know if an item will be added, removed or exist in the next state, to be able to setState instead of adding an item if it already exists
+- fixed ParamEffects names not having "ParamEffects" removed from the name
 
 v0.14.3
 

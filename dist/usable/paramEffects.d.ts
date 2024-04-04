@@ -15,7 +15,7 @@ export declare function makeParamEffects<K_EffectName extends string, T_ParamKey
     params: T_Params;
 }) => Record<K_EffectName, Effect>): ParamEffectsGroup<K_EffectName, T_Params>;
 export declare function initParamEffectGroups<T extends Record<string, ParamEffectsGroup<any, any>>>(groups: T): T;
-type RemoveParamEffectsSuffix<T extends string> = T extends `${infer Prefix}Effects` ? Prefix : T;
+type RemoveParamEffectsSuffix<T extends string> = T extends `${infer Prefix}ParamEffects` ? Prefix : T;
 export type RefinedParamEffectGroups = {
     [K in keyof RepondTypes["ParamEffectGroups"] as RemoveParamEffectsSuffix<K>]: RepondTypes["ParamEffectGroups"][K];
 };

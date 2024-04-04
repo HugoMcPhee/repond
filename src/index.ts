@@ -22,7 +22,19 @@ export {
 } from "./usable/patchesAndDiffs";
 
 export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
-export { addItem, getItem, getPrevState, getRefs, getState, removeItem, setState, onNextTick } from "./usable/getSet";
+export {
+  addItem,
+  getItem,
+  getPrevState,
+  getRefs,
+  getState,
+  removeItem,
+  setState,
+  onNextTick,
+  getItemWillBeAdded,
+  getItemWillBeRemoved,
+  getItemWillExist,
+} from "./usable/getSet";
 
 export {
   initEffectGroups,

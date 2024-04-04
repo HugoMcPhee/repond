@@ -20,3 +20,12 @@ export function addItem(addItemOptions, callback) {
 export function removeItem(itemInfo) {
     _removeItem(itemInfo);
 }
+export function getItemWillBeAdded(type, id) {
+    return !!meta.willAddItemsInfo[type]?.[id];
+}
+export function getItemWillBeRemoved(type, id) {
+    return !!meta.willRemoveItemsInfo[type]?.[id];
+}
+export function getItemWillExist(type, id) {
+    return getItemWillBeAdded(type, id) || !!getState()[type][id];
+}

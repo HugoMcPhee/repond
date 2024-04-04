@@ -105,7 +105,8 @@ export function makeGetStatesDiffFunction() {
                         // if (diffInfo.itemsAddedBool.all__[itemId]) {
                         // if the item was just added (should it mark all the properties as changed?)
                         // }
-                        if (!diffInfo.itemsRemovedBool.all__[itemId] && !diffInfo.itemsAddedBool.all__[itemId]) {
+                        // dont check for removed items, if it was just added then check if the properties are different to default
+                        if (!diffInfo.itemsRemovedBool.all__[itemId]) {
                             for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; ++propIndex) {
                                 const itemPropName = propNamesByItemType[itemType][propIndex];
                                 if (checkAllChanges || recordedChanges.itemPropsBool[itemType]?.[itemId]?.[itemPropName] === true) {
@@ -136,7 +137,17 @@ export function makeGetStatesDiffFunction() {
                                     //     currentState[itemType][itemId][itemPropName] !==
                                     //     prevState[itemType][itemId][itemPropName];
                                     // }
-                                    propChanged = nowState[itemType][itemId][itemPropName] !== prevState[itemType][itemId][itemPropName];
+                                    const wasJustAdded = diffInfo.itemsAddedBool.all__[itemId];
+                                    if (wasJustAdded) {
+                                        propChanged =
+                                            nowState[itemType][itemId][itemPropName] !==
+                                                meta.defaultStateByItemType[itemType](itemId)[itemPropName];
+                                        // console.log("propChanged", itemType, itemId, itemPropName);
+                                    }
+                                    else {
+                                        propChanged =
+                                            nowState[itemType][itemId][itemPropName] !== prevState[itemType][itemId][itemPropName];
+                                    }
                                     if (propChanged) {
                                         if (!itemTypeAddedToItemsTypesChanged) {
                                             diffInfo.itemTypesChanged.push(itemType);

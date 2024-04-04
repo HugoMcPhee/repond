@@ -121,6 +121,8 @@ export const repondMeta = {
     [itemTypeName: string]: (itemId?: string) => //   itemId?: string
     { [itemPropertyName: string]: any };
   },
+  willAddItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
+  willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
   copyStates: (
     nowState: any,
     saveToObject: any,

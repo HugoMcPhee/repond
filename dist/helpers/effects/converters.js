@@ -48,6 +48,10 @@ function itemEffectRunToEffectRun({ check, run, }) {
         forEach(diffInfo.itemsChanged[type], (itemIdThatChanged) => {
             if (!(!allowedIdsMap || (allowedIdsMap && allowedIdsMap[itemIdThatChanged])))
                 return;
+            let thisItemsPrevState = prevItemsState[itemIdThatChanged];
+            const itemWasJustAdded = diffInfo.itemsAddedBool[type][itemIdThatChanged];
+            if (itemWasJustAdded)
+                thisItemsPrevState = meta.defaultStateByItemType[type](itemIdThatChanged);
             breakableForEach(props, (propName) => {
                 if (!diffInfo.propsChangedBool[type][itemIdThatChanged][propName])
                     return;
@@ -56,7 +60,7 @@ function itemEffectRunToEffectRun({ check, run, }) {
                 if (becomes === undefined)
                     canRunRun = true;
                 else if (typeof becomes === "function") {
-                    canRunRun = becomes(newValue, prevItemsState[itemIdThatChanged][propName]);
+                    canRunRun = becomes(newValue, thisItemsPrevState[propName]);
                 }
                 else if (becomes === newValue)
                     canRunRun = true;
@@ -65,7 +69,7 @@ function itemEffectRunToEffectRun({ check, run, }) {
                 run({
                     itemId: itemIdThatChanged,
                     newValue,
-                    prevValue: prevItemsState[itemIdThatChanged][propName],
+                    prevValue: thisItemsPrevState[propName],
                     itemState: itemsState[itemIdThatChanged],
                     itemRefs: itemsRefs[itemIdThatChanged],
                     frameDuration,

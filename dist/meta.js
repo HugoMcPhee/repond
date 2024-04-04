@@ -67,6 +67,8 @@ export const repondMeta = {
     itemIdsByItemType: {}, // current item names only, not previous..
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
+    willAddItemsInfo: {},
+    willRemoveItemsInfo: {},
     copyStates: (nowState, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
     allRecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
     ) => { },
