@@ -56,6 +56,8 @@ function runAddAndRemove() {
         const loopedUpdateFunction = meta.addAndRemoveItemsQue[index];
         loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
     }
+    meta.willAddItemsInfo = {};
+    meta.willRemoveItemsInfo = {};
     meta.addAndRemoveItemsQue.length = 0;
 }
 function runEffects(phase, stepName) {

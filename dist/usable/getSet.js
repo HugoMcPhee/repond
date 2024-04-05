@@ -24,7 +24,7 @@ export function getItemWillBeAdded(type, id) {
     return !!meta.willAddItemsInfo[type]?.[id];
 }
 export function getItemWillBeRemoved(type, id) {
-    return !!meta.willRemoveItemsInfo[type]?.[id];
+    return !!meta.willRemoveItemsInfo[type]?.[id] || !!meta.nowState[type][id];
 }
 export function getItemWillExist(type, id) {
     return getItemWillBeAdded(type, id) || !!getState()[type][id];

@@ -65,7 +65,7 @@ export function getItemWillBeAdded<K_Type extends ItemType>(type: K_Type, id: st
 }
 
 export function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: string) {
-  return !!meta.willRemoveItemsInfo[type]?.[id];
+  return !!meta.willRemoveItemsInfo[type]?.[id] || !!(meta.nowState as any)[type][id];
 }
 
 export function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string) {

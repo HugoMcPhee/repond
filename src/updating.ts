@@ -69,6 +69,8 @@ function runAddAndRemove() {
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   }
 
+  meta.willAddItemsInfo = {};
+  meta.willRemoveItemsInfo = {};
   meta.addAndRemoveItemsQue.length = 0;
 }
 

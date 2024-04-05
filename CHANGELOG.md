@@ -7,6 +7,11 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.15.1
+
+- Fix getItemWillBeAdded and getItemWillBeRemoved not clearing after item's are added/removed
+- fix getItemWillBeRemoved not detecting already removed items
+
 v0.15.0
 
 - New added items now run effects if their props changes from the default props
