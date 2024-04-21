@@ -1,6 +1,6 @@
 {
   "name": "repond",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "respond to items state in realtime",
   "_main": "src/index.ts",
   "_types": "src/index.ts",

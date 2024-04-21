@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase } from "./types";
+import { DiffInfo, Effect, EffectPhase, FramerateTypeOption } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 export type RecordedChanges = {
     itemTypesBool: {
@@ -92,7 +92,7 @@ export declare const repondMeta: {
     lookingForScreenFramerate: boolean;
     latestUpdateTime: number;
     latestUpdateDuration: number;
-    frameRateTypeOption: "auto" | "full" | "half";
+    frameRateTypeOption: FramerateTypeOption;
     frameRateType: "full" | "half";
     lateFramesAmount: number;
     shouldRunUpdateAtEndOfUpdate: boolean;
@@ -139,8 +139,6 @@ export declare const repondMeta: {
             [itemId: string]: any;
         };
     };
-    copyStates: (nowState: any, saveToObject: any, recordedChanges?: RecordedChanges, allRecordedChanges?: RecordedChanges) => void;
-    mergeStates: (newStates: any, saveToObject: any, recordedChanges: RecordedChanges, allRecordedChanges: RecordedChanges) => void;
     getStatesDiff: (nowState: any, prevState: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
     autoEffectIdCounter: number;
     stepNames: readonly string[];

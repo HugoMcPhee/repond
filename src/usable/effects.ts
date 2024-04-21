@@ -104,8 +104,8 @@ export function initEffectGroups<T extends Record<string, ReturnType<typeof make
   const transformedGroups: Record<string, ReturnType<typeof makeEffects>> = {};
 
   Object.entries(groups).forEach(([key, value]) => {
-    // Remove "Effects" from the key, if present
-    const newKey = key.replace("Effects", "");
+    // Remove "Effects" from the end of the key, if present
+    const newKey = key.replace(/Effects$/, "");
     transformedGroups[newKey] = value;
   });
 

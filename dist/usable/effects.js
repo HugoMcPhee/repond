@@ -62,8 +62,8 @@ export function makeEffects(effectsToAdd) {
 export function initEffectGroups(groups) {
     const transformedGroups = {};
     Object.entries(groups).forEach(([key, value]) => {
-        // Remove "Effects" from the key, if present
-        const newKey = key.replace("Effects", "");
+        // Remove "Effects" from the end of the key, if present
+        const newKey = key.replace(/Effects$/, "");
         transformedGroups[newKey] = value;
     });
     const groupNames = Object.keys(transformedGroups);

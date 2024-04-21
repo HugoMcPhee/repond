@@ -7,6 +7,15 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.16.0
+
+- Rename state and refs to getDefaultState and getDefaultRefs
+- Default frameRate option is full, since there may need to be more to make auto work well
+- Supports naming stores with a "Store" suffix, and effects will properly only remove the "Effects"/"ParamEffects" suffix if its at the end of the name
+- removed the need to have a factory to support copyStates, getStatesDiff and mergeStates
+- fixed getStatesDiff to fix patch and diff functions
+- exports ItemType as a helper type
+
 v0.15.1
 
 - Fix getItemWillBeAdded and getItemWillBeRemoved not clearing after item's are added/removed

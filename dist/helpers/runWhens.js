@@ -1,7 +1,7 @@
 import { repondMeta as meta } from "../meta";
 import { runNextFrameIfNeeded } from "./frames";
 // Only runs when calling  _setState
-export function runWhenUpdatingRepond(whatToRun, callback) {
+export function runWhenDoingSetStates(whatToRun, callback) {
     meta.setStatesQue.push(whatToRun);
     if (callback)
         meta.callbacksQue.push(callback);

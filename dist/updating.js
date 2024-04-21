@@ -2,9 +2,11 @@ import { repondMeta as meta } from "./meta";
 import { forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
 import { runNextFrame } from "./helpers/frames";
+import { getStatesDiff } from "./getStatesDiff";
+import { copyStates } from "./copyStates";
 function updateDiffInfo(recordedChanges) {
     //  make a diff of the changes
-    meta.getStatesDiff(meta.nowState, meta.prevState, meta.diffInfo, recordedChanges, false /* checkAllChanges */);
+    getStatesDiff(meta.nowState, meta.prevState, meta.diffInfo, recordedChanges, false /* checkAllChanges */);
 }
 function setMetaPhase(metaPhase) {
     meta.nowMetaPhase = metaPhase;
@@ -124,8 +126,13 @@ function resetRecordedStepEndChanges() {
 function resetRecordedStepChanges() {
     resetRecordedChanges(meta.recordedEffectChanges);
 }
+// NOTE why is runEffects happening beofre runStepEffects?
+// I think it's meant to listen to the changes that happened in the last step? then if any setStates happened in the effects, they will be run in the next step, the diff info gets updated
+// it expects the diff info to be updated before it runs the effects
+// BUT I think the first time it runs, it doesn't have any diff info, so it runs the effects first which maybe won't do anything, then the setStates
+// the setStates from clalbacks only get run here and not before
 function runStepEffects(stepName) {
-    resetRecordedStepChanges(); // NOTE recently added to prevent derive changes being remembered each time it derives again
+    resetRecordedStepChanges(); // NOTE recently added to prevent 'derive' changes being remembered each time it derives again
     runEffectsWithRunAtStart(); // run the runAtStart listeners
     runEffects("duringStep", stepName); //  a running derive-listener can add more to the setStates que (or others)
     runAddEffects(); // add rules / effects
@@ -133,6 +140,7 @@ function runStepEffects(stepName) {
     runSetStates(); // run the qued setStates
     updateDiffInfo(meta.recordedEffectChanges);
 }
+// NOTE diffInfo form the previous step is kept for the first loop of step effects, so the normal/derrive listeners can run based on the previous step's changes
 function removeRemovedItemRefs() {
     if (!meta.diffInfo.itemsRemoved)
         return;
@@ -182,7 +190,7 @@ function runSetOfStepEffects(stepName) {
         .map((propEntry) => propEntry[0]))), null, 2));
 }
 function runStepEndEffectsShortcut(stepName) {
-    meta.nowMetaPhase = "runningStepEndEffects"; // hm not checked anywhere, but checking metaPhase !== "runningDerivers" is
+    meta.nowMetaPhase = "runningStepEndEffects"; // hm not checked anywhere, but checking metaPhase !== "runningEffects" (runnin derrivers) is
     updateDiffInfo(meta.recordedStepEndEffectChanges); // the diff for all the combined derriver changes
     runEffects("endOfStep", stepName); //  Then it runs the stepEnd effects based on the diff
 }
@@ -312,7 +320,7 @@ export function _updateRepond(animationFrameTime) {
     // save previous state, ,
     // this won't this discard all the setStates from the callbacks
     // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
-    meta.copyStates(meta.nowState, meta.prevState);
+    copyStates(meta.nowState, meta.prevState);
     runSetOfStepsLoopShortcut();
     resetRecordedStepEndChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
     setMetaPhase("waitingForFirstUpdate");

@@ -78,16 +78,22 @@ export type EffectPhase = "duringStep" | "endOfStep";
 // ---------------------------------------------------------------------------------------------------------------------
 
 export type StepName = RepondTypes["StepNames"][number];
-type AllStoreInfo = RepondTypes["AllStoreInfo"]; // TODO rename?
+type AllStoreInfoWithoutRename = RepondTypes["AllStoreInfo"]; // TODO rename?
+
+type RemoveStoreSuffix<T extends string> = T extends `${infer Prefix}Store` ? Prefix : T;
+export type AllStoreInfo = {
+  [K in keyof RepondTypes["AllStoreInfo"] as RemoveStoreSuffix<K>]: RepondTypes["AllStoreInfo"][K];
+};
+
 export type ItemType = keyof AllStoreInfo;
 
 export type DefaultStates = {
-  [K_Type in ItemType]: AllStoreInfo[K_Type]["state"];
+  [K_Type in ItemType]: AllStoreInfo[K_Type]["getDefaultState"];
 };
 export type DefaultRefs = {
-  [K_Type in ItemType]: AllStoreInfo[K_Type]["refs"];
+  [K_Type in ItemType]: AllStoreInfo[K_Type]["getDefaultRefs"];
 };
-type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["refs"];
+type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["getDefaultRefs"];
 
 // Make a type that has the start states of all the stores
 export type StartStates = {
@@ -105,7 +111,7 @@ export type StartStatesItemId<K_Type extends keyof AllStoreInfo> = AllStoreInfo[
 export type AllState = {
   [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"] extends Record<string, any>
     ? AllStoreInfo[K_Type]["startStates"]
-    : Record<string, ReturnType<AllStoreInfo[K_Type]["state"]>>;
+    : Record<string, ReturnType<AllStoreInfo[K_Type]["getDefaultState"]>>;
 };
 
 // Make an AllRefs type that uses Get_DefaultRefs for each store
@@ -303,3 +309,5 @@ export type Effect = {
   step?: StepName;
   runAtStart?: boolean;
 };
+
+export type FramerateTypeOption = "full" | "half" | "auto";

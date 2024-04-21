@@ -3,7 +3,7 @@ import { _updateRepond } from "../updating";
 import { runNextFrameIfNeeded } from "./frames";
 
 // Only runs when calling  _setState
-export function runWhenUpdatingRepond(whatToRun: any, callback?: any) {
+export function runWhenDoingSetStates(whatToRun: any, callback?: any) {
   meta.setStatesQue.push(whatToRun);
   if (callback) meta.callbacksQue.push(callback);
   runNextFrameIfNeeded();

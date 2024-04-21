@@ -1,14 +1,11 @@
 import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
 import { addItem, getDefaultStates, getItemTypes, removeItem, setState } from "./getSet";
-import { createDiffInfo } from "../getStatesDiff";
+import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
 import { repondMeta as meta, UntypedDiffInfo, initialRecordedChanges } from "../meta";
 import { AllState, DiffInfo, GetPartialState, ItemIdsByType, ItemId, ItemType, PropName } from "../types";
 import { cloneObjectWithJson } from "../utils";
-
-// ---------------------------------------------------
-// Patches and Diffs
-// ---------------------------------------------------
+import { copyStates } from "../copyStates";
 
 type StatesPatch = {
   changed: GetPartialState<AllState>;
@@ -80,7 +77,7 @@ export function applyPatchHere(newStates: GetPartialState<AllState>, patch: Stat
       }
     });
 
-    // Loop through each new item, and add it to newStates with state(itemId)
+    // Loop through each new item, and add it to newStates with getDefaultState(itemId)
     forEach(patch.added[type] ?? [], (id) => {
       if (!newStates[type]) {
         newStates[type] = {} as (typeof newStates)[typeof type];
@@ -147,7 +144,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
   const tempManualUpdateChanges = initialRecordedChanges();
 
   try {
-    meta.getStatesDiff(
+    getStatesDiff(
       newState, // currentState
       prevState, // previousState
       tempDiffInfo,
@@ -335,9 +332,9 @@ export function getPatchAndReversed(prevState: GetPartialState<AllState>, newSta
 
 export function getReversePatch(partialState: GetPartialState<AllState>, newPatch: StatesPatch) {
   const prevState: GetPartialState<AllState> = {};
-  meta.copyStates(partialState, prevState);
+  copyStates(partialState, prevState);
   const newState: GetPartialState<AllState> = {};
-  meta.copyStates(partialState, newState);
+  copyStates(partialState, newState);
   applyPatchHere(newState, newPatch);
   const reversePatch = getPatch(newState, prevState);
   return reversePatch;

@@ -1,12 +1,13 @@
 import { forEach } from "chootils/dist/loops";
 import { repondMeta as meta } from "../meta";
-import { runWhenAddingAndRemovingItems, runWhenUpdatingRepond } from "./runWhens";
+import { runWhenAddingAndRemovingItems, runWhenDoingSetStates } from "./runWhens";
+import { mergeStates } from "../copyStates";
 export function _setState(newState, callback) {
-    runWhenUpdatingRepond(() => {
+    runWhenDoingSetStates(() => {
         const newStateValue = typeof newState === "function" ? newState(meta.nowState) : newState;
         if (!newStateValue)
             return;
-        meta.mergeStates(newStateValue, meta.nowState, meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges, meta.recordedStepEndEffectChanges);
+        mergeStates(newStateValue, meta.nowState, meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges, meta.recordedStepEndEffectChanges);
     }, callback);
 }
 export function _removeItem({ type, id }, callback) {

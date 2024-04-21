@@ -36,7 +36,7 @@ export const repondMeta = {
     //
     latestUpdateTime: 0,
     latestUpdateDuration: 16.66667, // how long everything inside "update" took
-    frameRateTypeOption: "auto",
+    frameRateTypeOption: "full",
     frameRateType: "full",
     lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
     shouldRunUpdateAtEndOfUpdate: false,
@@ -69,10 +69,6 @@ export const repondMeta = {
     defaultStateByItemType: {},
     willAddItemsInfo: {},
     willRemoveItemsInfo: {},
-    copyStates: (nowState, saveToObject, recordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
-    allRecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
-    ) => { },
-    mergeStates: (newStates, saveToObject, recordedChanges, allRecordedChanges) => { },
     getStatesDiff: (nowState, prevState, diffInfo, recordedChanges, checkAllChanges) => { },
     // react specific?
     autoEffectIdCounter: 1,

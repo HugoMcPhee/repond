@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase } from "./types";
+import { DiffInfo, Effect, EffectPhase, FramerateTypeOption } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
 export type RecordedChanges = {
@@ -82,7 +82,7 @@ export const repondMeta = {
   //
   latestUpdateTime: 0,
   latestUpdateDuration: 16.66667, // how long everything inside "update" took
-  frameRateTypeOption: "auto" as "full" | "half" | "auto",
+  frameRateTypeOption: "full" as FramerateTypeOption,
   frameRateType: "full" as "full" | "half",
   lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
   shouldRunUpdateAtEndOfUpdate: false,
@@ -123,18 +123,6 @@ export const repondMeta = {
   },
   willAddItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
   willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
-  copyStates: (
-    nowState: any,
-    saveToObject: any,
-    recordedChanges?: RecordedChanges, // NOTE these aren't used, but added to have same type as mergeStates
-    allRecordedChanges?: RecordedChanges // NOTE these aren't used, but added to have same type as mergeStates
-  ) => {},
-  mergeStates: (
-    newStates: any,
-    saveToObject: any,
-    recordedChanges: RecordedChanges,
-    allRecordedChanges: RecordedChanges
-  ) => {},
   getStatesDiff: (
     nowState: any,
     prevState: any,

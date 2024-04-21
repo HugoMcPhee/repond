@@ -1,3 +1,5 @@
+import { AllState, ItemType } from "./types";
+
 export * from "./declarations";
 export * from "./types";
 
@@ -75,3 +77,5 @@ export {
 export type InitialItemsState<T_defaultStateFunctionType extends (...args: any) => any> = {
   [itemId: string]: ReturnType<T_defaultStateFunctionType>; // : AtLeastOne<T>;
 };
+
+export type ItemState<T_ItemType extends ItemType> = AllState[T_ItemType][keyof AllState[T_ItemType]];

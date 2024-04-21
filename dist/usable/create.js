@@ -1,5 +1,4 @@
-import { makeCopyStatesFunction } from "../copyStates";
-import { createDiffInfo, makeGetStatesDiffFunction } from "../getStatesDiff";
+import { createDiffInfo } from "../getStatesDiff";
 import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import { repondMeta as meta } from "../meta";
 import { createRecordedChanges } from "../updating";
@@ -8,14 +7,20 @@ import { cloneObjectWithJson } from "../utils";
 can 'check' get clearer?
 can check have single or arrays for every property, or would that widen all types?
 */
-export function initRepond(allInfo, extraOptions) {
+export function initRepond(allStoresInfoOriginal, extraOptions) {
     const { dontSetMeta } = extraOptions ?? {};
-    const itemTypes = Object.keys(allInfo);
+    const allStoresInfo = {};
+    Object.entries(allStoresInfoOriginal).forEach(([key, value]) => {
+        // Remove "Store" from the end of the key, if present
+        const newKey = key.replace(/Store$/, "");
+        allStoresInfo[newKey] = value;
+    });
+    const itemTypes = Object.keys(allStoresInfo);
     const stepNamesUntyped = extraOptions?.stepNames ? [...extraOptions.stepNames] : ["default"];
     if (!stepNamesUntyped.includes("default"))
         stepNamesUntyped.push("default");
     const stepNames = [...stepNamesUntyped];
-    meta.frameRateTypeOption = extraOptions?.framerate || "auto";
+    meta.frameRateTypeOption = extraOptions?.framerate || "full";
     if (meta.frameRateTypeOption === "full")
         meta.frameRateType = "full";
     else if (meta.frameRateTypeOption === "half")
@@ -29,18 +34,20 @@ export function initRepond(allInfo, extraOptions) {
     }
     // ReturnType<T_AllInfo[K_Type]["state"]> //
     const defaultStates = itemTypes.reduce((prev, key) => {
-        prev[key] = allInfo[key].state;
+        prev[key] = allStoresInfo[key].getDefaultState;
         return prev;
     }, {});
     const defaultRefs = itemTypes.reduce((prev, key) => {
-        prev[key] = allInfo[key].refs;
+        prev[key] = allStoresInfo[key].getDefaultRefs;
         return prev;
     }, {});
     const initialState = itemTypes.reduce((prev, key) => {
-        prev[key] = allInfo[key].startStates || {};
+        prev[key] = allStoresInfo[key].startStates || {};
         meta.itemIdsByItemType[key] = Object.keys(prev[key]);
         return prev;
     }, {});
+    console.log("defaultStates");
+    console.log(defaultStates);
     // ------------------------------------------------
     // Setup Repond
     // ------------------------------------------------
@@ -55,9 +62,6 @@ export function initRepond(allInfo, extraOptions) {
         meta.defaultRefsByItemType = defaultRefs;
         getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
         makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemIds from repond state
-        meta.copyStates = makeCopyStatesFunction("copy");
-        meta.getStatesDiff = makeGetStatesDiffFunction();
-        meta.mergeStates = makeCopyStatesFunction("merge");
         createRecordedChanges(meta.recordedEffectChanges);
         createRecordedChanges(meta.recordedStepEndEffectChanges);
         createDiffInfo(meta.diffInfo);

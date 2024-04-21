@@ -1,9 +1,10 @@
 import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
 import { addItem, getDefaultStates, getItemTypes, removeItem, setState } from "./getSet";
-import { createDiffInfo } from "../getStatesDiff";
-import { repondMeta as meta, initialRecordedChanges } from "../meta";
+import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
+import { initialRecordedChanges } from "../meta";
 import { cloneObjectWithJson } from "../utils";
+import { copyStates } from "../copyStates";
 export function makeEmptyPatch() {
     return {
         changed: {},
@@ -54,7 +55,7 @@ export function applyPatchHere(newStates, patch) {
                 delete itemTypeState[id];
             }
         });
-        // Loop through each new item, and add it to newStates with state(itemId)
+        // Loop through each new item, and add it to newStates with getDefaultState(itemId)
         forEach(patch.added[type] ?? [], (id) => {
             if (!newStates[type]) {
                 newStates[type] = {};
@@ -96,7 +97,7 @@ function getPatchOrDiff(prevState, newState, patchOrDiff) {
     const tempDiffInfo = makeEmptyDiffInfo();
     const tempManualUpdateChanges = initialRecordedChanges();
     try {
-        meta.getStatesDiff(newState, // currentState
+        getStatesDiff(newState, // currentState
         prevState, // previousState
         tempDiffInfo, tempManualUpdateChanges, // manualUpdateChanges
         true // checkAllChanges
@@ -258,9 +259,9 @@ export function getPatchAndReversed(prevState, newState) {
 }
 export function getReversePatch(partialState, newPatch) {
     const prevState = {};
-    meta.copyStates(partialState, prevState);
+    copyStates(partialState, prevState);
     const newState = {};
-    meta.copyStates(partialState, newState);
+    copyStates(partialState, newState);
     applyPatchHere(newState, newPatch);
     const reversePatch = getPatch(newState, prevState);
     return reversePatch;

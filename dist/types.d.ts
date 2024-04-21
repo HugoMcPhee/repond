@@ -29,21 +29,24 @@ export type RepondCallback = (frameDuration: number, frameTime: number) => any;
 export type SetRepondState<T_State> = (newState: GetPartialState<T_State> | ((state: DeepReadonly<T_State>) => GetPartialState<T_State> | undefined), callback?: RepondCallback) => void;
 export type EffectPhase = "duringStep" | "endOfStep";
 export type StepName = RepondTypes["StepNames"][number];
-type AllStoreInfo = RepondTypes["AllStoreInfo"];
+type RemoveStoreSuffix<T extends string> = T extends `${infer Prefix}Store` ? Prefix : T;
+export type AllStoreInfo = {
+    [K in keyof RepondTypes["AllStoreInfo"] as RemoveStoreSuffix<K>]: RepondTypes["AllStoreInfo"][K];
+};
 export type ItemType = keyof AllStoreInfo;
 export type DefaultStates = {
-    [K_Type in ItemType]: AllStoreInfo[K_Type]["state"];
+    [K_Type in ItemType]: AllStoreInfo[K_Type]["getDefaultState"];
 };
 export type DefaultRefs = {
-    [K_Type in ItemType]: AllStoreInfo[K_Type]["refs"];
+    [K_Type in ItemType]: AllStoreInfo[K_Type]["getDefaultRefs"];
 };
-type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["refs"];
+type Get_DefaultRefs<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["getDefaultRefs"];
 export type StartStates = {
     [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"];
 };
 export type StartStatesItemId<K_Type extends keyof AllStoreInfo> = AllStoreInfo[K_Type]["startStates"] extends Record<string, any> ? keyof AllStoreInfo[K_Type]["startStates"] : string;
 export type AllState = {
-    [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"] extends Record<string, any> ? AllStoreInfo[K_Type]["startStates"] : Record<string, ReturnType<AllStoreInfo[K_Type]["state"]>>;
+    [K_Type in ItemType]: AllStoreInfo[K_Type]["startStates"] extends Record<string, any> ? AllStoreInfo[K_Type]["startStates"] : Record<string, ReturnType<AllStoreInfo[K_Type]["getDefaultState"]>>;
 };
 export type AllRefs = {
     [K_Type in ItemType]: Record<StartStatesItemId<K_Type>, ReturnType<Get_DefaultRefs<K_Type>>>;
@@ -171,4 +174,5 @@ export type Effect = {
     step?: StepName;
     runAtStart?: boolean;
 };
+export type FramerateTypeOption = "full" | "half" | "auto";
 export {};

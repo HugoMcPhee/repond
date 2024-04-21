@@ -38,8 +38,8 @@ export function initParamEffectGroups<T extends Record<string, ParamEffectsGroup
   const transformedGroups: Record<string, ReturnType<typeof makeParamEffects>> = {};
 
   Object.entries(groups).forEach(([key, value]) => {
-    // Remove "Effects" from the key, if present
-    let newKey = key.replace("ParamEffects", "");
+    // Remove "ParamEffects" from the end of the key, if present
+    const newKey = key.replace(/ParamEffects$/, "");
     transformedGroups[newKey] = value;
   });
 

@@ -11,8 +11,8 @@ export function makeParamEffects(defaultParams, effectsToAdd) {
 export function initParamEffectGroups(groups) {
     const transformedGroups = {};
     Object.entries(groups).forEach(([key, value]) => {
-        // Remove "Effects" from the key, if present
-        let newKey = key.replace("ParamEffects", "");
+        // Remove "ParamEffects" from the end of the key, if present
+        const newKey = key.replace(/ParamEffects$/, "");
         transformedGroups[newKey] = value;
     });
     // Store the transformed groups
