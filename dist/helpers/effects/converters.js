@@ -30,9 +30,9 @@ function itemEffectRunToEffectRun({ check, run, }) {
                         run({
                             itemId: itemId,
                             newValue,
-                            prevValue: prevItemsState[itemId][propName],
-                            itemState: itemsState[itemId],
-                            itemRefs: itemsRefs[itemId],
+                            prevValue: prevItemsState?.[itemId]?.[propName] ?? itemsState?.[itemId],
+                            itemState: itemsState?.[itemId],
+                            itemRefs: itemsRefs?.[itemId],
                             frameDuration,
                             ranWithoutChange: true,
                         });

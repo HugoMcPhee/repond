@@ -39,9 +39,9 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
             run({
               itemId: itemId as any,
               newValue,
-              prevValue: prevItemsState[itemId][propName],
-              itemState: itemsState[itemId],
-              itemRefs: itemsRefs[itemId],
+              prevValue: prevItemsState?.[itemId]?.[propName] ?? itemsState?.[itemId],
+              itemState: itemsState?.[itemId],
+              itemRefs: itemsRefs?.[itemId],
               frameDuration,
               ranWithoutChange: true,
             });

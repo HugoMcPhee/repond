@@ -7,6 +7,10 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.1
+
+- Fix item effects on react native hermes
+
 v0.17.0
 
 - add helpers getPartialState and applyState, for helping with saving and loading state
