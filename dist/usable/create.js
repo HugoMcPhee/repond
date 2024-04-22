@@ -46,8 +46,6 @@ export function initRepond(allStoresInfoOriginal, extraOptions) {
         meta.itemIdsByItemType[key] = Object.keys(prev[key]);
         return prev;
     }, {});
-    console.log("defaultStates");
-    console.log(defaultStates);
     // ------------------------------------------------
     // Setup Repond
     // ------------------------------------------------
@@ -65,5 +63,6 @@ export function initRepond(allStoresInfoOriginal, extraOptions) {
         createRecordedChanges(meta.recordedEffectChanges);
         createRecordedChanges(meta.recordedStepEndEffectChanges);
         createDiffInfo(meta.diffInfo);
+        meta.didInit = true;
     }
 }

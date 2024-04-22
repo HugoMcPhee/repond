@@ -1,3 +1,4 @@
+import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
 import { _setState, _addItem, _removeItem } from "../helpers/setting";
 import { repondMeta as meta } from "../meta";
 import {
@@ -7,6 +8,7 @@ import {
   DefaultRefs,
   DefaultStates,
   ItemId,
+  ItemPropsByType,
   ItemType,
   RepondCallback,
   SetRepondState,
@@ -70,4 +72,37 @@ export function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: 
 
 export function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string) {
   return getItemWillBeAdded(type, id) || !!(getState() as any)[type][id];
+}
+
+// Function to selectively get data with only specific props from the repond store, can be used for save data
+export function getPartialState(propsToGet: Partial<ItemPropsByType>) {
+  const itemTypes = Object.keys(propsToGet) as Array<keyof ItemPropsByType>;
+  const state = getState();
+
+  if (!meta.didInit) {
+    console.warn("getPartialState called before repond was initialized");
+    return {};
+  }
+
+  const partialState: Partial<AllState> = {};
+  for (const itemType of itemTypes) {
+    const itemPropNames = propsToGet[itemType]!;
+    const items = state[itemType];
+    const itemIds = Object.keys(items);
+    const partialItems: Record<string, any> = {};
+    for (const itemId of itemIds) {
+      const item = items[itemId as keyof typeof items];
+      const partialItem: Record<string, any> = {};
+      for (const propName of itemPropNames) {
+        partialItem[propName] = item[propName];
+      }
+      partialItems[itemId] = partialItem;
+    }
+    partialState[itemType] = partialItems as any;
+  }
+  return partialState as Partial<AllState>;
+}
+
+export function applyState(partialState: Partial<AllState>) {
+  if (partialState) applyPatch(getPatch(getState(), partialState));
 }

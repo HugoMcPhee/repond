@@ -21,6 +21,7 @@ export const repondMeta = {
     //   default: {},
     // } as Record<string, any>,
     //
+    didInit: false,
     // this gets reset for each step (might not still be true)
     recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
     // this gets reset at the start of a frame, and kept added to throughout the frame

@@ -130,6 +130,10 @@ export type ItemIdsByType = {
   [K_Type in ItemType]: ItemId<K_Type>[];
 };
 
+export type ItemPropsByType = {
+  [K_Type in ItemType]: PropName<K_Type>[];
+};
+
 // ------------------------------------------------------------
 // DiffInfo
 

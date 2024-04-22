@@ -59,6 +59,9 @@ export type AllProps = {
 export type ItemIdsByType = {
     [K_Type in ItemType]: ItemId<K_Type>[];
 };
+export type ItemPropsByType = {
+    [K_Type in ItemType]: PropName<K_Type>[];
+};
 type DiffInfo_PropsChanged = {
     [K_Type in ItemType]: Record<ItemId<K_Type>, PropName<K_Type>[]> & {
         all__: PropName<K_Type>[];

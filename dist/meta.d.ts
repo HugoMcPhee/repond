@@ -80,6 +80,7 @@ export type UntypedDiffInfo = {
 type AFunction = (...args: any[]) => void;
 export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningEffects" | "runningStepEndEffects" | "runningCallbacks";
 export declare const repondMeta: {
+    didInit: boolean;
     recordedEffectChanges: RecordedChanges;
     recordedStepEndEffectChanges: RecordedChanges;
     nextFrameIsFirst: boolean;

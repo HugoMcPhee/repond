@@ -1,4 +1,4 @@
-import { AllRefs, AllState, DeepReadonly, DefaultRefs, DefaultStates, ItemId, ItemType, RepondCallback, SetRepondState } from "../types";
+import { AllRefs, AllState, DeepReadonly, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, RepondCallback, SetRepondState } from "../types";
 export declare const getDefaultStates: () => DefaultStates;
 export declare const getDefaultRefs: () => DefaultRefs;
 export declare const getItemTypes: () => ItemType[];
@@ -22,4 +22,6 @@ export declare function removeItem(itemInfo: {
 export declare function getItemWillBeAdded<K_Type extends ItemType>(type: K_Type, id: string): boolean;
 export declare function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: string): boolean;
 export declare function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string): boolean;
+export declare function getPartialState(propsToGet: Partial<ItemPropsByType>): Partial<AllState>;
+export declare function applyState(partialState: Partial<AllState>): void;
 export {};

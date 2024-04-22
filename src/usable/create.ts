@@ -75,9 +75,6 @@ export function initRepond<T_AllInfo extends AllStoreInfoUntyped, T_StepNamesPar
     return prev;
   }, {});
 
-  console.log("defaultStates");
-  console.log(defaultStates);
-
   // ------------------------------------------------
   // Setup Repond
   // ------------------------------------------------
@@ -98,5 +95,6 @@ export function initRepond<T_AllInfo extends AllStoreInfoUntyped, T_StepNamesPar
     createRecordedChanges(meta.recordedEffectChanges);
     createRecordedChanges(meta.recordedStepEndEffectChanges);
     createDiffInfo(meta.diffInfo as unknown as UntypedDiffInfo);
+    meta.didInit = true;
   }
 }

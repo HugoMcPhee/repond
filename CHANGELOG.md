@@ -7,6 +7,11 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.0
+
+- add helpers getPartialState and applyState, for helping with saving and loading state
+- add meta property didInit to know if the stores have been initialised
+
 v0.16.0
 
 - Rename state and refs to getDefaultState and getDefaultRefs

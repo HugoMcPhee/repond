@@ -36,6 +36,8 @@ export {
   getItemWillBeAdded,
   getItemWillBeRemoved,
   getItemWillExist,
+  getPartialState,
+  applyState,
 } from "./usable/getSet";
 
 export {
