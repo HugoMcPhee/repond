@@ -25,6 +25,22 @@ export function copyStates(currentObject: any, saveToObject: any) {
   }
 }
 
+function fastCloneArray<T_ArrayItem extends any>(arr: T_ArrayItem[]) {
+  const newArray: T_ArrayItem[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    newArray.push(arr[i]);
+  }
+  return newArray;
+}
+
+export function copyItemIdsByItemType(currentObject: any, saveToObject: any) {
+  const itemTypes = meta.itemTypeNames;
+  for (let i = 0; i < itemTypes.length; i++) {
+    const itemType = itemTypes[i];
+    saveToObject[itemType] = fastCloneArray(currentObject[itemType]);
+  }
+}
+
 export function mergeStates(
   currentObject: any,
   saveToObject: any,

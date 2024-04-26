@@ -66,6 +66,7 @@ export const repondMeta = {
     itemTypeNames: [],
     propNamesByItemType: {},
     itemIdsByItemType: {}, // current item names only, not previous..
+    prevItemIdsByItemType: {}, // this should be manually copied when the prevState is copied
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
     willAddItemsInfo: {},

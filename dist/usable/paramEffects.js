@@ -88,8 +88,11 @@ export function startParamEffect(groupName, effectName, params) {
 // unless it's a good to keep that list for startParamEffectsGroup
 export function stopParamEffect(groupName, effectName, params) {
     const effect = findParamEffect(groupName, effectName, params);
+    // console.log("stop param effect", effect);
+    // if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+    // FIXME repond events is stopping effects that are not found
     if (!effect)
-        return console.warn("no effect found for ", groupName, effectName, params);
+        return;
     const effectId = getParamEffectId(groupName, effectName, params);
     _stopEffect(effect.id);
 }

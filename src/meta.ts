@@ -115,6 +115,7 @@ export const repondMeta = {
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
   itemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
+  prevItemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // this should be manually copied when the prevState is copied
   defaultRefsByItemType: {} as {
     [itemTypeName: string]: (itemId?: string, itemState?: any) => { [itemPropertyName: string]: any };
   },

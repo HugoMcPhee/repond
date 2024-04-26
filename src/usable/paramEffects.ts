@@ -170,7 +170,10 @@ export function stopParamEffect<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findParamEffect(groupName, effectName, params);
-  if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+  // console.log("stop param effect", effect);
+  // if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+  // FIXME repond events is stopping effects that are not found
+  if (!effect) return;
   const effectId = getParamEffectId(groupName, effectName, params);
   _stopEffect(effect.id);
 }

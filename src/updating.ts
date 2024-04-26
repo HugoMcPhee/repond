@@ -4,7 +4,7 @@ import checkEffects from "./checkEffects";
 import { EffectPhase } from "./types";
 import { runNextFrame } from "./helpers/frames";
 import { getStatesDiff } from "./getStatesDiff";
-import { copyStates } from "./copyStates";
+import { copyItemIdsByItemType, copyStates } from "./copyStates";
 
 function updateDiffInfo(recordedChanges: RecordedChanges) {
   //  make a diff of the changes
@@ -331,6 +331,8 @@ export function _updateRepond(animationFrameTime: number) {
   // this won't this discard all the setStates from the callbacks
   // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
   copyStates(meta.nowState, meta.prevState);
+  // copy the item ids into the previous item ids
+  copyItemIdsByItemType(meta.itemIdsByItemType, meta.prevItemIdsByItemType);
 
   runSetOfStepsLoopShortcut();
   resetRecordedStepEndChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?

@@ -114,11 +114,9 @@ export function getStatesDiff(
 
     const itemIds = checkAllChanges ? Object.keys(nowState[itemType]) : meta.itemIdsByItemType[itemType];
 
-    // TODO repalce this with real previous item names?
-    // NOTE may need to handle added and removed items, when not using checkAllChanges (which is set when getting a patch or diff)
-    const prevItemIds = checkAllChanges ? Object.keys(prevState[itemType]) : meta.itemIdsByItemType[itemType];
+    const prevItemIds = checkAllChanges ? Object.keys(prevState[itemType]) : meta.prevItemIdsByItemType[itemType];
 
-    // check for items removed from previous object
+    // Check for items removed from previous state
     for (let prevNameIndex = 0; prevNameIndex < prevItemIds.length; ++prevNameIndex) {
       const prevItemId = prevItemIds[prevNameIndex];
       if (nowState?.[itemType]?.[prevItemId] === undefined) {
@@ -150,7 +148,8 @@ export function getStatesDiff(
       // if the item was just added (should it mark all the properties as changed?)
       // }
 
-      // dont check for removed items, if it was just added then check if the properties are different to default
+      // Dont check for removed items, if it was just added then check if the properties are different to default
+      // NOTE the item may never be deleted here, since it's only looping through current items
       const itemWasRemoved = diffInfo.itemsRemovedBool.all__[itemId];
       const itemWasAdded = diffInfo.itemsAddedBool.all__[itemId];
       let canRun = !itemWasRemoved;

@@ -120,6 +120,9 @@ export declare const repondMeta: {
     itemIdsByItemType: {
         [itemTypeName: string]: string[];
     };
+    prevItemIdsByItemType: {
+        [itemTypeName: string]: string[];
+    };
     defaultRefsByItemType: {
         [itemTypeName: string]: (itemId?: string, itemState?: any) => {
             [itemPropertyName: string]: any;

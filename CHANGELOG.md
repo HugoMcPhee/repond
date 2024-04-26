@@ -7,6 +7,11 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.2
+
+- Handle reacting to deleted items
+- remove warning when trying to stop a apram effect that doesn't exist
+
 v0.17.1
 
 - Fix item effects on react native hermes

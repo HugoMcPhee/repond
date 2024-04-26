@@ -18,6 +18,20 @@ export function copyStates(currentObject, saveToObject) {
         }
     }
 }
+function fastCloneArray(arr) {
+    const newArray = [];
+    for (let i = 0; i < arr.length; i++) {
+        newArray.push(arr[i]);
+    }
+    return newArray;
+}
+export function copyItemIdsByItemType(currentObject, saveToObject) {
+    const itemTypes = meta.itemTypeNames;
+    for (let i = 0; i < itemTypes.length; i++) {
+        const itemType = itemTypes[i];
+        saveToObject[itemType] = fastCloneArray(currentObject[itemType]);
+    }
+}
 export function mergeStates(currentObject, saveToObject, recordedChanges, allRecordedChanges) {
     const { itemTypeNames, propNamesByItemType, itemIdsByItemType } = meta;
     for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
