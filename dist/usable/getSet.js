@@ -60,3 +60,7 @@ export function applyState(partialState) {
     if (partialState)
         applyPatch(getPatch(getState(), partialState));
 }
+export function getStatePathState(path) {
+    const [itemType, id, propName] = path;
+    return getState()[itemType][id][propName];
+}

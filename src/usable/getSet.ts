@@ -10,8 +10,10 @@ import {
   ItemId,
   ItemPropsByType,
   ItemType,
+  PropName,
   RepondCallback,
   SetRepondState,
+  StatePath,
 } from "../types";
 
 export const getDefaultStates = (): DefaultStates => meta.defaultStateByItemType as DefaultStates;
@@ -105,4 +107,11 @@ export function getPartialState(propsToGet: Partial<ItemPropsByType>) {
 
 export function applyState(partialState: Partial<AllState>) {
   if (partialState) applyPatch(getPatch(getState(), partialState));
+}
+
+export function getStatePathState<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>>(
+  path: StatePath<T_ItemType, T_PropName>
+) {
+  const [itemType, id, propName] = path;
+  return getState()[itemType][id][propName];
 }

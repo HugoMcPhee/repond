@@ -315,3 +315,9 @@ export type Effect = {
 };
 
 export type FramerateTypeOption = "full" | "half" | "auto";
+
+export type StatePath<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>> = [
+  type: T_ItemType,
+  id: ItemId<T_ItemType>,
+  prop: T_PropName
+];

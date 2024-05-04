@@ -7,6 +7,11 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.3
+
+- added getStatePathState to get a state from a path (array of [itemType, itemId, propName])
+- added StatePath type (might be able to simplify to have one generic type param)
+
 v0.17.2
 
 - Handle reacting to deleted items

@@ -1,4 +1,4 @@
-import { AllRefs, AllState, DeepReadonly, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, RepondCallback, SetRepondState } from "../types";
+import { AllRefs, AllState, DeepReadonly, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, PropName, RepondCallback, SetRepondState, StatePath } from "../types";
 export declare const getDefaultStates: () => DefaultStates;
 export declare const getDefaultRefs: () => DefaultRefs;
 export declare const getItemTypes: () => ItemType[];
@@ -24,4 +24,12 @@ export declare function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Ty
 export declare function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string): boolean;
 export declare function getPartialState(propsToGet: Partial<ItemPropsByType>): Partial<AllState>;
 export declare function applyState(partialState: Partial<AllState>): void;
+export declare function getStatePathState<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>>(path: StatePath<T_ItemType, T_PropName>): {
+    readonly [x: string]: {
+        readonly [x: string]: any;
+    };
+    readonly [x: number]: {
+        readonly [x: string]: any;
+    };
+}[T_ItemType][import("../types").ExtendsString<import("../types").KeysOfUnion<AllState[T_ItemType]>>][T_PropName];
 export {};
