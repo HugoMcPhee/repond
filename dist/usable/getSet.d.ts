@@ -24,12 +24,12 @@ export declare function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Ty
 export declare function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string): boolean;
 export declare function getPartialState(propsToGet: Partial<ItemPropsByType>): Partial<AllState>;
 export declare function applyState(partialState: Partial<AllState>): void;
-export declare function getStatePathState<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>>(path: StatePath<T_ItemType, T_PropName>): {
+export declare function getStateAtPath<T_ItemType extends ItemType>(path: StatePath<T_ItemType>): {
     readonly [x: string]: {
         readonly [x: string]: any;
     };
     readonly [x: number]: {
         readonly [x: string]: any;
     };
-}[T_ItemType][import("../types").ExtendsString<import("../types").KeysOfUnion<AllState[T_ItemType]>>][T_PropName];
+}[T_ItemType][import("../types").ExtendsString<import("../types").KeysOfUnion<AllState[T_ItemType]>>][PropName<T_ItemType>];
 export {};

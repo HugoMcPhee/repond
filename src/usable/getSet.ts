@@ -109,9 +109,7 @@ export function applyState(partialState: Partial<AllState>) {
   if (partialState) applyPatch(getPatch(getState(), partialState));
 }
 
-export function getStatePathState<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>>(
-  path: StatePath<T_ItemType, T_PropName>
-) {
+export function getStateAtPath<T_ItemType extends ItemType>(path: StatePath<T_ItemType>) {
   const [itemType, id, propName] = path;
   return getState()[itemType][id][propName];
 }

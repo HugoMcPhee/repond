@@ -178,9 +178,9 @@ export type Effect = {
     runAtStart?: boolean;
 };
 export type FramerateTypeOption = "full" | "half" | "auto";
-export type StatePath<T_ItemType extends ItemType, T_PropName extends PropName<T_ItemType>> = [
+export type StatePath<T_ItemType extends ItemType> = [
     type: T_ItemType,
     id: ItemId<T_ItemType>,
-    prop: T_PropName
+    prop: PropName<T_ItemType>
 ];
 export {};

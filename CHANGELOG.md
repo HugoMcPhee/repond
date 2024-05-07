@@ -7,6 +7,11 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.4
+
+- renamed getStatePathState to getStateAtPath
+- updated StatePath type to have one generic parameter
+
 v0.17.3
 
 - added getStatePathState to get a state from a path (array of [itemType, itemId, propName])
