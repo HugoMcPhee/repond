@@ -223,13 +223,6 @@ export function getStatesDiff(
             }
 
             if (!diffInfo.propsChangedBool?.[itemType]?.[itemId]?.[itemPropName]) {
-              if (checkAllChanges) {
-                console.log("itemType", itemType);
-                if (itemType === "learnies") {
-                  console.log(diffInfo.propsChanged[itemType]);
-                }
-              }
-
               diffInfo.propsChanged[itemType][itemId].push(itemPropName);
               diffInfo.propsChangedBool[itemType][itemId][itemPropName] = true;
             }

@@ -7,6 +7,10 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 
+v0.17.5
+
+- removed log from getStatesDiff
+
 v0.17.4
 
 - renamed getStatePathState to getStateAtPath
