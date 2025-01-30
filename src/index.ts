@@ -26,7 +26,6 @@ export {
 export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
 export {
   addItem,
-  getItem,
   getPrevState,
   getRefs,
   getState,

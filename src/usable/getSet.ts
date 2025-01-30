@@ -23,14 +23,6 @@ export const getDefaultRefs = (): DefaultRefs => meta.defaultRefsByItemType as D
 
 export const getItemTypes = (): ItemType[] => meta.itemTypeNames;
 
-export function getItem<K_Type extends ItemType, T_ItemId extends ItemId<K_Type>>(type: K_Type, id: T_ItemId) {
-  return [getState(type, id) as any, getRefs()[type][id], getPrevState(type, id)] as [
-    AllState[K_Type][T_ItemId],
-    ReturnType<typeof getRefs>[K_Type][T_ItemId],
-    ReturnType<typeof getPrevState_OLD>[K_Type][T_ItemId]
-  ];
-}
-
 export const getState_OLD = (): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
 // export const getState = (kind: string, itemId: string): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
 export const getState = <T_Kind extends ItemType>(
@@ -75,7 +67,24 @@ export const getPrevState = <T_Kind extends ItemType>(
   return meta.prevState[kind][itemId];
 };
 
-export const getRefs = (): AllRefs => meta.nowRefs as AllRefs;
+export const getRefs_OLD = (): AllRefs => meta.nowRefs as AllRefs;
+
+export const getRefs = <T_Kind extends ItemType>(
+  kind: T_Kind,
+  itemId?: string
+): AllState[T_Kind][keyof AllState[T_Kind]] => {
+  if (!itemId) {
+    const foundItemId = meta.itemIdsByItemType?.[kind]?.[0];
+    if (!foundItemId) {
+      console.warn(`(getRefs) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
+    }
+    return meta.nowRefs[kind][foundItemId];
+  }
+  return meta.nowRefs[kind][itemId];
+};
+
+
+
 
 type AddItem_OptionsUntyped<T_State extends Record<any, any>, T_Refs extends Record<any, any>, T_TypeName> = {
   type: string;

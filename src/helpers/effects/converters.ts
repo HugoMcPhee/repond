@@ -1,7 +1,7 @@
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import { repondMeta as meta } from "../../meta";
 import { AllState, DiffInfo, EasyEffect, EasyEffect_Check, Effect, ItemEffect, ItemType, PropName } from "../../types";
-import { getPrevState, getPrevState_OLD, getRefs, getState, getState_OLD } from "../../usable/getSet";
+import { getPrevState, getPrevState_OLD, getRefs_OLD, getState, getState_OLD } from "../../usable/getSet";
 import { toArray, toMaybeArray } from "../../utils";
 import { toSafeEffectId } from "./internal";
 
@@ -28,7 +28,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
       const idsToRun = ids?.length ? ids : meta.itemIdsByItemType[type];
 
       if (idsToRun?.length) {
-        const itemsRefs = getRefs()[type];
+        const itemsRefs = getRefs_OLD()[type];
 
         forEach(idsToRun, (itemId) => {
           breakableForEach(props, (propName) => {
@@ -50,7 +50,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
       return true; // return early if skipChangeCheck was true
     }
 
-    const itemsRefs = getRefs()[type];
+    const itemsRefs = getRefs_OLD()[type];
     forEach(diffInfo.itemsChanged[type], (itemIdThatChanged) => {
       if (!(!allowedIdsMap || (allowedIdsMap && allowedIdsMap[itemIdThatChanged as string]))) return;
 

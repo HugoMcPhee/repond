@@ -103,7 +103,7 @@ export function useStoreItem<
       itemId: check.id,
       prevItemState: getPrevState(check.type, check.id),
       itemState: getState(check.type, check.id),
-      itemRefs: getRefs()[check.type][check.id],
+      itemRefs: getRefs(check.type, check.id),
     } as unknown as T_TheParams;
   }
 
