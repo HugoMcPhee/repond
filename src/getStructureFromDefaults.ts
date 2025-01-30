@@ -21,6 +21,14 @@ export function getRepondStructureFromDefaults() {
 
     const propNames = Object.keys(meta.defaultStateByItemType[itemType](validName));
     meta.propNamesByItemType[itemType] = propNames;
+
+    forEach(propNames, (propName) => {
+      // propPathId stuff
+      const propPathId = `${itemType}.${propName}`;
+
+      meta.storeTypeByPropPathId[propPathId] = itemType;
+      meta.propKeyByPropPathId[propPathId] = propName;
+    });
   });
 }
 

@@ -1,7 +1,7 @@
 import { toSafeEffectId } from "../helpers/effects/internal";
 import { AllState, EasyEffect_Check, ItemType, StepName } from "../types";
 import { makeEffects } from "./effects";
-import { getPrevState, getState } from "./getSet";
+import { getPrevState, getPrevState_OLD, getState } from "./getSet";
 
 export function makeEffectsMaker<
   T_StoreName extends ItemType & string,
@@ -27,7 +27,7 @@ export function makeEffectsMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulParams = getUsefulParams?.();
-          const latestValue = getState()[storeName][storeItemId][storyProperty] as PropertyValue;
+          const latestValue = getState(storeName, storeItemId)[storyProperty] as PropertyValue;
 
           callbacksMap[latestValue]?.(usefulParams!);
         },
@@ -65,7 +65,7 @@ export function makeLeaveEffectsMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulStoryStuff = getUsefulParams?.();
-          const prevValue = (getPrevState() as AllState)[storeName][storeItemId][storyProperty] as PropertyValue;
+          const prevValue = getPrevState(storeName, storeItemId)[storyProperty] as PropertyValue;
 
           callBacksObject[prevValue]?.(usefulStoryStuff!);
         },
@@ -116,8 +116,8 @@ export function makeNestedEffectsMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulStoryStuff = getUsefulParams?.();
-          const latestValue1 = (getState() as AllState)[storeName1][storeItemId1][storyProp1] as PropValue1;
-          const latestValue2 = (getState() as AllState)[storeName2][storeItemId2][storyProp2] as PropValue2;
+          const latestValue1 = getState(storeName1, storeItemId1)?.[storyProp1] as PropValue1;
+          const latestValue2 = getState(storeName2, storeItemId2)?.[storyProp2] as PropValue2;
 
           callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff!);
         },
@@ -169,10 +169,10 @@ export function makeNestedLeaveEffectsMaker<
       whenPropertyChanges: effect({
         run(_diffInfo) {
           const usefulParams = getUsefulParams?.();
-          const latestValue1 = getState()[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
-          const latestValue2 = getState()[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
-          const prevValue1 = getPrevState()[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
-          const prevValue2 = getPrevState()[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
+          const latestValue1 = getState(storeName1, storeItemId1)?.[storyProperty1] as PropertyValue1;
+          const latestValue2 = getState(storeName2, storeItemId2)?.[storyProperty2] as PropertyValue2;
+          const prevValue1 = getPrevState(storeName1, storeItemId1)[storyProperty1] as PropertyValue1;
+          const prevValue2 = getPrevState(storeName2, storeItemId2)[storyProperty2] as PropertyValue2;
 
           const callback = callBacksObject[prevValue1]?.[prevValue2];
           if (callback) callback(usefulParams!);

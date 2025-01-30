@@ -138,6 +138,14 @@ export const repondMeta = {
   stepNames: ["default"] as const as Readonly<string[]>,
   nowStepName: "default" as Readonly<string>,
   nowStepIndex: 0,
+
+  // -----------------------------------------------------
+  // -----------------------------------------------------
+  // New stuff
+  storeTypeByPropPathId: {} as Record<string, string>,
+  propKeyByPropPathId: {} as Record<string, string>,
+
+  isRunningSetStates: false,
 };
 
 export type RepondMeta = typeof repondMeta;

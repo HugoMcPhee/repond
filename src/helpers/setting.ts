@@ -2,7 +2,7 @@ import { forEach } from "chootils/dist/loops";
 import { repondMeta as meta } from "../meta";
 import { _updateRepond } from "../updating";
 import { runWhenAddingAndRemovingItems, runWhenDoingSetStates } from "./runWhens";
-import { mergeStates } from "../copyStates";
+import { mergeStates, mergeToState_NEW } from "../copyStates";
 
 export function _setState(newState: any, callback?: any) {
   runWhenDoingSetStates(() => {
@@ -11,6 +11,44 @@ export function _setState(newState: any, callback?: any) {
     if (!newStateValue) return;
     mergeStates(
       newStateValue,
+      meta.nowState,
+      meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
+      meta.recordedStepEndEffectChanges
+    );
+  }, callback);
+}
+
+export function _setState_NEW(propPath: string, newValue: any, itemId?: string, callback?: any) {
+  runWhenDoingSetStates(() => {
+    if (newValue === undefined) return;
+
+    if (!propPath) {
+      console.error("propPath must be provided");
+      return;
+    }
+
+    if (typeof propPath !== "string") {
+      console.error("propPath must be a string");
+      console.log("propPath", propPath);
+
+      return;
+    }
+
+    const storeType = meta.storeTypeByPropPathId[propPath];
+    const propKey = meta.propKeyByPropPathId[propPath];
+    let foundItemId = itemId || meta.itemIdsByItemType[storeType]?.[0];
+    if (!foundItemId) {
+      foundItemId = Object.keys(meta.nowState[storeType] ?? {})[0];
+      console.warn(
+        `${propPath}No itemId found for setState ${storeType}, using first found itemId: ${foundItemId} from Object keys`
+      );
+    }
+
+    mergeToState_NEW(
+      storeType,
+      propKey,
+      newValue,
+      foundItemId,
       meta.nowState,
       meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
       meta.recordedStepEndEffectChanges

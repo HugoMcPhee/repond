@@ -36,10 +36,12 @@ function updateFrameTimes(animationFrameTime: number) {
 function runSetStates() {
   // merges all the states from setState()
 
+  meta.isRunningSetStates = true;
   for (let index = 0; index < meta.setStatesQue.length; index++) {
     const loopedUpdateFunction = meta.setStatesQue[index];
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   }
+  meta.isRunningSetStates = false;
 
   meta.setStatesQue.length = 0;
 }

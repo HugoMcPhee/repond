@@ -1,7 +1,7 @@
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import { repondMeta as meta } from "../../meta";
 import { AllState, DiffInfo, EasyEffect, EasyEffect_Check, Effect, ItemEffect, ItemType, PropName } from "../../types";
-import { getPrevState, getRefs, getState } from "../../usable/getSet";
+import { getPrevState, getPrevState_OLD, getRefs, getState, getState_OLD } from "../../usable/getSet";
 import { toArray, toMaybeArray } from "../../utils";
 import { toSafeEffectId } from "./internal";
 
@@ -28,19 +28,17 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
       const idsToRun = ids?.length ? ids : meta.itemIdsByItemType[type];
 
       if (idsToRun?.length) {
-        const prevItemsState = getPrevState()[type] as any;
-        const itemsState = (getState() as AllState)[type];
         const itemsRefs = getRefs()[type];
 
         forEach(idsToRun, (itemId) => {
           breakableForEach(props, (propName) => {
-            const newValue = itemsState[itemId][propName];
+            const newValue = getState(type, itemId)[propName];
 
             run({
               itemId: itemId as any,
               newValue,
-              prevValue: prevItemsState?.[itemId]?.[propName] ?? itemsState?.[itemId],
-              itemState: itemsState?.[itemId],
+              prevValue: getPrevState(type, itemId)?.[propName] ?? newValue,
+              itemState: getState(type, itemId) as any,
               itemRefs: itemsRefs?.[itemId],
               frameDuration,
               ranWithoutChange: true,
@@ -52,20 +50,18 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
       return true; // return early if skipChangeCheck was true
     }
 
-    const prevItemsState = getPrevState()[type] as any;
-    const itemsState = (getState() as AllState)[type];
     const itemsRefs = getRefs()[type];
     forEach(diffInfo.itemsChanged[type], (itemIdThatChanged) => {
       if (!(!allowedIdsMap || (allowedIdsMap && allowedIdsMap[itemIdThatChanged as string]))) return;
 
-      let thisItemsPrevState = prevItemsState[itemIdThatChanged];
+      let thisItemsPrevState = getPrevState(type, itemIdThatChanged) as AllState[K_Type][keyof AllState[K_Type]];
       const itemWasJustAdded = diffInfo.itemsAddedBool[type][itemIdThatChanged];
-      if (itemWasJustAdded) thisItemsPrevState = meta.defaultStateByItemType[type](itemIdThatChanged);
+      if (itemWasJustAdded) thisItemsPrevState = meta.defaultStateByItemType[type](itemIdThatChanged) as any;
 
       breakableForEach(props, (propName) => {
         if (!(diffInfo.propsChangedBool as any)[type][itemIdThatChanged][propName]) return;
-
-        const newValue = itemsState[itemIdThatChanged][propName];
+        const itemState = getState(type, itemIdThatChanged);
+        const newValue = itemState?.[propName];
 
         let canRunRun = false;
 
@@ -80,7 +76,7 @@ function itemEffectRunToEffectRun<K_Type extends ItemType, K_PropName extends Pr
           itemId: itemIdThatChanged as any,
           newValue,
           prevValue: thisItemsPrevState[propName],
-          itemState: itemsState[itemIdThatChanged],
+          itemState: itemState as any,
           itemRefs: itemsRefs[itemIdThatChanged],
           frameDuration,
           ranWithoutChange: false,

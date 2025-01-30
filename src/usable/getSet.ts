@@ -1,5 +1,5 @@
 import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
-import { _setState, _addItem, _removeItem } from "../helpers/setting";
+import { _setState, _addItem, _removeItem, _setState_NEW } from "../helpers/setting";
 import { repondMeta as meta } from "../meta";
 import {
   AllRefs,
@@ -15,6 +15,7 @@ import {
   SetRepondState,
   StatePath,
 } from "../types";
+import { runWhenDoingSetStates } from "../helpers/runWhens";
 
 export const getDefaultStates = (): DefaultStates => meta.defaultStateByItemType as DefaultStates;
 
@@ -23,23 +24,56 @@ export const getDefaultRefs = (): DefaultRefs => meta.defaultRefsByItemType as D
 export const getItemTypes = (): ItemType[] => meta.itemTypeNames;
 
 export function getItem<K_Type extends ItemType, T_ItemId extends ItemId<K_Type>>(type: K_Type, id: T_ItemId) {
-  return [(getState() as any)[type][id], getRefs()[type][id], getPrevState()[type][id]] as [
+  return [getState(type, id) as any, getRefs()[type][id], getPrevState(type, id)] as [
     AllState[K_Type][T_ItemId],
     ReturnType<typeof getRefs>[K_Type][T_ItemId],
-    ReturnType<typeof getPrevState>[K_Type][T_ItemId]
+    ReturnType<typeof getPrevState_OLD>[K_Type][T_ItemId]
   ];
 }
 
-export const getState = (): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
+export const getState_OLD = (): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
+// export const getState = (kind: string, itemId: string): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
+export const getState = <T_Kind extends ItemType>(
+  kind: T_Kind,
+  itemId?: string
+): AllState[T_Kind][keyof AllState[T_Kind]] => {
+  if (!itemId) {
+    const foundItemId = meta.itemIdsByItemType?.[kind]?.[0];
+    if (!foundItemId) {
+      console.warn(`No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
+    }
+    return meta.nowState[kind][foundItemId];
+  }
+  return meta.nowState[kind][itemId];
+};
 
-export const setState: SetRepondState<AllState> = (newState, callback) => _setState(newState, callback);
+// export const setState: SetRepondState<AllState> = (newState, callback) => _setState(newState, callback);
+export const setState_OLD = _setState;
+export const setState = _setState_NEW;
+
+export const whenSettingStates = runWhenDoingSetStates;
 
 // Good for running things to be sure the state change is seen
-export function onNextTick(callback: RepondCallback) {
-  meta.callbacksQue.push(callback);
+export function onNextTick(callback?: RepondCallback) {
+  if (callback) meta.callbacksQue.push(callback);
 }
 
-export const getPrevState = (): AllState => meta.prevState as AllState;
+export const getPrevState_OLD = (): AllState => meta.prevState as AllState;
+
+export const getPrevState = <T_Kind extends ItemType>(
+  kind: T_Kind,
+  itemId?: string
+): AllState[T_Kind][keyof AllState[T_Kind]] => {
+  if (!itemId) {
+    // const foundItemId = meta.prevItemIdsByItemType?.[kind]?.[0];
+    const foundItemId = Object.keys(meta.prevState?.[kind] ?? {})?.[0];
+    if (!foundItemId) {
+      console.warn(`No itemId provided for ${kind}, using first found itemId: ${foundItemId} (prevState)`);
+    }
+    return meta.prevState?.[kind]?.[foundItemId];
+  }
+  return meta.prevState[kind][itemId];
+};
 
 export const getRefs = (): AllRefs => meta.nowRefs as AllRefs;
 
@@ -73,13 +107,13 @@ export function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: 
 }
 
 export function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string) {
-  return getItemWillBeAdded(type, id) || !!(getState() as any)[type][id];
+  return getItemWillBeAdded(type, id) || !!(getState_OLD() as any)[type][id];
 }
 
 // Function to selectively get data with only specific props from the repond store, can be used for save data
 export function getPartialState(propsToGet: Partial<ItemPropsByType>) {
   const itemTypes = Object.keys(propsToGet) as Array<keyof ItemPropsByType>;
-  const state = getState();
+  const state = getState_OLD();
 
   if (!meta.didInit) {
     console.warn("getPartialState called before repond was initialized");
@@ -106,10 +140,10 @@ export function getPartialState(propsToGet: Partial<ItemPropsByType>) {
 }
 
 export function applyState(partialState: Partial<AllState>) {
-  if (partialState) applyPatch(getPatch(getState(), partialState));
+  if (partialState) applyPatch(getPatch(getState_OLD(), partialState));
 }
 
 export function getStateAtPath<T_ItemType extends ItemType>(path: StatePath<T_ItemType>) {
   const [itemType, id, propName] = path;
-  return getState()[itemType][id][propName];
+  return getState_OLD()[itemType][id][propName];
 }

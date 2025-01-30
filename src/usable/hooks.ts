@@ -101,8 +101,8 @@ export function useStoreItem<
   function getInitialState() {
     return {
       itemId: check.id,
-      prevItemState: getPrevState()[check.type][check.id],
-      itemState: (getState() as any)[check.type as any][check.id],
+      prevItemState: getPrevState(check.type, check.id),
+      itemState: getState(check.type, check.id),
       itemRefs: getRefs()[check.type][check.id],
     } as unknown as T_TheParams;
   }
