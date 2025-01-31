@@ -95,7 +95,7 @@ export function mergeToState_NEW(
   allRecordedChanges: RecordedChanges
 ) {
   // check if the item exists before copying
-  if (saveToObject?.[storeType]?.[foundItemId] == undefined) return;
+  if (saveToObject?.[storeType]?.[foundItemId] === undefined) return;
 
   // save the new state
   saveToObject[storeType][foundItemId][propKey] = newValue;

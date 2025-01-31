@@ -40,7 +40,8 @@ export {
   getItemWillExist,
   getPartialState,
   applyState,
-  getStateAtPath,
+  getItemTypes,
+  getItemIds,
 } from "./usable/getSet";
 
 export {

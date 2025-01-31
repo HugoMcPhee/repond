@@ -5,10 +5,7 @@ import { runNextFrameIfNeeded } from "./frames";
 // Only runs when calling  _setState
 export function runWhenDoingSetStates(whatToRun: any, callback?: any) {
   if (meta.isRunningSetStates) {
-    // NOTE this is new!, it might be better to just add it to the current queue instead of running it instantly
     whatToRun();
-
-    // meta.setStatesQue.push(whatToRun);
   } else {
     meta.setStatesQue.push(whatToRun);
   }
