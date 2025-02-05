@@ -4,6 +4,7 @@ import { repondMeta as meta } from "../meta";
 import { AllState, Effect, ItemPropsByType, ItemType, PropName } from "../types";
 import { startNewEffect, stopEffect } from "./effects";
 import { getState } from "./getSet";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 export function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(
   whatToReturn: (diffInfo: typeof meta.diffInfo) => T_ReturnedRepondProps,
@@ -68,21 +69,30 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
   // const [returnedState, setReturnedState] = useState(getState(type, id));
 
   const [, setTick] = useState(0);
-  const rerender = useCallback(() => {
+  // const rerender = useCallback(() => {
+  //   returnedStateRef.current = getState(type, id);
+  //   setTick((tick) => tick + 1);
+  // }, []);
+  const rerender = () => {
+    returnedStateRef.current = getState(type, id);
     setTick((tick) => tick + 1);
-  }, []);
+  };
 
   useLayoutEffect(
     () => {
       // if (didRender.current) setReturnedState(getState(type, id));
-      // if (didRender.current) rerender();
+      if (didRender.current) rerender();
 
       const effectId = toSafeEffectId("useStoreItem" + id); // note could add JSON.stringify(check) for useful effect name
 
       startNewEffect({
         id: effectId,
         // run: (itemId) => rerender(),
-        run: rerender,
+        run() {
+          // returnedStateRef.current = getState(type, id);
+          // setTick((tick) => tick + 1);
+          rerender();
+        },
         atStepEnd: true,
         changes: props.map((prop) => `${type}.${prop}`),
         itemIds: [id],
@@ -94,7 +104,7 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
       return () => stopEffect(effectId);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    hookDeps && hookDeps?.length > 0 ? [...hookDeps, ...props, id] : [...props, id]
+    hookDeps && hookDeps?.length > 0 ? [...hookDeps, ...props, id] : [...props, id] // NOTE maybe need to change this to be stringified
   );
 
   // useEffect(() => {
@@ -102,6 +112,7 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
   // }, [returnedState]);
 
   return itemEffectCallback(returnedStateRef.current);
+  // return itemEffectCallback(getState(type, id));
 }
 
 // useStoreItemPrevState
