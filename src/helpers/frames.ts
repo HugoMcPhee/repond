@@ -52,10 +52,9 @@ export function runNextFrame() {
       findScreenFramerate();
     }
   } else {
-    const isUnderShortestFrame = meta.latestUpdateDuration < meta.shortestFrameDuration;
-
     // If the framerate is constently not reaching full, then switch to half
     if (meta.frameRateTypeOption === "auto") {
+      const isUnderShortestFrame = meta.latestUpdateDuration < meta.shortestFrameDuration;
       if (isUnderShortestFrame) {
         if (meta.lateFramesAmount > 0) meta.lateFramesAmount -= 1;
       } else {

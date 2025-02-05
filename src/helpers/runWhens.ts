@@ -1,36 +1,32 @@
 import { repondMeta as meta } from "../meta";
-import { _updateRepond } from "../updating";
 import { runNextFrameIfNeeded } from "./frames";
 
 // Only runs when calling  _setState
-export function runWhenDoingSetStates(whatToRun: any, callback?: any) {
+export function whenSettingStates(callback: any) {
   if (meta.isRunningSetStates) {
-    whatToRun();
+    callback();
   } else {
-    meta.setStatesQue.push(whatToRun);
+    meta.setStatesQueue.push(callback);
   }
-  if (callback) meta.callbacksQue.push(callback);
   runNextFrameIfNeeded();
 }
 
-export function runWhenStartingEffects(whatToRun: any) {
-  meta.startEffectsQue.push(whatToRun);
+export function whenStartingEffects(callback: any) {
+  meta.startEffectsQueue.push(callback);
   runNextFrameIfNeeded();
 }
 
-export function runWhenStoppingEffects(whatToRun: any) {
+export function whenStoppingEffects(callback: any) {
   // stopping listeners runs instantly
-  whatToRun();
+  callback();
 }
 
-export function runWhenDoingEffectsRunAtStart(whatToRun: any, callback?: any) {
-  meta.effectsRunAtStartQueue.push(whatToRun);
-  if (callback) meta.effectsRunAtStartQueue.push(callback);
+export function whenDoingEffectsRunAtStart(callback: any) {
+  meta.effectsRunAtStartQueue.push(callback);
   runNextFrameIfNeeded();
 }
 
-export function runWhenAddingAndRemovingItems(whatToRun: any, callback?: any) {
-  meta.addAndRemoveItemsQue.push(whatToRun);
-  if (callback) meta.callbacksQue.push(callback);
+export function runWhenAddingAndRemovingItems(callback: any) {
+  meta.addAndRemoveItemsQueue.push(callback);
   runNextFrameIfNeeded();
 }

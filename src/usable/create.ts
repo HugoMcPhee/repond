@@ -1,10 +1,9 @@
-import { AllStoreInfoUntyped, StoreInfoUntyped } from "../declarations";
+import { AllStoreInfoUntyped } from "../declarations";
 import { createDiffInfo } from "../getStatesDiff";
 import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import { repondMeta as meta, UntypedDiffInfo } from "../meta";
 import {
   AllState,
-  AllStoreInfo,
   DefaultRefs,
   DefaultStates,
   FramerateTypeOption,

@@ -1,3 +1,4 @@
+export { whenSettingStates } from "repond/src/helpers/runWhens";
 import { AllState, ItemType } from "./types";
 
 export * from "./declarations";
@@ -23,7 +24,7 @@ export {
   removePartialPatch,
 } from "./usable/patchesAndDiffs";
 
-export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
+export { useStore, useStoreEffect, useStoreItem } from "./usable/hooks";
 export {
   addItem,
   getPrevState,
@@ -33,7 +34,6 @@ export {
   removeItem,
   setState,
   setState_OLD,
-  whenSettingStates,
   onNextTick,
   getItemWillBeAdded,
   getItemWillBeRemoved,
@@ -55,7 +55,6 @@ export {
   startEffect,
   startEffectsGroup,
   startNewEffect,
-  startNewItemEffect,
   stopAllEffectsGroups as stopAllEffectGroups,
   stopEffect,
   stopEffectsGroup,

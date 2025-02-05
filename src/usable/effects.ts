@@ -1,103 +1,92 @@
 import { forEach } from "chootils/dist/loops";
-import { easyEffectToEffect, itemEffectToEffect } from "../helpers/effects/converters";
-import { _startEffect, _stopEffect } from "../helpers/effects/internal";
-import { repondMeta as meta } from "../meta";
-import { EasyEffect, Effect, ItemEffect, ItemType, PropName } from "../types";
 import { RepondTypes } from "../declarations";
+import {
+  _startEffect,
+  _stopEffect,
+  runEffectWithoutChange,
+  storeCachedValuesForEffect,
+} from "../helpers/effects/internal";
+import { repondMeta as meta } from "../meta";
+import { Effect, ItemType, PropName } from "../types";
 
 // Helper type to strip "Effects" suffix from group names
-type RemoveEffectsSuffix<T extends string> = T extends `${infer Prefix}Effects` ? Prefix : T;
+type RemoveEffectsSuffix<T extends string> = (T extends `${infer Prefix}Effects` ? Prefix : T) & string;
 export type RefinedEffectGroups = {
   [K in keyof RepondTypes["EffectGroups"] as RemoveEffectsSuffix<K>]: RepondTypes["EffectGroups"][K];
 };
 
-export function startNewEffect<K_Type extends ItemType>(theEffect: EasyEffect<K_Type>) {
-  _startEffect(easyEffectToEffect(theEffect));
-}
-
-export function startNewItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  itemEffect: ItemEffect<K_Type, K_PropName>
-) {
-  const effect = itemEffectToEffect(itemEffect);
-
-  _startEffect(effect);
-  return effect.id;
-}
-
-export function stopNewEffect(effectName: string) {
-  _stopEffect(effectName);
+export function startNewEffect(theEffect: Effect) {
+  _startEffect(theEffect);
 }
 
 // This is really startGroupedEffect
 export function startEffect<
   K_EffectGroup extends keyof RefinedEffectGroups,
   K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string
->(groupName: K_EffectGroup, effectName: K_EffectName) {
-  const theEffect = (meta.allEffectGroups as any)[groupName][effectName];
-  if (!theEffect) return console.warn("no effect found for ", groupName, effectName);
+>(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
+  const theEffect = meta.storedEffectsMap[effectId];
+  if (!theEffect) return console.warn("no effect found for ", effectId);
   _startEffect(theEffect);
 }
 
 export function stopEffect<
   K_EffectGroup extends keyof RefinedEffectGroups,
   K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string
->(groupName: K_EffectGroup, effectName: K_EffectName) {
-  const theEffect = (meta.allEffectGroups as any)[groupName][effectName];
-  if (!theEffect) return console.warn("no effect found for ", groupName, effectName);
+>(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
+  const theEffect = (meta.liveEffectsMap as any)[effectId];
+  //  NOTE Not logging if it tried to stop a missing event, because react useEffect does a quick start stop at the start
+  // if (!theEffect) return console.warn("(stop) no effect found for ", effectId);
+  if (!theEffect) return;
   _stopEffect(theEffect.id);
 }
 
-export function startEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup) {
-  const theGroup = (meta.allEffectGroups as any)[groupName];
-  forEach(Object.keys(theGroup), (effectName) => startEffect(groupName, effectName));
+export function startEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup & string) {
+  forEach(meta.effectIdsByGroup[groupName], (effectId) => startEffect(effectId));
 }
 
-export function stopEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup) {
-  const theGroup = (meta.allEffectGroups as any)[groupName];
-  forEach(Object.keys(theGroup), (effectName) => stopEffect(groupName, effectName));
+export function stopEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup & string) {
+  forEach(meta.effectIdsByGroup[groupName], (effectId) => stopEffect(effectId));
 }
 
 export function startAllEffectsGroups() {
-  forEach(Object.keys(meta.allEffectGroups), (groupName) => startEffectsGroup(groupName));
+  forEach(Object.keys(meta.effectIdsByGroup), (groupName) => startEffectsGroup(groupName));
 }
 
 export function stopAllEffectsGroups() {
-  forEach(Object.keys(meta.allEffectGroups), (groupName) => stopEffectsGroup(groupName));
+  forEach(Object.keys(meta.effectIdsByGroup), (groupName) => stopEffectsGroup(groupName));
 }
 
 export function runEffect<
   K_EffectGroup extends keyof RefinedEffectGroups,
   K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string
->(groupName: K_EffectGroup, effectName: K_EffectName) {
-  const theEffect = (meta.allEffectGroups as any)[groupName][effectName];
-  if (!theEffect) return console.warn("no effect found for ", groupName, effectName);
-  theEffect.run(meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
+>(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
+  const theEffect = meta.liveEffectsMap[effectId];
+  if (!theEffect) return console.warn("(run) no effect found for ", effectId);
+
+  runEffectWithoutChange(theEffect);
 }
 
-export function runEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup) {
-  const theGroup = (meta.allEffectGroups as any)[groupName];
-  forEach(Object.keys(theGroup), (effectName) => runEffect(groupName, effectName));
+export function runEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup & string) {
+  forEach(meta.effectIdsByGroup[groupName], (effectId) => runEffect(effectId));
 }
 
-export type MakeEffect = <K_Type extends ItemType>(easyEffect: EasyEffect<K_Type>) => Effect;
-export type MakeItemEffect = <K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  itemEffect: ItemEffect<K_Type, K_PropName>
+export type MakeEffect = <K_Type extends ItemType>(
+  effectRun: Effect["run"],
+  effectOptions: Omit<Effect, "run">
 ) => Effect;
 
-export function makeEffect<K_Type extends ItemType>(easyEffect: EasyEffect<K_Type>): Effect {
-  return easyEffectToEffect(easyEffect);
-}
-
-export function makeItemEffect<K_Type extends ItemType, K_PropName extends PropName<K_Type>>(
-  itemEffect: ItemEffect<K_Type, K_PropName>
+export function makeEffect<K_Type extends ItemType>(
+  effectRun: Effect["run"],
+  effectOptions: Omit<Effect, "run">
 ): Effect {
-  return itemEffectToEffect(itemEffect);
+  (effectOptions as Effect).run = effectRun;
+  return effectOptions as Effect;
 }
 
 export function makeEffects<K_EffectName extends string>(
-  effectsToAdd: (arg0: { itemEffect: MakeItemEffect; effect: MakeEffect }) => Record<K_EffectName, Effect>
+  getEffectsToAddCallback: (makeEffect: MakeEffect) => Record<K_EffectName, Effect>
 ) {
-  return effectsToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
+  return getEffectsToAddCallback(makeEffect);
 }
 
 export function initEffectGroups<T extends Record<string, ReturnType<typeof makeEffects>>>(groups: T): T {
@@ -117,12 +106,17 @@ export function initEffectGroups<T extends Record<string, ReturnType<typeof make
     const effectNames = Object.keys(theGroup);
     forEach(effectNames, (effectName) => {
       const theEffect = theGroup[effectName];
-      theEffect.id = `${groupName}_${effectName}`;
+      theEffect.id = `${groupName}.${effectName}`;
+      theEffect._groupName = groupName;
+      theEffect._effectName = effectName;
+      storeCachedValuesForEffect(theEffect);
+
+      meta.storedEffectsMap[theEffect.id] = theEffect as any;
+      meta.effectIdsByGroup[groupName] = meta.effectIdsByGroup[groupName] || [];
+      meta.effectIdsByGroup[groupName].push(theEffect.id);
     });
   });
 
-  // Store the transformed groups
-  meta.allEffectGroups = transformedGroups as any;
-
+  // Only used for types
   return groups;
 }

@@ -1,6 +1,7 @@
 import { DiffInfo, Effect, EffectPhase, FramerateTypeOption } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
+// This is changes recorded from setStates, and addItem and removeItem
 export type RecordedChanges = {
   itemTypesBool: { [type: string]: boolean };
   itemIdsBool: { [type: string]: { [itemId: string]: boolean } };
@@ -97,18 +98,21 @@ export const repondMeta = {
   nowRefs: {} as any,
   nowMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   // functions
-  addAndRemoveItemsQue: [] as AFunction[],
+  addAndRemoveItemsQueue: [] as AFunction[],
   effectsRunAtStartQueue: [] as AFunction[],
-  startEffectsQue: [] as AFunction[],
-  setStatesQue: [] as AFunction[],
-  callbacksQue: [] as AFunction[],
+  startEffectsQueue: [] as AFunction[],
+  setStatesQueue: [] as AFunction[],
+  nextTickQueue: [] as AFunction[],
   //
-  allEffects: {} as Record<string, Effect>,
+  liveEffectsMap: {} as Record<string, Effect>,
   effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
     EffectPhase,
     Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
-  allEffectGroups: {} as Record<string, Record<string, Effect>>,
+  storedEffectsMap: {} as Record<string, Effect>,
+  effectIdsByGroup: {} as Record<string, string[]>, // effectGroup: [effectId]
+
+  // storedParamEffectsMap: {} as Record<string, Effect>, // NOTE Not used yet! it's complicated
   allParamEffectGroups: {} as Record<string, ParamEffectsGroup<any, any>>,
   paramEffectIdsByGroupPlusParamKey: {} as Record<string, string[]>, // effectGroup: {paramKey: [effectId]}
   //
@@ -142,8 +146,9 @@ export const repondMeta = {
   // -----------------------------------------------------
   // -----------------------------------------------------
   // New stuff
-  storeTypeByPropPathId: {} as Record<string, string>,
-  propKeyByPropPathId: {} as Record<string, string>,
+  itemTypeByPropPathId: {} as Record<string, string>, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
+  propKeyByPropPathId: {} as Record<string, string>, // To get "piecePropertyA" from "pieces.piecePropertyA" quickly ( in O(1) time )
+  specialKeyByPropPathId: {} as Record<string, string>, // For special keys like __added, __removed
 
   isRunningSetStates: false,
 };

@@ -1,19 +1,15 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
+import { _startEffect, _stopEffect } from "../helpers/effects/internal";
 import { repondMeta as meta } from "../meta";
 import { Effect } from "../types";
-import { MakeEffect, MakeItemEffect, makeEffect, makeItemEffect } from "./effects";
-import { _startEffect, _stopEffect } from "../helpers/effects/internal";
+import { MakeEffect, makeEffect } from "./effects";
 
 // Make effects based on params
 
 export type ParamEffectsGroup<K_EffectName extends string, T_Params extends any> = {
-  makeEffects: (arg0: {
-    itemEffect: MakeItemEffect;
-    effect: MakeEffect;
-    params: T_Params;
-  }) => Record<K_EffectName, Effect>;
   defaultParams: T_Params;
+  makeEffects: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>;
 };
 
 export function makeParamEffects<
@@ -22,15 +18,11 @@ export function makeParamEffects<
   T_Params extends Record<T_ParamKey, any>
 >(
   defaultParams: T_Params,
-  effectsToAdd: (arg0: {
-    itemEffect: MakeItemEffect;
-    effect: MakeEffect;
-    params: T_Params;
-  }) => Record<K_EffectName, Effect>
+  effectsToAdd: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>
 ): ParamEffectsGroup<K_EffectName, T_Params> {
   return {
-    makeEffects: effectsToAdd,
     defaultParams,
+    makeEffects: effectsToAdd,
   };
 }
 
@@ -45,6 +37,8 @@ export function initParamEffectGroups<T extends Record<string, ParamEffectsGroup
 
   // Store the transformed groups
   meta.allParamEffectGroups = transformedGroups as any;
+
+  // storedParamEffectsMap
 
   return groups;
 }
@@ -65,14 +59,14 @@ function getParamEffectId<
   K_GroupName extends keyof RefinedParamEffectGroups & string,
   K_EffectName extends keyof ReturnType<RefinedParamEffectGroups[K_GroupName]["makeEffects"]> & string
 >(groupName: K_GroupName, effectName: K_EffectName, params: RefinedParamEffectGroups[K_GroupName]["defaultParams"]) {
-  return `${groupName}_${effectName}_${sortAndStringifyObject(params)}`;
+  return `${groupName}.${effectName}.${sortAndStringifyObject(params)}`;
 }
 
 function getGroupPlusParamKey<K_GroupName extends keyof RefinedParamEffectGroups & string>(
   groupName: K_GroupName,
   params: RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 ) {
-  return `${groupName}_${sortAndStringifyObject(params)}`;
+  return `${groupName}.${sortAndStringifyObject(params)}`;
 }
 
 function findParamEffect<
@@ -80,18 +74,14 @@ function findParamEffect<
   K_EffectName extends keyof ReturnType<RefinedParamEffectGroups[K_GroupName]["makeEffects"]> & string
 >(groupName: K_GroupName, effectName: K_EffectName, params: RefinedParamEffectGroups[K_GroupName]["defaultParams"]) {
   const effectId = getParamEffectId(groupName, effectName, params);
-  return meta.allEffects[effectId];
+  return meta.liveEffectsMap[effectId];
 }
 
 function makeAndStoreParamEffectsForGroup<
   K_GroupName extends keyof RefinedParamEffectGroups & string,
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, params: T_Params) {
-  const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects({
-    itemEffect: makeItemEffect,
-    effect: makeEffect,
-    params,
-  });
+  const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects(makeEffect, params);
 
   if (!madeParamEffects) return console.warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
 
@@ -105,7 +95,7 @@ function makeAndStoreParamEffectsForGroup<
     theEffect.id = getParamEffectId(groupName, effectName, params);
     effectIds.push(theEffect.id);
 
-    meta.allEffects[theEffect.id] = theEffect;
+    meta.liveEffectsMap[theEffect.id] = theEffect;
   });
 
   const groupPlusParamKey = getGroupPlusParamKey(groupName, params);
@@ -175,7 +165,7 @@ export function stopParamEffect<
   // FIXME repond events is stopping effects that are not found
   if (!effect) return;
   const effectId = getParamEffectId(groupName, effectName, params);
-  _stopEffect(effect.id);
+  _stopEffect(effect.id!);
 }
 
 export function startParamEffectsGroup<
@@ -185,7 +175,7 @@ export function startParamEffectsGroup<
   const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
   if (!effectIds?.length) return console.warn("no effectIds found for ", groupName);
   forEach(effectIds, (effectId) => {
-    const effect = meta.allEffects[effectId];
+    const effect = meta.liveEffectsMap[effectId];
     if (!effect) return console.warn("no effect found for ", groupName, effectId);
     _startEffect(effect);
   });
@@ -208,7 +198,7 @@ export function runParamEffect<
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findOrMakeParamEffect(groupName, effectName, params);
   if (!effect) return console.warn("no effect found for ", groupName, effectName);
-  effect.run(meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
+  effect.run("", meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
 }
 
 export function runParamEffectsGroup<
@@ -218,8 +208,8 @@ export function runParamEffectsGroup<
   const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
   if (!effectIds?.length) return console.warn("no effectIds made for ", groupName, params);
   forEach(effectIds, (effectId) => {
-    const effect = meta.allEffects[effectId];
+    const effect = meta.liveEffectsMap[effectId];
     if (!effect) return console.warn("no effect found for ", groupName, effectId);
-    effect.run(meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
+    effect.run("", meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
   });
 }

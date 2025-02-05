@@ -22,11 +22,17 @@ export function getRepondStructureFromDefaults() {
     const propNames = Object.keys(meta.defaultStateByItemType[itemType](validName));
     meta.propNamesByItemType[itemType] = propNames;
 
+    const specialChangeKeys = ["__added", "__removed"];
+    specialChangeKeys.forEach((key) => {
+      meta.specialKeyByPropPathId[`${itemType}.${key}`] = key;
+      meta.itemTypeByPropPathId[`${itemType}.${key}`] = itemType;
+    });
+
     forEach(propNames, (propName) => {
       // propPathId stuff
       const propPathId = `${itemType}.${propName}`;
 
-      meta.storeTypeByPropPathId[propPathId] = itemType;
+      meta.itemTypeByPropPathId[propPathId] = itemType;
       meta.propKeyByPropPathId[propPathId] = propName;
     });
   });

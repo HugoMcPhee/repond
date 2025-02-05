@@ -1,5 +1,4 @@
-import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
-import { _setState, _addItem, _removeItem, _setState_NEW } from "../helpers/setting";
+import { _addItem, _removeItem, _setState, _setState_OLD } from "../helpers/setting";
 import { repondMeta as meta } from "../meta";
 import {
   AllRefs,
@@ -10,12 +9,9 @@ import {
   ItemId,
   ItemPropsByType,
   ItemType,
-  PropName,
   RepondCallback,
-  SetRepondState,
-  StatePath,
 } from "../types";
-import { runWhenDoingSetStates } from "../helpers/runWhens";
+import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
 
 export const getDefaultStates = (): DefaultStates => meta.defaultStateByItemType as DefaultStates;
 
@@ -34,22 +30,30 @@ export const getState = <T_Kind extends ItemType>(
   if (!itemId) {
     const foundItemId = meta.itemIdsByItemType?.[kind]?.[0];
     if (!foundItemId) {
-      console.warn(`No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
+      console.warn(`(getState) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
     }
     return meta.nowState[kind][foundItemId];
   }
-  return meta.nowState[kind][itemId];
+
+  // const allItemTypeState = meta.nowState[kind];
+  // if (allItemTypeState === undefined) {
+  //   console.warn(`(getState) No state found for ${kind}`);
+  // }
+  // const foundState = allItemTypeState?.[itemId];
+  // if (foundState === undefined) {
+  //   console.warn(`(getState) No state found for ${kind} with id ${itemId}`);
+  // }
+  // return foundState;
+  return meta.nowState[kind]?.[itemId];
 };
 
-// export const setState: SetRepondState<AllState> = (newState, callback) => _setState(newState, callback);
-export const setState_OLD = _setState;
-export const setState = _setState_NEW;
-
-export const whenSettingStates = runWhenDoingSetStates;
+// export const setState: SetRepondState<AllState> = (newState) => _setState(newState);
+export const setState_OLD = _setState_OLD;
+export const setState = _setState;
 
 // Good for running things to be sure the state change is seen
 export function onNextTick(callback?: RepondCallback) {
-  if (callback) meta.callbacksQue.push(callback);
+  if (callback) meta.nextTickQueue.push(callback);
 }
 
 export const getPrevState_OLD = (): AllState => meta.prevState as AllState;
@@ -60,11 +64,15 @@ export const getPrevState = <T_Kind extends ItemType>(
 ): AllState[T_Kind][keyof AllState[T_Kind]] => {
   if (!itemId) {
     // const foundItemId = meta.prevItemIdsByItemType?.[kind]?.[0];
-    const foundItemId = Object.keys(meta.prevState?.[kind] ?? {})?.[0];
+    const foundItemId = Object.keys(meta.prevState?.[kind] ?? {})?.[0] ?? meta.itemIdsByItemType?.[kind]?.[0];
     if (!foundItemId) {
-      console.warn(`No itemId provided for ${kind}, using first found itemId: ${foundItemId} (prevState)`);
+      // console.warn(`(getPrevState) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
     }
-    return meta.prevState?.[kind]?.[foundItemId];
+    return meta.prevState?.[kind]?.[foundItemId] ?? meta.nowState[kind][foundItemId];
+  }
+  if (!meta.prevState[kind]?.[itemId]) {
+    // console.warn(`(getPrevState) No prevState found for ${kind} with id ${itemId} (using nowState instead)`);
+    return meta.nowState[kind][itemId];
   }
   return meta.prevState[kind][itemId];
 };
@@ -82,6 +90,9 @@ export const getRefs = <T_Kind extends ItemType>(
     }
     return meta.nowRefs[kind][foundItemId];
   }
+  if (meta.nowRefs?.[kind]?.[itemId] === undefined) {
+    console.warn(`(getRefs) No refs found for ${kind} with id ${itemId}`);
+  }
   return meta.nowRefs[kind][itemId];
 };
 
@@ -98,8 +109,8 @@ type AddItem_Options<K_Type extends ItemType> = {
   state?: Partial<AllState[K_Type][ItemId<K_Type>]>;
   refs?: Partial<AllRefs[K_Type][ItemId<K_Type>]>;
 };
-export function addItem<K_Type extends ItemType>(addItemOptions: AddItem_Options<K_Type>, callback?: any) {
-  _addItem(addItemOptions as AddItem_OptionsUntyped<AllState, AllRefs, K_Type>, callback);
+export function addItem<K_Type extends ItemType>(addItemOptions: AddItem_Options<K_Type>) {
+  _addItem(addItemOptions as AddItem_OptionsUntyped<AllState, AllRefs, K_Type>);
 }
 
 export function removeItem(itemInfo: { type: ItemType; id: string }) {

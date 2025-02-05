@@ -1,25 +1,27 @@
 import { forEach } from "chootils/dist/loops";
 import { repondMeta as meta } from "../meta";
 import { _updateRepond } from "../updating";
-import { runWhenAddingAndRemovingItems, runWhenDoingSetStates } from "./runWhens";
-import { mergeStates, mergeToState_NEW } from "../copyStates";
+import { runWhenAddingAndRemovingItems, whenSettingStates } from "./runWhens";
+import { mergeStates_OLD, mergeToState } from "../copyStates";
+import { onNextTick } from "repond/src/usable/getSet";
 
-export function _setState(newState: any, callback?: any) {
-  runWhenDoingSetStates(() => {
+export function _setState_OLD(newState: any, callback?: any) {
+  whenSettingStates(() => {
     const newStateValue = typeof newState === "function" ? newState(meta.nowState) : newState;
 
     if (!newStateValue) return;
-    mergeStates(
+    mergeStates_OLD(
       newStateValue,
       meta.nowState,
       meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
       meta.recordedStepEndEffectChanges
     );
-  }, callback);
+  });
+  onNextTick(callback);
 }
 
-export function _setState_NEW(propPath: string, newValue: any, itemId?: string, callback?: any) {
-  runWhenDoingSetStates(() => {
+export function _setState(propPath: string, newValue: any, itemId?: string) {
+  whenSettingStates(() => {
     if (newValue === undefined) return;
 
     if (!propPath) {
@@ -34,7 +36,7 @@ export function _setState_NEW(propPath: string, newValue: any, itemId?: string, 
       return;
     }
 
-    const storeType = meta.storeTypeByPropPathId[propPath];
+    const storeType = meta.itemTypeByPropPathId[propPath];
     const propKey = meta.propKeyByPropPathId[propPath];
     let foundItemId = itemId || meta.itemIdsByItemType[storeType]?.[0];
     if (!foundItemId) {
@@ -44,7 +46,7 @@ export function _setState_NEW(propPath: string, newValue: any, itemId?: string, 
       );
     }
 
-    mergeToState_NEW(
+    mergeToState(
       storeType,
       propKey,
       newValue,
@@ -53,7 +55,7 @@ export function _setState_NEW(propPath: string, newValue: any, itemId?: string, 
       meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges,
       meta.recordedStepEndEffectChanges
     );
-  }, callback);
+  });
 }
 
 export function _removeItem({ type, id }: { type: string; id: string }, callback?: any) {
@@ -68,13 +70,10 @@ export function _removeItem({ type, id }: { type: string; id: string }, callback
     meta.recordedStepEndEffectChanges.somethingChanged = true;
     meta.recordedEffectChanges.itemTypesBool[type] = true;
     meta.recordedEffectChanges.somethingChanged = true;
-  }, callback);
+  });
 }
 
-export function _addItem(
-  { type, id, state, refs }: { type: string; id: string; state?: any; refs?: any },
-  callback?: any
-) {
+export function _addItem({ type, id, state, refs }: { type: string; id: string; state?: any; refs?: any }) {
   if (!meta.willAddItemsInfo[type]) meta.willAddItemsInfo[type] = {};
   meta.willAddItemsInfo[type][id] = true;
   runWhenAddingAndRemovingItems(() => {
@@ -114,5 +113,5 @@ export function _addItem(
         meta.recordedEffectChanges.itemPropsBool[type][id][propName] = true;
       }
     });
-  }, callback);
+  });
 }

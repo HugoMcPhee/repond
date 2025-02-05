@@ -41,7 +41,7 @@ export function copyItemIdsByItemType(currentObject: any, saveToObject: any) {
   }
 }
 
-export function mergeStates(
+export function mergeStates_OLD(
   currentObject: any,
   saveToObject: any,
   recordedChanges: RecordedChanges,
@@ -85,7 +85,7 @@ export function mergeStates(
   }
 }
 
-export function mergeToState_NEW(
+export function mergeToState(
   storeType: string,
   propKey: string,
   newValue: string,
