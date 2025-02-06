@@ -1,7 +1,6 @@
 import { repondMeta as meta } from "../meta";
 import { runNextFrameIfNeeded } from "./frames";
 
-// Only runs when calling  _setState
 export function whenSettingStates(callback: any) {
   if (meta.isRunningSetStates) {
     callback();

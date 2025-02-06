@@ -1,6 +1,6 @@
 import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
-import { addItem, getDefaultStates, getItemTypes, removeItem, setState, setState_OLD } from "./getSet";
+import { addItem, getDefaultStates, getItemTypes, removeItem, setNestedState } from "./getSet";
 import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
 import { repondMeta as meta, UntypedDiffInfo, initialRecordedChanges } from "../meta";
 import { AllState, DiffInfo, GetPartialState, ItemIdsByType, ItemId, ItemType, PropName } from "../types";
@@ -61,7 +61,7 @@ export function applyPatch(patch: StatesPatch) {
     forEach(patch.removed[type] ?? [], (id) => removeItem({ type, id }));
     forEach(patch.added[type] ?? [], (id) => addItem({ type, id, state: patch.changed?.[type]?.[id] }));
   });
-  setState_OLD(patch.changed);
+  setNestedState(patch.changed);
 }
 
 export function applyPatchHere(newStates: GetPartialState<AllState>, patch: StatesPatch) {
