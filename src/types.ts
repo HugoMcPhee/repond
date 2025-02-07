@@ -193,6 +193,7 @@ export type Effect = {
   atStepEnd?: boolean;
   step?: StepName;
   runAtStart?: boolean;
+  becomes?: boolean | string | number;
   // cached when the effect is created and saved
   _itemTypes?: ItemType[];
   _groupName?: string;

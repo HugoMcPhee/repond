@@ -16,7 +16,7 @@ export type RefinedEffectGroups = {
 };
 
 export function startNewEffect(theEffect: Effect) {
-  _startEffect(theEffect);
+  return _startEffect(theEffect);
 }
 
 // This is really startGroupedEffect

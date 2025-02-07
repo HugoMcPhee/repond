@@ -1,3 +1,4 @@
+import { getState } from "repond/src/usable/getSet";
 import { repondMeta as meta } from "./meta";
 import { Effect, EffectPhase } from "./types";
 
@@ -37,6 +38,7 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
 
   if (!itemTypes.length) {
     console.warn(`Effect ${effect.id} has no item types, skipping check`);
+    console.log(effect);
     return false;
   }
 
@@ -46,6 +48,7 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
     const shouldCheckAdded = checkAddedByItemType[type];
     const shouldCheckRemoved = checkRemovedByItemType[type];
     const propsToCheck = propsByItemType?.[type];
+    const shouldCheckBecomes = effect.becomes !== undefined;
 
     // First check if anything was added for this item type
     if (shouldCheckAdded && diffInfo.itemsAddedBool[type]) {
@@ -85,6 +88,13 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
               // forEach(diffInfo.itemsChanged[type], (itemId) => {
               if (allowedIdsMap![itemId]) {
                 if (diffInfo.propsChangedBool[type][itemId][propName]) {
+                  if (shouldCheckBecomes) {
+                    if (getState(type, itemId)?.[propName] === effect.becomes) {
+                      return true; // did change
+                    } else {
+                      continue; // did not change
+                    }
+                  }
                   return true; // did change
                 }
               }

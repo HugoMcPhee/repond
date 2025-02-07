@@ -12,7 +12,9 @@ export function _startEffect(newEffect: Effect) {
   // TODO setupEffect the frist time each time if the cache stuff isn't there
   storeCachedValuesForEffect(newEffect);
 
-  if (newEffect.runAtStart) runEffectWithoutChange(newEffect);
+  if (newEffect.runAtStart) {
+    whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffect));
+  }
 
   whenStartingEffects(() => {
     meta.liveEffectsMap[effectId] = newEffect;
