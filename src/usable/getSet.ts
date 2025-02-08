@@ -60,9 +60,9 @@ export function setNestedState(newState: Partial<AllState>) {
     forEach(itemTypes, (itemType) => {
       const itemIds = Object.keys(newState[itemType] as any);
       forEach(itemIds, (itemId) => {
-        const itemProps = Object.keys(newState[itemType][itemId]);
+        const itemProps = Object.keys(newState[itemType]![itemId]);
         forEach(itemProps, (propName) => {
-          const newValue = newState[itemType][itemId][propName];
+          const newValue = newState[itemType]![itemId][propName];
           setState(`${itemType}.${propName}`, newValue, itemId);
         });
       });
@@ -77,7 +77,7 @@ export const getDefaultRefs = <T_Type extends ItemType>(kind: T_Type): DefaultRe
 export const getItemTypes = (): ItemType[] => meta.itemTypeNames;
 export const getItemIds = (kind: ItemType): string[] => meta.itemIdsByItemType[kind];
 
-const _getNestedState = (): DeepReadonly<AllState> => meta.nowState as DeepReadonly<AllState>;
+const _getNestedState = (): AllState => meta.nowState as AllState;
 
 export const getState = <T_Type extends ItemType>(
   kind: T_Type,

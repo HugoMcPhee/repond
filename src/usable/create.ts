@@ -1,82 +1,53 @@
-import { cloneObjectWithJson } from "../copyStates";
-import { AllStoreInfoUntyped } from "../declarations";
+import { forEach } from "chootils/dist/loops";
+import { ItemTypeDefs } from "../declarations";
 import { createDiffInfo } from "../getStatesDiff";
-import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import { repondMeta as meta, UntypedDiffInfo } from "../meta";
-import {
-  AllState,
-  DefaultRefs,
-  DefaultStates,
-  FramerateTypeOption,
-  ItemType,
-  StartStatesItemId,
-  StepName,
-} from "../types";
 import { createRecordedChanges } from "../updating";
 
-export function initRepond<T_AllInfo extends AllStoreInfoUntyped, T_StepNamesParam extends Readonly<string[]>>(
-  allStoresInfoOriginal: T_AllInfo,
-  extraOptions?: {
-    stepNames: T_StepNamesParam;
-    framerate?: FramerateTypeOption;
-  }
-) {
-  const allStoresInfo: AllStoreInfoUntyped = {};
+const SPECIAL_CHANGE_KEYS = ["__added", "__removed"];
 
-  Object.entries(allStoresInfoOriginal).forEach(([key, value]) => {
-    // Remove "Store" from the end of the key, if present
-    const newKey = key.replace(/Store$/, "");
-    allStoresInfo[newKey] = value;
+export function initRepond<T_ItemTypeDefs extends ItemTypeDefs, T_StepNamesParam extends Readonly<string[]>>(
+  itemTypeDefs: T_ItemTypeDefs,
+  stepNames: T_StepNamesParam
+) {
+  const renamedItemTypeDefs: ItemTypeDefs = {};
+
+  Object.entries(itemTypeDefs).forEach(([type, definition]) => {
+    renamedItemTypeDefs[type.replace(/Store$/, "")] = definition; // Remove "Store" from the end of the key, if present
   });
 
-  const itemTypes = Object.keys(allStoresInfo) as unknown as Readonly<ItemType[]>;
+  meta.itemTypeNames = Object.keys(renamedItemTypeDefs);
 
-  const stepNamesUntyped = extraOptions?.stepNames ? [...extraOptions.stepNames] : ["default"];
-  if (!stepNamesUntyped.includes("default")) stepNamesUntyped.push("default");
+  const editedStepNames = stepNames ? [...stepNames] : ["default"];
+  if (!editedStepNames.includes("default")) editedStepNames.push("default");
 
-  const stepNames: Readonly<StepName[]> = [...stepNamesUntyped];
-
-  meta.frameRateTypeOption = extraOptions?.framerate || "full";
-  if (meta.frameRateTypeOption === "full") meta.frameRateType = "full";
-  else if (meta.frameRateTypeOption === "half") meta.frameRateType = "half";
-  else if (meta.frameRateTypeOption === "auto") meta.frameRateType = "full";
-
-  meta.stepNames = stepNames;
+  meta.stepNames = editedStepNames;
   meta.nowStepIndex = 0;
   meta.nowStepName = stepNames[meta.nowStepIndex];
 
-  const defaultStates: DefaultStates = itemTypes.reduce((prev: any, key) => {
-    prev[key] = allStoresInfo[key].getDefaultState;
-    return prev;
-  }, {});
-  const defaultRefs: DefaultRefs = itemTypes.reduce((prev: any, key) => {
-    prev[key] = allStoresInfo[key].getDefaultRefs;
-    return prev;
-  }, {});
+  for (const type of meta.itemTypeNames) {
+    meta.nowState[type] = {};
+    meta.prevState[type] = {};
+    meta.nowRefs[type] = {};
+    meta.defaultStateByItemType[type] = renamedItemTypeDefs[type].newState;
+    meta.defaultRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
+    meta.itemIdsByItemType[type] = [];
 
-  const initialState: AllState = itemTypes.reduce((prev: any, key) => {
-    prev[key] = allStoresInfo[key].startStates || ({} as StartStatesItemId<typeof key>);
+    const propNames = Object.keys(meta.defaultStateByItemType[type]?.("anyItemId"));
 
-    meta.itemIdsByItemType[key as string] = Object.keys(prev[key]);
+    meta.propNamesByItemType[type] = propNames;
 
-    return prev;
-  }, {});
+    SPECIAL_CHANGE_KEYS.forEach((key) => {
+      meta.specialKeyByPropPathId[`${type}.${key}`] = key;
+      meta.itemTypeByPropPathId[`${type}.${key}`] = type;
+    });
 
-  // ------------------------------------------------
-  // Setup Repond
-  // ------------------------------------------------
-
-  const nowState: AllState = cloneObjectWithJson(initialState);
-  const prevState: AllState = cloneObjectWithJson(initialState);
-  // store initialState and set currentState
-  meta.initialState = initialState;
-  meta.nowState = nowState;
-  meta.prevState = prevState;
-  meta.defaultStateByItemType = defaultStates as any;
-  meta.defaultRefsByItemType = defaultRefs as any;
-
-  getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-  makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemIds from repond state
+    forEach(propNames, (propName) => {
+      const propPathId = `${type}.${propName}`;
+      meta.itemTypeByPropPathId[propPathId] = type;
+      meta.propKeyByPropPathId[propPathId] = propName;
+    });
+  }
 
   createRecordedChanges(meta.recordedEffectChanges);
   createRecordedChanges(meta.recordedStepEndEffectChanges);

@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase, FramerateTypeOption } from "./types";
+import { DiffInfo, Effect, EffectPhase } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
 // This is changes recorded from setStates, and addItem and removeItem
@@ -64,46 +64,45 @@ export type RepondMetaPhase =
   | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
 
 export const repondMeta = {
-  // prevStatesByStep: {
-  //   default: {},
-  // } as Record<string, any>,
-  //
+  // Items -----------------------------------------------------
+  prevState: {} as any,
+  nowState: {} as any,
+  nowRefs: {} as any,
+  stepNames: ["default"] as const as Readonly<string[]>,
+
+  // Live info -----------------------------------------------------
+  nowStepName: "default" as Readonly<string>,
+  nowStepIndex: 0,
+  nowMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
+  willAddItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
+  willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
+  isRunningSetStates: false,
   didInit: false,
+
+  // Recording changes -----------------------------------------------------
+  diffInfo: initialDiffInfo as DiffInfo,
   // this gets reset for each step (might not still be true)
   recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
   // this gets reset at the start of a frame, and kept added to throughout the frame
   recordedStepEndEffectChanges: initialRecordedChanges(),
+
+  // Frames -----------------------------------------------------
   nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
-  latestFrameId: 0,
   previousFrameTime: 0,
   latestFrameTime: 0,
   latestFrameDuration: 16.66667,
-  shortestFrameDuration: 16.6666667, // the screens frameRate
-  foundScreenFramerate: false,
-  lookingForScreenFramerate: false,
-  //
-  latestUpdateTime: 0,
-  latestUpdateDuration: 16.66667, // how long everything inside "update" took
-  frameRateTypeOption: "full" as FramerateTypeOption,
-  frameRateType: "full" as "full" | "half",
-  lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
   shouldRunUpdateAtEndOfUpdate: false,
-  //
-  diffInfo: initialDiffInfo as DiffInfo,
-  // state
-  prevState: {} as any,
-  nowState: {} as any,
-  initialState: {} as any,
-  // refs
-  nowRefs: {} as any,
-  nowMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
-  // functions
+
+  // Callback queues -----------------------------------------------------
   addAndRemoveItemsQueue: [] as AFunction[],
   effectsRunAtStartQueue: [] as AFunction[],
   startEffectsQueue: [] as AFunction[],
   setStatesQueue: [] as AFunction[],
   nextTickQueue: [] as AFunction[],
-  //
+
+  // Effects -----------------------------------------------------
+  autoEffectIdCounter: 1,
+  // Normal effects
   liveEffectsMap: {} as Record<string, Effect>,
   effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
     EffectPhase,
@@ -111,11 +110,11 @@ export const repondMeta = {
   >,
   storedEffectsMap: {} as Record<string, Effect>,
   effectIdsByGroup: {} as Record<string, string[]>, // effectGroup: [effectId]
-
-  // storedParamEffectsMap: {} as Record<string, Effect>, // NOTE Not used yet! it's complicated
+  // Param effects
   allParamEffectGroups: {} as Record<string, ParamEffectsGroup<any, any>>,
   paramEffectIdsByGroupPlusParamKey: {} as Record<string, string[]>, // effectGroup: {paramKey: [effectId]}
-  //
+
+  // Cached info -----------------------------------------------------
   itemTypeNames: [] as string[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
   itemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
@@ -124,33 +123,12 @@ export const repondMeta = {
     [itemTypeName: string]: (itemId?: string, itemState?: any) => { [itemPropertyName: string]: any };
   },
   defaultStateByItemType: {} as {
-    [itemTypeName: string]: (itemId?: string) => //   itemId?: string
-    { [itemPropertyName: string]: any };
+    [itemTypeName: string]: (itemId?: string) => { [itemPropertyName: string]: any };
   },
-  willAddItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
-  willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
-  getStatesDiff: (
-    nowState: any,
-    prevState: any,
-    diffInfo: any,
-    recordedChanges: RecordedChanges,
-    checkAllChanges: boolean
-  ) => {},
-  // react specific?
-  autoEffectIdCounter: 1,
-  //
-  stepNames: ["default"] as const as Readonly<string[]>,
-  nowStepName: "default" as Readonly<string>,
-  nowStepIndex: 0,
-
-  // -----------------------------------------------------
-  // -----------------------------------------------------
-  // New stuff
+  // PropPathId info
   itemTypeByPropPathId: {} as Record<string, string>, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
   propKeyByPropPathId: {} as Record<string, string>, // To get "piecePropertyA" from "pieces.piecePropertyA" quickly ( in O(1) time )
   specialKeyByPropPathId: {} as Record<string, string>, // For special keys like __added, __removed
-
-  isRunningSetStates: false,
 };
 
 export type RepondMeta = typeof repondMeta;

@@ -1,11 +1,10 @@
-import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
-import { Effect, EffectPhase } from "./types";
-import { runNextFrame } from "./helpers/frames";
-import { getStatesDiff } from "./getStatesDiff";
 import { copyItemIdsByItemType, copyStates } from "./copyStates";
-import { getPrevState } from "./usable/getSet";
+import { getStatesDiff } from "./getStatesDiff";
+import { updateRepondNextFrame } from "./helpers/frames";
+import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
+import { Effect, EffectPhase } from "./types";
 
 const MAX_STEP_ITERATIONS = 8;
 
@@ -23,14 +22,6 @@ function updateFrameTimes(animationFrameTime: number) {
   meta.latestFrameTime = animationFrameTime;
   if (meta.nextFrameIsFirst === false) {
     meta.latestFrameDuration = meta.latestFrameTime - meta.previousFrameTime;
-    // NOTE possibly stop this check if it's been done enough
-    // if (meta.frameRateTypeOption !== "full") {
-    //   if (meta.speedTestFramesRun < 15) {
-    //     if (meta.latestFrameDuration < meta.shortestFrameDuration) {
-    //       meta.shortestFrameDuration = meta.latestFrameDuration;
-    //     }
-    //   }
-    // }
   } else {
     meta.latestFrameDuration = 16.66667;
   }
@@ -175,6 +166,7 @@ export function createRecordedChanges(recordedChanges: RecordedChanges) {
   recordedChanges.itemTypesBool = {};
   recordedChanges.itemIdsBool = {};
   recordedChanges.itemPropsBool = {};
+  console.log("createRecordedChanges", meta.itemTypeNames);
 
   forEach(meta.itemTypeNames, (itemType) => {
     recordedChanges.itemTypesBool[itemType] = false;
@@ -288,7 +280,6 @@ function runSetOfStepsLoop() {
 
 export function _updateRepond(animationFrameTime: number) {
   updateFrameTimes(animationFrameTime);
-  meta.latestUpdateTime = performance.now();
 
   setMetaPhase("runningUpdates");
   // Save previous state
@@ -308,10 +299,9 @@ export function _updateRepond(animationFrameTime: number) {
 
   // if theres nothing running on next frame
   meta.nextFrameIsFirst = meta.setStatesQueue.length === 0;
-  meta.latestUpdateDuration = performance.now() - meta.latestUpdateTime;
 
   if (meta.shouldRunUpdateAtEndOfUpdate) {
-    runNextFrame();
+    updateRepondNextFrame();
     meta.shouldRunUpdateAtEndOfUpdate = false;
   }
 }

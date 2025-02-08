@@ -453,7 +453,7 @@ export function makeMinimalPatch(currentStates: GetPartialState<AllState>, thePa
 
     const changedForType = minimalPatch.changed[itemType];
     if (changedForType) {
-      const changedItemIds = Object.keys(changedForType ?? {}) as ItemId<typeof itemType>[];
+      const changedItemIds = Object.keys(changedForType ?? {}) as ItemId[];
       forEach(changedItemIds, (itemId) => {
         const changedForItem = changedForType[itemId];
         const itemState = currentStates?.[itemType]?.[itemId];
