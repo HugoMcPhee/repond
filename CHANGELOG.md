@@ -7,6 +7,7 @@ TODO
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
 - clean up the code a bit
+- maybe support starting param effects with group.name instead of seperate params
 
 v1.0.0
 
