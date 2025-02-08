@@ -9,6 +9,7 @@ TODO
 - clean up the code a bit
 - maybe support starting param effects with group.name instead of seperate params
 - maybe remove "getUsefulParams" from prendy effect makers
+- maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
 v1.0.0
 
