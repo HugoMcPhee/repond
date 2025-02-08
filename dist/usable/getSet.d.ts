@@ -1,35 +1,18 @@
-import { AllRefs, AllState, DeepReadonly, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, PropName, RepondCallback, SetRepondState, StatePath } from "../types";
-export declare const getDefaultStates: () => DefaultStates;
-export declare const getDefaultRefs: () => DefaultRefs;
+import { AllRefs, AllState, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, RepondCallback } from "../types";
+export declare function setState(propPath: string, newValue: any, itemId?: string): void;
+export declare function setNestedState(newState: Partial<AllState>): void;
+export declare const getDefaultState: <T_Type extends string>(kind: T_Type) => (itemId?: any) => any;
+export declare const getDefaultRefs: <T_Type extends string>(kind: T_Type) => (itemId?: any, type?: any) => any;
 export declare const getItemTypes: () => ItemType[];
-export declare function getItem<K_Type extends ItemType, T_ItemId extends ItemId<K_Type>>(type: K_Type, id: T_ItemId): [AllState[K_Type][T_ItemId], AllRefs[K_Type][T_ItemId], AllState[K_Type][T_ItemId]];
-export declare const getState: () => DeepReadonly<AllState>;
-export declare const setState: SetRepondState<AllState>;
-export declare function onNextTick(callback: RepondCallback): void;
-export declare const getPrevState: () => AllState;
-export declare const getRefs: () => AllRefs;
-type AddItem_Options<K_Type extends ItemType> = {
-    type: K_Type;
-    id: string;
-    state?: Partial<AllState[K_Type][ItemId<K_Type>]>;
-    refs?: Partial<AllRefs[K_Type][ItemId<K_Type>]>;
-};
-export declare function addItem<K_Type extends ItemType>(addItemOptions: AddItem_Options<K_Type>, callback?: any): void;
-export declare function removeItem(itemInfo: {
-    type: ItemType;
-    id: string;
-}): void;
-export declare function getItemWillBeAdded<K_Type extends ItemType>(type: K_Type, id: string): boolean;
-export declare function getItemWillBeRemoved<K_Type extends ItemType>(type: K_Type, id: string): boolean;
-export declare function getItemWillExist<K_Type extends ItemType>(type: K_Type, id: string): boolean;
+export declare const getItemIds: (kind: ItemType) => string[];
+export declare const getState: <T_Type extends string>(kind: T_Type, itemId?: string) => any;
+export declare function onNextTick(callback?: RepondCallback): void;
+export declare const getPrevState: <T_ItemType extends string>(itemType: T_ItemType, itemId?: string) => any;
+export declare const getRefs: <T_ItemType extends string>(itemType: T_ItemType, itemId?: string) => any;
+export declare function addItem<T_ItemType extends ItemType>(type: T_ItemType, id: string, state?: Partial<AllState[T_ItemType][ItemId]>, refs?: Partial<AllRefs[T_ItemType][ItemId]>): void;
+export declare function removeItem(type: ItemType, id: string): void;
+export declare function getItemWillBeAdded<T_Type extends ItemType>(type: T_Type, id: string): boolean;
+export declare function getItemWillBeRemoved<T_Type extends ItemType>(type: T_Type, id: string): boolean;
+export declare function getItemWillExist<T_Type extends ItemType>(type: T_Type, id: string): any;
 export declare function getPartialState(propsToGet: Partial<ItemPropsByType>): Partial<AllState>;
 export declare function applyState(partialState: Partial<AllState>): void;
-export declare function getStateAtPath<T_ItemType extends ItemType>(path: StatePath<T_ItemType>): {
-    readonly [x: string]: {
-        readonly [x: string]: any;
-    };
-    readonly [x: number]: {
-        readonly [x: string]: any;
-    };
-}[T_ItemType][import("../types").ExtendsString<import("../types").KeysOfUnion<AllState[T_ItemType]>>][PropName<T_ItemType>];
-export {};

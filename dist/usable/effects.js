@@ -1,63 +1,51 @@
 import { forEach } from "chootils/dist/loops";
-import { easyEffectToEffect, itemEffectToEffect } from "../helpers/effects/converters";
-import { _startEffect, _stopEffect } from "../helpers/effects/internal";
+import { _startEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
 export function startNewEffect(theEffect) {
-    _startEffect(easyEffectToEffect(theEffect));
-}
-export function startNewItemEffect(itemEffect) {
-    const effect = itemEffectToEffect(itemEffect);
-    _startEffect(effect);
-    return effect.id;
-}
-export function stopNewEffect(effectName) {
-    _stopEffect(effectName);
+    return _startEffect(theEffect);
 }
 // This is really startGroupedEffect
-export function startEffect(groupName, effectName) {
-    const theEffect = meta.allEffectGroups[groupName][effectName];
+export function startEffect(effectId) {
+    const theEffect = meta.storedEffectsMap[effectId];
     if (!theEffect)
-        return console.warn("no effect found for ", groupName, effectName);
+        return console.warn("no effect found for ", effectId);
     _startEffect(theEffect);
 }
-export function stopEffect(groupName, effectName) {
-    const theEffect = meta.allEffectGroups[groupName][effectName];
+export function stopEffect(effectId) {
+    const theEffect = meta.liveEffectsMap[effectId];
+    //  NOTE Not logging if it tried to stop a missing event, because react useEffect does a quick start stop at the start
+    // if (!theEffect) return console.warn("(stop) no effect found for ", effectId);
     if (!theEffect)
-        return console.warn("no effect found for ", groupName, effectName);
+        return;
     _stopEffect(theEffect.id);
 }
 export function startEffectsGroup(groupName) {
-    const theGroup = meta.allEffectGroups[groupName];
-    forEach(Object.keys(theGroup), (effectName) => startEffect(groupName, effectName));
+    forEach(meta.effectIdsByGroup[groupName], (effectId) => startEffect(effectId));
 }
 export function stopEffectsGroup(groupName) {
-    const theGroup = meta.allEffectGroups[groupName];
-    forEach(Object.keys(theGroup), (effectName) => stopEffect(groupName, effectName));
+    forEach(meta.effectIdsByGroup[groupName], (effectId) => stopEffect(effectId));
 }
 export function startAllEffectsGroups() {
-    forEach(Object.keys(meta.allEffectGroups), (groupName) => startEffectsGroup(groupName));
+    forEach(Object.keys(meta.effectIdsByGroup), (groupName) => startEffectsGroup(groupName));
 }
 export function stopAllEffectsGroups() {
-    forEach(Object.keys(meta.allEffectGroups), (groupName) => stopEffectsGroup(groupName));
+    forEach(Object.keys(meta.effectIdsByGroup), (groupName) => stopEffectsGroup(groupName));
 }
-export function runEffect(groupName, effectName) {
-    const theEffect = meta.allEffectGroups[groupName][effectName];
+export function runEffect(effectId) {
+    const theEffect = meta.liveEffectsMap[effectId];
     if (!theEffect)
-        return console.warn("no effect found for ", groupName, effectName);
-    theEffect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
+        return console.warn("(run) no effect found for ", effectId);
+    runEffectWithoutChange(theEffect);
 }
 export function runEffectsGroup(groupName) {
-    const theGroup = meta.allEffectGroups[groupName];
-    forEach(Object.keys(theGroup), (effectName) => runEffect(groupName, effectName));
+    forEach(meta.effectIdsByGroup[groupName], (effectId) => runEffect(effectId));
 }
-export function makeEffect(easyEffect) {
-    return easyEffectToEffect(easyEffect);
+export function makeEffect(effectRun, effectOptions) {
+    effectOptions.run = effectRun;
+    return effectOptions;
 }
-export function makeItemEffect(itemEffect) {
-    return itemEffectToEffect(itemEffect);
-}
-export function makeEffects(effectsToAdd) {
-    return effectsToAdd({ itemEffect: makeItemEffect, effect: makeEffect });
+export function makeEffects(getEffectsToAddCallback) {
+    return getEffectsToAddCallback(makeEffect);
 }
 export function initEffectGroups(groups) {
     const transformedGroups = {};
@@ -73,10 +61,15 @@ export function initEffectGroups(groups) {
         const effectNames = Object.keys(theGroup);
         forEach(effectNames, (effectName) => {
             const theEffect = theGroup[effectName];
-            theEffect.id = `${groupName}_${effectName}`;
+            theEffect.id = `${groupName}.${effectName}`;
+            theEffect._groupName = groupName;
+            theEffect._effectName = effectName;
+            storeCachedValuesForEffect(theEffect);
+            meta.storedEffectsMap[theEffect.id] = theEffect;
+            meta.effectIdsByGroup[groupName] = meta.effectIdsByGroup[groupName] || [];
+            meta.effectIdsByGroup[groupName].push(theEffect.id);
         });
     });
-    // Store the transformed groups
-    meta.allEffectGroups = transformedGroups;
+    // Only used for types
     return groups;
 }

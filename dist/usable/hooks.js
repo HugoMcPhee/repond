@@ -1,100 +1,82 @@
-import { forEach } from "chootils/dist/loops";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { toSafeEffectId } from "../helpers/effects/internal";
+import { toSafeEffectId } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
-import { startNewEffect, startNewItemEffect, stopNewEffect } from "./effects";
-import { getPrevState, getRefs, getState } from "./getSet";
-export function useStore(whatToReturn, check, hookDeps = []) {
+import { startNewEffect, stopEffect } from "./effects";
+import { getState } from "./getSet";
+export function useStore(whatToReturn, options, hookDeps = []) {
     const [, setTick] = useState(0);
     const rerender = useCallback(() => setTick((tick) => tick + 1), []);
     useEffect(() => {
-        const name = toSafeEffectId("reactComponent");
+        const effectId = toSafeEffectId("reactComponent");
         startNewEffect({
+            isPerItem: false, // isPerItem false since it's not an item effect, and it can only return one value
             atStepEnd: true,
-            id: name,
-            check,
+            id: effectId,
             run: rerender,
             runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
+            ...options,
         });
-        return () => stopNewEffect(name);
+        return () => stopEffect(effectId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
-    return whatToReturn(meta.nowState);
+    return whatToReturn(meta.diffInfo);
 }
-export function useStoreEffect(run, check, hookDeps = []) {
+export function useStoreEffect(run, options, hookDeps = undefined) {
     // const stringifiedCheck = JSON.stringify(check); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
+    const stringifiedCheck = JSON.stringify(options?.itemIds); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
     useLayoutEffect(() => {
-        const name = toSafeEffectId("useStoreEffect_"); // note could add JSON.stringify(check) for useful effect name
-        startNewEffect({ id: name, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
-        return () => stopNewEffect(name);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, 
-    // hookDeps ? [...hookDeps, stringifiedCheck] : [stringifiedCheck]
-    hookDeps);
+        const effectId = toSafeEffectId("useStoreEffect_" + JSON.stringify(options.changes));
+        startNewEffect({ id: effectId, atStepEnd: true, run, runAtStart: true, ...options }); // runAtStart true so it works like useEffect
+        return () => stopEffect(effectId);
+    }, hookDeps ? [...hookDeps, stringifiedCheck] : [stringifiedCheck]
+    // hookDeps.length > 0 ? [...hookDeps, ...(options?.itemIds ?? [])] : options?.itemIds
+    // hookDeps ? hookDeps : []
+    );
 }
-export function useStoreItemEffect(run, check, hookDeps = []) {
-    useLayoutEffect(() => {
-        const effectId = toSafeEffectId("useStoreItemEffect_" + JSON.stringify(check));
-        startNewItemEffect({ id: effectId, atStepEnd: true, check, run, runAtStart: true }); // runAtStart true so it works like useEffect
-        return () => stopNewEffect(effectId);
-    }, hookDeps.length > 0 ? [...hookDeps, check.id] : [check.id]);
-}
-// NOTE it automatically supports changing item name, but not item type or props, that needs custom hookDeps
-export function useStoreItem(itemEffectCallback, check, hookDeps = []) {
-    function getInitialState() {
-        return {
-            itemId: check.id,
-            prevItemState: getPrevState()[check.type][check.id],
-            itemState: getState()[check.type][check.id],
-            itemRefs: getRefs()[check.type][check.id],
-        };
-    }
+// NOTE types might be hard here, since it checks the first "changes" path to get the item type
+export function useStoreItem(itemEffectCallback, options, hookDeps) {
+    const { id, type, props } = options;
     const didRender = useRef(false);
-    const [returnedState, setReturnedState] = useState(getInitialState());
+    const returnedStateRef = useRef(getState(type, id));
+    // const [returnedState, setReturnedState] = useState(getState(type, id));
+    const [, setTick] = useState(0);
+    // const rerender = useCallback(() => {
+    //   returnedStateRef.current = getState(type, id);
+    //   setTick((tick) => tick + 1);
+    // }, []);
+    const rerender = () => {
+        returnedStateRef.current = getState(type, id);
+        setTick((tick) => tick + 1);
+    };
     useLayoutEffect(() => {
-        if (didRender.current) {
-            setReturnedState(getInitialState());
-        }
-        const effectId = toSafeEffectId("useStoreItem"); // note could add JSON.stringify(check) for useful effect name
-        startNewItemEffect({
+        // if (didRender.current) setReturnedState(getState(type, id));
+        if (didRender.current)
+            rerender();
+        const effectId = toSafeEffectId("useStoreItem" + id); // note could add JSON.stringify(check) for useful effect name
+        startNewEffect({
             id: effectId,
+            // run: (itemId) => rerender(),
+            run() {
+                // returnedStateRef.current = getState(type, id);
+                // setTick((tick) => tick + 1);
+                rerender();
+            },
             atStepEnd: true,
-            check,
-            run: (theParameters) => setReturnedState(theParameters),
+            changes: props.map((prop) => `${type}.${prop}`),
+            itemIds: [id],
             runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
+            isPerItem: true,
         });
         didRender.current = true;
-        return () => stopNewEffect(effectId);
+        return () => stopEffect(effectId);
     }, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    hookDeps.length > 0 ? [...hookDeps, check.id] : [check.id]);
-    return itemEffectCallback(returnedState);
+    hookDeps && hookDeps?.length > 0 ? [...hookDeps, ...props, id] : [...props, id] // NOTE maybe need to change this to be stringified
+    );
+    // useEffect(() => {
+    //   console.log("returnedState updated", returnedState);
+    // }, [returnedState]);
+    return itemEffectCallback(returnedStateRef.current);
+    // return itemEffectCallback(getState(type, id));
 }
-/*
-  useStoreItemPropsEffect(
-  { position() {}, rotationY() {}, nowAnimation() {} },
-  { type: "characters", name: "walker" },
-  );
-  */
-export function useStoreItemPropsEffect(checkItem, onPropChanges, hookDeps = []) {
-    useLayoutEffect(() => {
-        const propNameKeys = Object.keys(onPropChanges);
-        const effectIdPrefix = toSafeEffectId("useStoreItemPropsEffect"); // note could add checkItem.type and checkItem.name for useful effect name
-        forEach(propNameKeys, (propKey) => {
-            const effectId = effectIdPrefix + propKey;
-            const itemEffectRun = onPropChanges[propKey];
-            startNewItemEffect({
-                run: itemEffectRun,
-                id: effectId,
-                check: { type: checkItem.type, id: checkItem.id, prop: propKey },
-                atStepEnd: true,
-                step: checkItem.step,
-                runAtStart: true, // runAtStart true so it works like useEffect
-            });
-        });
-        return () => {
-            forEach(propNameKeys, (propKey) => stopNewEffect(effectIdPrefix + propKey));
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, hookDeps.length > 0 ? [...hookDeps, checkItem.id] : [checkItem.id]);
-}
+// useStoreItemPrevState

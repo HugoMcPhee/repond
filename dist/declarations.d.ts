@@ -1,12 +1,11 @@
 import { ParamEffectsGroup } from "./usable/paramEffects";
-export type StoreInfoUntyped = {
-    getDefaultState: (itemId?: any) => any;
-    getDefaultRefs: (itemId?: any, type?: any) => any;
-    startStates?: Record<any, any>;
+export type ItemTypeDefUntyped = {
+    newState: (itemId?: any) => any;
+    newRefs: (itemId?: any, type?: any) => any;
 };
-export type AllStoreInfoUntyped = Record<string, StoreInfoUntyped>;
+export type ItemTypeDefsUntyped = Record<string, ItemTypeDefUntyped>;
 export interface RepondTypesUntyped {
-    AllStoreInfo: AllStoreInfoUntyped;
+    ItemTypeDefs: ItemTypeDefsUntyped;
     StepNames: string[] | readonly string[];
     EffectGroups: Record<string, Record<string, any>>;
     ParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;

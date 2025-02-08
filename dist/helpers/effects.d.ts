@@ -1,0 +1,9 @@
+import { Effect } from "../types";
+export declare function _startEffect(newEffect: Effect): string;
+export declare function runEffectWithoutChangeForItems(effect: Effect): void;
+export declare function runEffectWithoutChange(effect: Effect): void;
+export declare function getItemTypesFromEffect(effect: Effect): string[];
+export declare function getItemIdsForEffect(effect: Effect): string[];
+export declare function storeCachedValuesForEffect(effect: Effect): void;
+export declare function _stopEffect(effectId: string): void;
+export declare function toSafeEffectId(prefix?: string): string;

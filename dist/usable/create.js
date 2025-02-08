@@ -1,68 +1,41 @@
+import { forEach } from "chootils/dist/loops";
 import { createDiffInfo } from "../getStatesDiff";
-import { getRepondStructureFromDefaults, makeRefsStructureFromRepondState } from "../getStructureFromDefaults";
 import { repondMeta as meta } from "../meta";
 import { createRecordedChanges } from "../updating";
-import { cloneObjectWithJson } from "../utils";
-/*
-can 'check' get clearer?
-can check have single or arrays for every property, or would that widen all types?
-*/
-export function initRepond(allStoresInfoOriginal, extraOptions) {
-    const { dontSetMeta } = extraOptions ?? {};
-    const allStoresInfo = {};
-    Object.entries(allStoresInfoOriginal).forEach(([key, value]) => {
-        // Remove "Store" from the end of the key, if present
-        const newKey = key.replace(/Store$/, "");
-        allStoresInfo[newKey] = value;
+const SPECIAL_CHANGE_KEYS = ["__added", "__removed"];
+export function initRepond(itemTypeDefs, stepNames) {
+    const renamedItemTypeDefs = {};
+    Object.entries(itemTypeDefs).forEach(([type, definition]) => {
+        renamedItemTypeDefs[type.replace(/Store$/, "")] = definition; // Remove "Store" from the end of the key, if present
     });
-    const itemTypes = Object.keys(allStoresInfo);
-    const stepNamesUntyped = extraOptions?.stepNames ? [...extraOptions.stepNames] : ["default"];
-    if (!stepNamesUntyped.includes("default"))
-        stepNamesUntyped.push("default");
-    const stepNames = [...stepNamesUntyped];
-    meta.frameRateTypeOption = extraOptions?.framerate || "full";
-    if (meta.frameRateTypeOption === "full")
-        meta.frameRateType = "full";
-    else if (meta.frameRateTypeOption === "half")
-        meta.frameRateType = "half";
-    else if (meta.frameRateTypeOption === "auto")
-        meta.frameRateType = "full";
-    if (!dontSetMeta) {
-        meta.stepNames = stepNames;
-        meta.nowStepIndex = 0;
-        meta.nowStepName = stepNames[meta.nowStepIndex];
+    meta.itemTypeNames = Object.keys(renamedItemTypeDefs);
+    const editedStepNames = stepNames ? [...stepNames] : ["default"];
+    if (!editedStepNames.includes("default"))
+        editedStepNames.push("default");
+    meta.stepNames = editedStepNames;
+    meta.nowStepIndex = 0;
+    meta.nowStepName = stepNames[meta.nowStepIndex];
+    for (const type of meta.itemTypeNames) {
+        meta.nowState[type] = {};
+        meta.prevState[type] = {};
+        meta.nowRefs[type] = {};
+        meta.defaultStateByItemType[type] = renamedItemTypeDefs[type].newState;
+        meta.defaultRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
+        meta.itemIdsByItemType[type] = [];
+        const propNames = Object.keys(meta.defaultStateByItemType[type]?.("anyItemId"));
+        meta.propNamesByItemType[type] = propNames;
+        SPECIAL_CHANGE_KEYS.forEach((key) => {
+            meta.specialKeyByPropPathId[`${type}.${key}`] = key;
+            meta.itemTypeByPropPathId[`${type}.${key}`] = type;
+        });
+        forEach(propNames, (propName) => {
+            const propPathId = `${type}.${propName}`;
+            meta.itemTypeByPropPathId[propPathId] = type;
+            meta.propKeyByPropPathId[propPathId] = propName;
+        });
     }
-    // ReturnType<T_AllInfo[K_Type]["state"]> //
-    const defaultStates = itemTypes.reduce((prev, key) => {
-        prev[key] = allStoresInfo[key].getDefaultState;
-        return prev;
-    }, {});
-    const defaultRefs = itemTypes.reduce((prev, key) => {
-        prev[key] = allStoresInfo[key].getDefaultRefs;
-        return prev;
-    }, {});
-    const initialState = itemTypes.reduce((prev, key) => {
-        prev[key] = allStoresInfo[key].startStates || {};
-        meta.itemIdsByItemType[key] = Object.keys(prev[key]);
-        return prev;
-    }, {});
-    // ------------------------------------------------
-    // Setup Repond
-    // ------------------------------------------------
-    if (!dontSetMeta) {
-        const nowState = cloneObjectWithJson(initialState);
-        const prevState = cloneObjectWithJson(initialState);
-        // store initialState and set currentState
-        meta.initialState = initialState;
-        meta.nowState = nowState;
-        meta.prevState = prevState;
-        meta.defaultStateByItemType = defaultStates;
-        meta.defaultRefsByItemType = defaultRefs;
-        getRepondStructureFromDefaults(); // sets itemTypeNames and propertyNamesByItemType
-        makeRefsStructureFromRepondState(); // sets currenRepondRefs based on itemIds from repond state
-        createRecordedChanges(meta.recordedEffectChanges);
-        createRecordedChanges(meta.recordedStepEndEffectChanges);
-        createDiffInfo(meta.diffInfo);
-        meta.didInit = true;
-    }
+    createRecordedChanges(meta.recordedEffectChanges);
+    createRecordedChanges(meta.recordedStepEndEffectChanges);
+    createDiffInfo(meta.diffInfo);
+    meta.didInit = true;
 }

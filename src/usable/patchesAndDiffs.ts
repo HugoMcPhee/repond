@@ -401,7 +401,7 @@ export function combineTwoPatches(prevPatch: StatesPatch, newPatch: StatesPatch)
       const allChangedItemIds = Object.keys({
         ...(itemsChangedPrev ?? {}),
         ...(itemsChangedNew ?? {}),
-      }) as ItemId<typeof itemType>[];
+      }) as ItemId[];
 
       if (!combinedPatch.changed[itemType]) {
         combinedPatch.changed[itemType] = {};
@@ -501,7 +501,7 @@ export function removePartialPatch(thePatch: StatesPatch, patchToRemove: StatesP
     }
     // Loop through added in patchToRemove, if it’s in newPatch , remove it
     // Keep track of noLongerAddedItems { itemType: []
-    const noLongerAddedItems: ItemId<ItemType>[] = [];
+    const noLongerAddedItems: ItemId[] = [];
     if (newPatch.added[itemType]) {
       newPatch.added[itemType] = newPatch.added[itemType]!.filter((itemId) => {
         const shouldKeep = !patchToRemove.added[itemType]!.includes(itemId);
@@ -516,7 +516,7 @@ export function removePartialPatch(thePatch: StatesPatch, patchToRemove: StatesP
     const removedPatchChangedForType = patchToRemove.changed[itemType];
     const newPatchChangedForType = newPatch.changed[itemType];
     if (removedPatchChangedForType && newPatchChangedForType) {
-      const changedItemIds = Object.keys(removedPatchChangedForType ?? {}) as ItemId<typeof itemType>[];
+      const changedItemIds = Object.keys(removedPatchChangedForType ?? {}) as ItemId[];
       forEach(changedItemIds, (itemId) => {
         const removedPatchChangedForItem = removedPatchChangedForType[itemId];
         const newPatchChangedForItem = newPatchChangedForType[itemId];

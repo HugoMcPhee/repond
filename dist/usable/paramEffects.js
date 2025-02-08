@@ -1,11 +1,11 @@
 import { forEach } from "chootils/dist/loops";
+import { _startEffect, _stopEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
-import { makeEffect, makeItemEffect } from "./effects";
-import { _startEffect, _stopEffect } from "../helpers/effects/internal";
+import { makeEffect } from "./effects";
 export function makeParamEffects(defaultParams, effectsToAdd) {
     return {
-        makeEffects: effectsToAdd,
         defaultParams,
+        makeEffects: effectsToAdd,
     };
 }
 export function initParamEffectGroups(groups) {
@@ -17,6 +17,7 @@ export function initParamEffectGroups(groups) {
     });
     // Store the transformed groups
     meta.allParamEffectGroups = transformedGroups;
+    // storedParamEffectsMap
     return groups;
 }
 function sortAndStringifyObject(obj) {
@@ -25,21 +26,17 @@ function sortAndStringifyObject(obj) {
     return parts.join("_");
 }
 function getParamEffectId(groupName, effectName, params) {
-    return `${groupName}_${effectName}_${sortAndStringifyObject(params)}`;
+    return `${groupName}.${effectName}.${sortAndStringifyObject(params)}`;
 }
 function getGroupPlusParamKey(groupName, params) {
-    return `${groupName}_${sortAndStringifyObject(params)}`;
+    return `${groupName}.${sortAndStringifyObject(params)}`;
 }
 function findParamEffect(groupName, effectName, params) {
     const effectId = getParamEffectId(groupName, effectName, params);
-    return meta.allEffects[effectId];
+    return meta.liveEffectsMap[effectId];
 }
 function makeAndStoreParamEffectsForGroup(groupName, params) {
-    const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects({
-        itemEffect: makeItemEffect,
-        effect: makeEffect,
-        params,
-    });
+    const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects(makeEffect, params);
     if (!madeParamEffects)
         return console.warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
     const effectIds = [];
@@ -50,7 +47,7 @@ function makeAndStoreParamEffectsForGroup(groupName, params) {
         const theEffect = madeParamEffects[effectName];
         theEffect.id = getParamEffectId(groupName, effectName, params);
         effectIds.push(theEffect.id);
-        meta.allEffects[theEffect.id] = theEffect;
+        meta.liveEffectsMap[theEffect.id] = theEffect;
     });
     const groupPlusParamKey = getGroupPlusParamKey(groupName, params);
     meta.paramEffectIdsByGroupPlusParamKey[groupPlusParamKey] = effectIds;
@@ -101,7 +98,7 @@ export function startParamEffectsGroup(groupName, params) {
     if (!effectIds?.length)
         return console.warn("no effectIds found for ", groupName);
     forEach(effectIds, (effectId) => {
-        const effect = meta.allEffects[effectId];
+        const effect = meta.liveEffectsMap[effectId];
         if (!effect)
             return console.warn("no effect found for ", groupName, effectId);
         _startEffect(effect);
@@ -118,16 +115,16 @@ export function runParamEffect(groupName, effectName, params) {
     const effect = findOrMakeParamEffect(groupName, effectName, params);
     if (!effect)
         return console.warn("no effect found for ", groupName, effectName);
-    effect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
+    effect.run("", meta.diffInfo, 16.66666, true /* ranWithoutChange */);
 }
 export function runParamEffectsGroup(groupName, params) {
     const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
     if (!effectIds?.length)
         return console.warn("no effectIds made for ", groupName, params);
     forEach(effectIds, (effectId) => {
-        const effect = meta.allEffects[effectId];
+        const effect = meta.liveEffectsMap[effectId];
         if (!effect)
             return console.warn("no effect found for ", groupName, effectId);
-        effect.run(meta.diffInfo, 16.66666, true /* ranWithoutChange */);
+        effect.run("", meta.diffInfo, 16.66666, true /* ranWithoutChange */);
     });
 }

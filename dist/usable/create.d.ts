@@ -1,7 +1,2 @@
-import { AllStoreInfoUntyped } from "../declarations";
-import { FramerateTypeOption } from "../types";
-export declare function initRepond<T_AllInfo extends AllStoreInfoUntyped, T_StepNamesParam extends Readonly<string[]>>(allStoresInfoOriginal: T_AllInfo, extraOptions?: {
-    stepNames: T_StepNamesParam;
-    dontSetMeta?: boolean;
-    framerate?: FramerateTypeOption;
-}): void;
+import { ItemTypeDefsUntyped } from "../declarations";
+export declare function initRepond<T_ItemTypeDefs extends ItemTypeDefsUntyped, T_StepNamesParam extends Readonly<string[]>>(itemTypeDefs: T_ItemTypeDefs, stepNames: T_StepNamesParam): void;

@@ -1,16 +1,16 @@
 import { forEach } from "chootils/dist/loops";
-import { ItemTypeDefs } from "../declarations";
+import { ItemTypeDefsUntyped } from "../declarations";
 import { createDiffInfo } from "../getStatesDiff";
 import { repondMeta as meta, UntypedDiffInfo } from "../meta";
 import { createRecordedChanges } from "../updating";
 
 const SPECIAL_CHANGE_KEYS = ["__added", "__removed"];
 
-export function initRepond<T_ItemTypeDefs extends ItemTypeDefs, T_StepNamesParam extends Readonly<string[]>>(
+export function initRepond<T_ItemTypeDefs extends ItemTypeDefsUntyped, T_StepNamesParam extends Readonly<string[]>>(
   itemTypeDefs: T_ItemTypeDefs,
   stepNames: T_StepNamesParam
 ) {
-  const renamedItemTypeDefs: ItemTypeDefs = {};
+  const renamedItemTypeDefs: ItemTypeDefsUntyped = {};
 
   Object.entries(itemTypeDefs).forEach(([type, definition]) => {
     renamedItemTypeDefs[type.replace(/Store$/, "")] = definition; // Remove "Store" from the end of the key, if present

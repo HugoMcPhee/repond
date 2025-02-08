@@ -5,10 +5,10 @@ export type ItemTypeDefUntyped = {
   newRefs: (itemId?: any, type?: any) => any; // NOTE the itemId and type might not be realiably passed in
 };
 
-export type ItemTypeDefs = Record<string, ItemTypeDefUntyped>;
+export type ItemTypeDefsUntyped = Record<string, ItemTypeDefUntyped>;
 
 export interface RepondTypesUntyped {
-  ItemTypeDefs: ItemTypeDefs;
+  ItemTypeDefs: ItemTypeDefsUntyped;
   StepNames: string[] | readonly string[];
   EffectGroups: Record<string, Record<string, any>>; // TOTO maybe rename groupedEffects
   ParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;

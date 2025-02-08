@@ -34,7 +34,7 @@ export function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(
 export function useStoreEffect<K_Type extends ItemType>(
   run: Effect["run"],
   options: Omit<Effect, "run">,
-  hookDeps: any[] = undefined
+  hookDeps: any[] | undefined = undefined
 ) {
   // const stringifiedCheck = JSON.stringify(check); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
   const stringifiedCheck = JSON.stringify(options?.itemIds); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps

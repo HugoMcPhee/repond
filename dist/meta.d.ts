@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase, FramerateTypeOption } from "./types";
+import { DiffInfo, Effect, EffectPhase } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 export type RecordedChanges = {
     itemTypesBool: {
@@ -80,37 +80,44 @@ export type UntypedDiffInfo = {
 type AFunction = (...args: any[]) => void;
 export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningEffects" | "runningStepEndEffects" | "runningCallbacks";
 export declare const repondMeta: {
+    prevState: any;
+    nowState: any;
+    nowRefs: any;
+    stepNames: readonly string[];
+    nowStepName: string;
+    nowStepIndex: number;
+    nowMetaPhase: RepondMetaPhase;
+    willAddItemsInfo: {
+        [itemTypeName: string]: {
+            [itemId: string]: any;
+        };
+    };
+    willRemoveItemsInfo: {
+        [itemTypeName: string]: {
+            [itemId: string]: any;
+        };
+    };
+    isRunningSetStates: boolean;
     didInit: boolean;
+    didStartFirstFrame: boolean;
+    diffInfo: DiffInfo;
     recordedEffectChanges: RecordedChanges;
     recordedStepEndEffectChanges: RecordedChanges;
     nextFrameIsFirst: boolean;
-    latestFrameId: number;
     previousFrameTime: number;
     latestFrameTime: number;
     latestFrameDuration: number;
-    shortestFrameDuration: number;
-    foundScreenFramerate: boolean;
-    lookingForScreenFramerate: boolean;
-    latestUpdateTime: number;
-    latestUpdateDuration: number;
-    frameRateTypeOption: FramerateTypeOption;
-    frameRateType: "full" | "half";
-    lateFramesAmount: number;
     shouldRunUpdateAtEndOfUpdate: boolean;
-    diffInfo: DiffInfo;
-    prevState: any;
-    nowState: any;
-    initialState: any;
-    nowRefs: any;
-    nowMetaPhase: RepondMetaPhase;
-    addAndRemoveItemsQue: AFunction[];
+    addAndRemoveItemsQueue: AFunction[];
     effectsRunAtStartQueue: AFunction[];
-    startEffectsQue: AFunction[];
-    setStatesQue: AFunction[];
-    callbacksQue: AFunction[];
-    allEffects: Record<string, Effect>;
+    startEffectsQueue: AFunction[];
+    setStatesQueue: AFunction[];
+    nextTickQueue: AFunction[];
+    autoEffectIdCounter: number;
+    liveEffectsMap: Record<string, Effect>;
     effectIdsByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
-    allEffectGroups: Record<string, Record<string, Effect>>;
+    storedEffectsMap: Record<string, Effect>;
+    effectIdsByGroup: Record<string, string[]>;
     allParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;
     paramEffectIdsByGroupPlusParamKey: Record<string, string[]>;
     itemTypeNames: string[];
@@ -133,21 +140,9 @@ export declare const repondMeta: {
             [itemPropertyName: string]: any;
         };
     };
-    willAddItemsInfo: {
-        [itemTypeName: string]: {
-            [itemId: string]: any;
-        };
-    };
-    willRemoveItemsInfo: {
-        [itemTypeName: string]: {
-            [itemId: string]: any;
-        };
-    };
-    getStatesDiff: (nowState: any, prevState: any, diffInfo: any, recordedChanges: RecordedChanges, checkAllChanges: boolean) => void;
-    autoEffectIdCounter: number;
-    stepNames: readonly string[];
-    nowStepName: string;
-    nowStepIndex: number;
+    itemTypeByPropPathId: Record<string, string>;
+    propKeyByPropPathId: Record<string, string>;
+    specialKeyByPropPathId: Record<string, string>;
 };
 export type RepondMeta = typeof repondMeta;
 export {};

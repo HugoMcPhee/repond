@@ -17,65 +17,57 @@ export const initialDiffInfo = {
     itemsRemovedBool: {},
 };
 export const repondMeta = {
-    // prevStatesByStep: {
-    //   default: {},
-    // } as Record<string, any>,
-    //
+    // Items -----------------------------------------------------
+    prevState: {},
+    nowState: {},
+    nowRefs: {},
+    stepNames: ["default"],
+    // Live info -----------------------------------------------------
+    nowStepName: "default",
+    nowStepIndex: 0,
+    nowMetaPhase: "waitingForFirstUpdate",
+    willAddItemsInfo: {},
+    willRemoveItemsInfo: {},
+    isRunningSetStates: false,
     didInit: false,
+    didStartFirstFrame: false, // so we can add items instantly before the first frame
+    // Recording changes -----------------------------------------------------
+    diffInfo: initialDiffInfo,
     // this gets reset for each step (might not still be true)
     recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
     // this gets reset at the start of a frame, and kept added to throughout the frame
     recordedStepEndEffectChanges: initialRecordedChanges(),
+    // Frames -----------------------------------------------------
     nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
-    latestFrameId: 0,
     previousFrameTime: 0,
     latestFrameTime: 0,
     latestFrameDuration: 16.66667,
-    shortestFrameDuration: 16.6666667, // the screens frameRate
-    foundScreenFramerate: false,
-    lookingForScreenFramerate: false,
-    //
-    latestUpdateTime: 0,
-    latestUpdateDuration: 16.66667, // how long everything inside "update" took
-    frameRateTypeOption: "full",
-    frameRateType: "full",
-    lateFramesAmount: 0, // if there's a late frame this increases by 15, if not it decreases by 1
     shouldRunUpdateAtEndOfUpdate: false,
-    //
-    diffInfo: initialDiffInfo,
-    // state
-    prevState: {},
-    nowState: {},
-    initialState: {},
-    // refs
-    nowRefs: {},
-    nowMetaPhase: "waitingForFirstUpdate",
-    // functions
-    addAndRemoveItemsQue: [],
+    // Callback queues -----------------------------------------------------
+    addAndRemoveItemsQueue: [],
     effectsRunAtStartQueue: [],
-    startEffectsQue: [],
-    setStatesQue: [],
-    callbacksQue: [],
-    //
-    allEffects: {},
+    startEffectsQueue: [],
+    setStatesQueue: [],
+    nextTickQueue: [],
+    // Effects -----------------------------------------------------
+    autoEffectIdCounter: 1,
+    // Normal effects
+    liveEffectsMap: {},
     effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} },
-    allEffectGroups: {},
+    storedEffectsMap: {},
+    effectIdsByGroup: {}, // effectGroup: [effectId]
+    // Param effects
     allParamEffectGroups: {},
     paramEffectIdsByGroupPlusParamKey: {}, // effectGroup: {paramKey: [effectId]}
-    //
+    // Cached info -----------------------------------------------------
     itemTypeNames: [],
     propNamesByItemType: {},
     itemIdsByItemType: {}, // current item names only, not previous..
     prevItemIdsByItemType: {}, // this should be manually copied when the prevState is copied
     defaultRefsByItemType: {},
     defaultStateByItemType: {},
-    willAddItemsInfo: {},
-    willRemoveItemsInfo: {},
-    getStatesDiff: (nowState, prevState, diffInfo, recordedChanges, checkAllChanges) => { },
-    // react specific?
-    autoEffectIdCounter: 1,
-    //
-    stepNames: ["default"],
-    nowStepName: "default",
-    nowStepIndex: 0,
+    // PropPathId info
+    itemTypeByPropPathId: {}, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
+    propKeyByPropPathId: {}, // To get "piecePropertyA" from "pieces.piecePropertyA" quickly ( in O(1) time )
+    specialKeyByPropPathId: {}, // For special keys like __added, __removed
 };

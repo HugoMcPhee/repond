@@ -1,78 +1,103 @@
+import { getState } from "./usable/getSet";
 import { repondMeta as meta } from "./meta";
-const NO_EFFECT_NAMES = [];
-const CHECK_ALL_OPTION = ["all__"];
+const NO_EFFECT_NAMES = []; // created once to avoidmaking many news arrays
 // created once and cleared to avoid making many new arrays each time, to save memory
 const changedEffectIds = [];
 export default function checkEffects(phase = "endOfStep", stepName = "default") {
     changedEffectIds.length = 0;
-    let effectNames = meta.effectIdsByPhaseByStep[phase][stepName] ?? NO_EFFECT_NAMES;
-    let allEffects = meta.allEffects;
-    for (let nameIndex = 0; nameIndex < effectNames.length; nameIndex++) {
-        const effectName = effectNames[nameIndex];
-        const effect = allEffects[effectName];
-        const effectChecks = effect.checks;
-        for (let checkIndex = 0; checkIndex < effectChecks.length; checkIndex++) {
-            const check = effectChecks[checkIndex];
-            if (checkOneCheckForChanges(check, meta.diffInfo)) {
-                changedEffectIds.push(effect.id);
-                break;
-            }
-        }
+    let effectIds = meta.effectIdsByPhaseByStep[phase][stepName] ?? NO_EFFECT_NAMES;
+    for (let idIndex = 0; idIndex < effectIds.length; idIndex++) {
+        const effectId = effectIds[idIndex];
+        const effect = meta.liveEffectsMap[effectId];
+        if (checkEffectForChanges(effect, meta.diffInfo))
+            changedEffectIds.push(effectId);
     }
+    // if (changedEffectIds.length) {
+    //   console.log(`Effects changed in ${phase} ${stepName}:`, changedEffectIds);
+    // }
     return changedEffectIds;
 }
-function checkOneCheckForChanges(check, diffInfo) {
-    const editedCheck = {
-        types: check.types || CHECK_ALL_OPTION,
-        ids: check.ids || CHECK_ALL_OPTION,
-        props: check.props || CHECK_ALL_OPTION,
-    };
-    let didChange = false;
-    // only updates on items removed if this property is true
-    if (check.addedOrRemoved) {
-        for (let typesIndex = 0; typesIndex < editedCheck.types.length; typesIndex++) {
-            const itemType = editedCheck.types[typesIndex];
-            if ((editedCheck.ids[0] === "all__" && diffInfo.itemsAdded[itemType].length > 0) ||
-                diffInfo.itemsRemoved[itemType].length > 0) {
-                didChange = true;
-                break;
+function checkEffectForChanges(effect, diffInfo) {
+    const itemTypes = effect._itemTypes;
+    const allowedIdsMap = effect._allowedIdsMap;
+    const propsByItemType = effect._propsByItemType;
+    const checkAddedByItemType = effect._checkAddedByItemType;
+    const checkRemovedByItemType = effect._checkRemovedByItemType;
+    const shouldCheckAnyId = !allowedIdsMap;
+    if (!itemTypes || !checkAddedByItemType || !checkRemovedByItemType) {
+        console.warn(`Effect ${effect.id} has no cached data, skipping check`);
+        return false;
+    }
+    if (!itemTypes.length) {
+        console.warn(`Effect ${effect.id} has no item types, skipping check`);
+        console.log(effect);
+        return false;
+    }
+    for (let typesIndex = 0; typesIndex < itemTypes.length; typesIndex++) {
+        const type = itemTypes[typesIndex];
+        const shouldCheckAdded = checkAddedByItemType[type];
+        const shouldCheckRemoved = checkRemovedByItemType[type];
+        const propsToCheck = propsByItemType?.[type];
+        const shouldCheckBecomes = effect.becomes !== undefined;
+        // First check if anything was added for this item type
+        if (shouldCheckAdded && diffInfo.itemsAddedBool[type]) {
+            if (shouldCheckAnyId) {
+                return true; // did change
             }
-            for (let idsIndex = 0; idsIndex < editedCheck.ids.length; idsIndex++) {
-                const itemId = editedCheck.ids[idsIndex];
-                if ((diffInfo.itemsAddedBool[itemType] && diffInfo.itemsAddedBool[itemType][itemId]) ||
-                    (diffInfo.itemsRemovedBool[itemType] && diffInfo.itemsRemovedBool[itemType][itemId])) {
-                    didChange = true;
-                    break;
+            else {
+                for (let itemIdIndex = 0; itemIdIndex < diffInfo.itemsAdded[type].length; itemIdIndex++) {
+                    const itemId = diffInfo.itemsAdded[type][itemIdIndex];
+                    if (allowedIdsMap[itemId])
+                        return true; // did change
                 }
             }
         }
-        // exist the function before checking the other updates (if onlyAddedOrRemoved is true)
-        return didChange;
-    }
-    for (let typesIndex = 0; typesIndex < editedCheck.types.length; typesIndex++) {
-        const itemType = editedCheck.types[typesIndex];
-        // NOTE checking itemsRemoved used to cause issues, but doesn't seem to now?
-        if (editedCheck.ids[0] === "all__" && diffInfo.itemsAdded?.[itemType]?.length > 0) {
-            didChange = true;
-            break;
-        }
-        for (let idIndex = 0; idIndex < editedCheck.ids.length; idIndex++) {
-            const itemId = editedCheck.ids[idIndex];
-            // used to check itemsRemoved, but not now?
-            if (diffInfo.itemsAddedBool[itemType] && diffInfo.itemsAddedBool[itemType][itemId]) {
-                didChange = true;
-                break;
+        // Then check if anything was removed for this item type
+        if (shouldCheckRemoved && diffInfo.itemsRemovedBool[type]) {
+            if (shouldCheckAnyId) {
+                return true; // did change
             }
-            for (let propIndex = 0; propIndex < editedCheck.props.length; propIndex++) {
-                const loopedPropertyName = editedCheck.props[propIndex];
-                if (diffInfo.propsChangedBool[itemType] &&
-                    diffInfo.propsChangedBool[itemType][itemId] &&
-                    (diffInfo.propsChangedBool[itemType][itemId][loopedPropertyName] === true || loopedPropertyName === "all__")) {
-                    didChange = true;
-                    break;
+            else {
+                for (let itemIdIndex = 0; itemIdIndex < diffInfo.itemsRemoved[type].length; itemIdIndex++) {
+                    const itemId = diffInfo.itemsRemoved[type][itemIdIndex];
+                    if (allowedIdsMap[itemId])
+                        return true; // did change
+                }
+            }
+        }
+        // Then check if any properties were changed for this item type
+        if (propsToCheck) {
+            for (let propNameIndex = 0; propNameIndex < propsToCheck.length; propNameIndex++) {
+                const propName = propsToCheck[propNameIndex];
+                const propChangedForAnyItem = diffInfo.propsChangedBool[type].all__[propName];
+                if (propChangedForAnyItem) {
+                    if (shouldCheckAnyId && !shouldCheckBecomes) {
+                        return true; // did change
+                    }
+                    else {
+                        for (let itemIdIndex = 0; itemIdIndex < diffInfo.itemsChanged[type].length; itemIdIndex++) {
+                            const itemId = diffInfo.itemsChanged[type][itemIdIndex];
+                            // forEach(diffInfo.itemsChanged[type], (itemId) => {
+                            if (!allowedIdsMap || allowedIdsMap[itemId]) {
+                                if (diffInfo.propsChangedBool[type][itemId][propName]) {
+                                    if (shouldCheckBecomes) {
+                                        if (getState(type, itemId)?.[propName] === effect.becomes) {
+                                            return true; // did change
+                                        }
+                                        else {
+                                            continue; // did not change
+                                        }
+                                    }
+                                    else {
+                                        return true; // did change
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-    return didChange;
+    return false;
 }
