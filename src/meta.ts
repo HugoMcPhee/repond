@@ -32,13 +32,13 @@ export const initialDiffInfo: UntypedDiffInfo = {
 type PropsByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
 
 type DiffInfo_PropsChanged<T = any> = {
-  [key: string]: { [itemId: string]: PropsByItemType<T, any>[] } & { all__?: PropsByItemType<T, any>[] };
-} & { all__?: string[] };
+  [key: string]: { [itemId: string]: PropsByItemType<T, any>[] } & { __all?: PropsByItemType<T, any>[] };
+} & { __all?: string[] };
 type DiffInfo_PropsChangedBool<T = any> = {
   [K in any]: {
     [itemId: string]: { [K_P in PropsByItemType<T, any>]: boolean };
-  } & { all__?: { [K_P in PropsByItemType<T, any>]: boolean } };
-} & { all__?: { [K_P in string]: boolean } };
+  } & { __all?: { [K_P in PropsByItemType<T, any>]: boolean } };
+} & { __all?: { [K_P in string]: boolean } };
 
 export type UntypedDiffInfo = {
   itemTypesChanged: [];

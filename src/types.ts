@@ -1,74 +1,46 @@
 import { RepondTypes } from "./declarations";
 
-// https://stackoverflow.com/questions/49401866/all-possible-keys-of-an-union-type
-export type KeysOfUnion<T> = T extends any ? keyof T : never;
-
-// ------------------------------------------------------------
-// Patches and diffs
+export type DeepPartial<T> = T extends Record<string, unknown> ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
 export type GetPartialState<T_State> = {
-  [P_Type in keyof T_State]?: {
-    [P_Name in keyof T_State[P_Type]]?: {
-      [P_Property in keyof T_State[P_Type][P_Name]]?: P_Property extends keyof T_State[P_Type][P_Name]
-        ? T_State[P_Type][P_Name][P_Property]
-        : never;
-    };
-  };
+  [P_Type in keyof T_State]?: DeepPartial<T_State[P_Type]>;
 };
 
-export type ItemIdsByType = { [K_Type in ItemType]: ItemId[] };
-
-// ------------------------------------------------------------
+export type ItemIdsByType = { [K in ItemType]: ItemId[] };
 
 export type RepondCallback = (frameDuration: number, frameTime: number) => any;
-
 export type EffectPhase = "duringStep" | "endOfStep";
-
-// ------------------------------------------------------------
-
 export type StepName = RepondTypes["StepNames"][number];
 
 type RemoveStoreSuffix<T extends string> = T extends `${infer Prefix}Store` ? Prefix : T;
 export type ItemTypeDefs = {
   [K in keyof RepondTypes["ItemTypeDefs"] as RemoveStoreSuffix<K>]: RepondTypes["ItemTypeDefs"][K];
 };
-
 export type ItemType = keyof ItemTypeDefs & string;
 
-export type DefaultStates = { [K_Type in ItemType]: ItemTypeDefs[K_Type]["newState"] };
-export type DefaultRefs = { [K_Type in ItemType]: ItemTypeDefs[K_Type]["newRefs"] };
-type Get_DefaultRefs<K_Type extends keyof ItemTypeDefs> = ItemTypeDefs[K_Type]["newRefs"];
+type GetNewState<K extends keyof ItemTypeDefs> = ItemTypeDefs[K]["newState"];
+type GetNewRefs<K extends keyof ItemTypeDefs> = ItemTypeDefs[K]["newRefs"];
+export type GetNewStateByType = { [K in ItemType]: ItemTypeDefs[K]["newState"] };
+export type GetNewRefsByType = { [K in ItemType]: ItemTypeDefs[K]["newRefs"] };
 
-export type AllState = { [K_Type in ItemType]: Record<string, ReturnType<ItemTypeDefs[K_Type]["newState"]>> };
-export type AllRefs = { [K_Type in ItemType]: Record<string, ReturnType<Get_DefaultRefs<K_Type>>> };
+export type ItemDefaultState<K extends ItemType> = ReturnType<ReturnType<GetNewState<K>>>;
+export type ItemDefaultRefs<K extends ItemType> = ReturnType<ReturnType<GetNewRefs<K>>>;
+
+export type AllState = { [K in ItemType]: Record<string, ItemDefaultState<K>> };
+export type AllRefs = { [K in ItemType]: Record<string, ItemDefaultRefs<K>> };
 
 export type ItemId = string;
-export type PropName<K_Type extends ItemType> = KeysOfUnion<AllState[K_Type][ItemId]> & string;
-export type AllProps = { [K_Type in ItemType]: PropName<K_Type> }[ItemType];
+export type PropName<K extends ItemType> = keyof ItemDefaultState<K> & string;
+export type AllProps = { [K in ItemType]: PropName<K> }[ItemType];
+export type PropValue<K extends ItemType, P extends PropName<K>> = ItemDefaultState<K>[P];
+export type ItemPropsByType = { [K in ItemType]: PropName<K>[] };
 
-export type ItemPropsByType = { [K_Type in ItemType]: PropName<K_Type>[] };
-
-// ------------------------------------------------------------
-// DiffInfo
-
-type DiffInfo_PropsChanged = {
-  [K_Type in ItemType]: Record<ItemId, PropName<K_Type>[]> & {
-    all__: PropName<K_Type>[];
-  };
-} & { all__: AllProps[] };
-
-type DiffInfo_PropsChangedBool = {
-  [K_Type in ItemType]: Record<ItemId, { [K_PropName in PropName<K_Type>]: boolean }> & {
-    all__: {
-      [K_PropName in PropName<K_Type>]: boolean;
-    };
-  };
-} & {
-  all__: { [K_PropName in AllProps]: boolean };
-};
-
-type DiffInfo_ItemsChanged = Record<ItemType | "all__", ItemId[]>;
-type DiffInfo_ItemsChangedBool = Record<ItemType | "all__", Record<ItemId, boolean>>;
+// Diffs
+type DiffRecord<K extends ItemType, T> = Record<K, Record<ItemId, T>> & { __all: T };
+type DiffInfo_PropsChanged = DiffRecord<ItemType, PropName<ItemType>[]>;
+type DiffInfo_PropsChangedBool = DiffRecord<ItemType, Record<AllProps, boolean>>;
+type DiffInfo_ItemsChanged = Record<ItemType | "__all", ItemId[]>;
+type DiffInfo_ItemsChangedBool = Record<ItemType | "__all", Record<ItemId, boolean>>;
 
 export type DiffInfo = {
   itemTypesChanged: ItemType[];
@@ -76,24 +48,19 @@ export type DiffInfo = {
   propsChanged: DiffInfo_PropsChanged;
   itemsAdded: DiffInfo_ItemsChanged;
   itemsRemoved: DiffInfo_ItemsChanged;
-  itemTypesChangedBool: Record<ItemType | "all__", boolean>;
+  itemTypesChangedBool: Record<ItemType | "__all", boolean>;
   itemsChangedBool: DiffInfo_ItemsChangedBool;
   propsChangedBool: DiffInfo_PropsChangedBool;
   itemsAddedBool: DiffInfo_ItemsChangedBool;
   itemsRemovedBool: DiffInfo_ItemsChangedBool;
 };
 
-// ------------------------------------------------------------
-// Effect
-
-// itemId is the first itemId if it's not per item
+// Effects
 export type Effect_Run_Params = [itemId: string, diffInfo: DiffInfo, frameDuration: number, ranWithoutChange?: boolean];
 export type Effect_Run = (...params: Effect_Run_Params) => void;
 
 export type Effect = {
-  // required, but optional when making an effect, a default id will be generated
-  // for saved group effects, the id will be "groupName.effectName"
-  id?: string;
+  id?: string; // required, but optional when making an effect, a default id will be generated, for saved group effects, the id will be "groupName.effectName"
   changes: string[];
   itemIds?: string[];
   run: Effect_Run;
@@ -102,7 +69,6 @@ export type Effect = {
   step?: StepName;
   runAtStart?: boolean;
   becomes?: boolean | string | number;
-  // cached when the effect is created and saved
   _itemTypes?: ItemType[];
   _groupName?: string;
   _effectName?: string;
@@ -112,4 +78,4 @@ export type Effect = {
   _checkRemovedByItemType?: { [itemId: string]: boolean };
 };
 
-export type StatePath<T_ItemType extends ItemType> = [type: T_ItemType, id: ItemId, prop: PropName<T_ItemType>];
+export type StatePath<T extends ItemType> = [type: T, id: ItemId, prop: PropName<T>];

@@ -38,10 +38,10 @@ export function makeEmptyDiff() {
 function makeEmptyDiffInfo() {
   const emptyDiffInfo: UntypedDiffInfo = {
     itemTypesChanged: [],
-    itemsChanged: { all__: [] },
+    itemsChanged: { __all: [] },
     propsChanged: {},
-    itemsAdded: { all__: [] },
-    itemsRemoved: { all__: [] },
+    itemsAdded: { __all: [] },
+    itemsRemoved: { __all: [] },
     itemTypesChangedBool: {},
     itemsChangedBool: {},
     propsChangedBool: {},

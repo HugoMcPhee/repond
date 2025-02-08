@@ -1,4 +1,4 @@
-import { AllRefs, AllState, DefaultRefs, DefaultStates, ItemId, ItemPropsByType, ItemType, RepondCallback } from "../types";
+import { AllRefs, AllState, GetNewRefsByType, GetNewStateByType, ItemId, ItemPropsByType, ItemType, RepondCallback } from "../types";
 export declare function setState(propPath: string, newValue: any, itemId?: string): void;
 export declare function setNestedState(newState: Partial<AllState>): void;
 export declare const getDefaultState: <T_Type extends string>(kind: T_Type) => (itemId?: any) => any;

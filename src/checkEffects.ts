@@ -77,7 +77,7 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
     if (propsToCheck) {
       for (let propNameIndex = 0; propNameIndex < propsToCheck.length; propNameIndex++) {
         const propName = propsToCheck[propNameIndex];
-        const propChangedForAnyItem = diffInfo.propsChangedBool[type].all__[propName];
+        const propChangedForAnyItem = diffInfo.propsChangedBool[type].__all[propName];
         if (propChangedForAnyItem) {
           if (shouldCheckAnyId && !shouldCheckBecomes) {
             return true; // did change

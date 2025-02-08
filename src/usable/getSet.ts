@@ -5,12 +5,12 @@ import { repondMeta as meta } from "../meta";
 import {
   AllRefs,
   AllState,
-  DefaultRefs,
-  DefaultStates,
+  GetNewRefsByType,
+  GetNewStateByType,
   ItemId,
   ItemPropsByType,
   ItemType,
-  RepondCallback
+  RepondCallback,
 } from "../types";
 import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
 
@@ -69,9 +69,9 @@ export function setNestedState(newState: Partial<AllState>) {
   });
 }
 
-export const getDefaultState = <T_Type extends ItemType>(kind: T_Type): DefaultStates[T_Type] =>
+export const getDefaultState = <T_Type extends ItemType>(kind: T_Type): GetNewStateByType[T_Type] =>
   meta.defaultStateByItemType[kind];
-export const getDefaultRefs = <T_Type extends ItemType>(kind: T_Type): DefaultRefs[T_Type] =>
+export const getDefaultRefs = <T_Type extends ItemType>(kind: T_Type): GetNewRefsByType[T_Type] =>
   meta.defaultRefsByItemType[kind];
 export const getItemTypes = (): ItemType[] => meta.itemTypeNames;
 export const getItemIds = (kind: ItemType): string[] => meta.itemIdsByItemType[kind];
