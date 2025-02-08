@@ -5,7 +5,7 @@ import {
   _stopEffect,
   runEffectWithoutChange,
   storeCachedValuesForEffect,
-} from "../helpers/effects/internal";
+} from "repond/src/helpers/effects";
 import { repondMeta as meta } from "../meta";
 import { Effect, ItemType, PropName } from "../types";
 

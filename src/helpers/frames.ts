@@ -11,28 +11,27 @@ function updateRepondInTwoFrames() {
 
 function findScreenFramerate() {
   meta.lookingForScreenFramerate = true;
-  let latestDuration = 100;
-  requestAnimationFrame((frameTime1) => {
-    requestAnimationFrame((frameTime2) => {
-      latestDuration = frameTime2 - frameTime1;
-      if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
-      requestAnimationFrame((frameTime3) => {
-        latestDuration = frameTime3 - frameTime2;
-        if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
-        requestAnimationFrame((frameTime4) => {
-          latestDuration = frameTime4 - frameTime3;
-          if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
-          requestAnimationFrame((frameTime5) => {
-            latestDuration = frameTime5 - frameTime4;
-            if (latestDuration < meta.shortestFrameDuration) meta.shortestFrameDuration = latestDuration;
+  let frameTimes: number[] = [];
+  const FRAMES_TO_MEASURE = 5;
 
-            meta.foundScreenFramerate = true;
-            runNextFrame();
-          });
-        });
-      });
-    });
-  });
+  function measureFrameTime(frameTime: number) {
+    if (frameTimes.length > 0) {
+      const latestDuration = frameTime - frameTimes[frameTimes.length - 1];
+      if (latestDuration < meta.shortestFrameDuration) {
+        meta.shortestFrameDuration = latestDuration;
+      }
+    }
+    frameTimes.push(frameTime);
+
+    if (frameTimes.length < FRAMES_TO_MEASURE) {
+      requestAnimationFrame(measureFrameTime);
+    } else {
+      meta.foundScreenFramerate = true;
+      runNextFrame();
+    }
+  }
+
+  requestAnimationFrame(measureFrameTime);
 }
 
 export function runNextFrameIfNeeded() {

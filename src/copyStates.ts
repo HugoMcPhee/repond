@@ -67,3 +67,7 @@ export function mergeToState(
   recordedChanges.somethingChanged = true;
   allRecordedChanges.somethingChanged = true;
 }
+
+export function cloneObjectWithJson(theObject: { [key: string]: any }) {
+  return JSON.parse(JSON.stringify(theObject));
+}

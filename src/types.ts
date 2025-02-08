@@ -35,11 +35,6 @@ interface ReadonlySetDeep<ItemType> extends ReadonlySet<DeepReadonly<ItemType>> 
 // ----------------------------
 // stuff from makeRepond
 
-// type Without<T, K> = Pick<T, Exclude<keyof T, K>>;
-type WithoutB<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
-export type XOR<T, U> = T | U extends object ? (WithoutB<T, U> & U) | (WithoutB<U, T> & T) : T | U;
-// NOTE: could use ts-xor package (same)
-
 export type RecursivePartial<T> = { [P in keyof T]?: RecursivePartial<T[P]> };
 
 // export type GetReadOnlyState<T_State> = {

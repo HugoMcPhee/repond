@@ -1,4 +1,4 @@
-import { toSafeEffectId } from "../helpers/effects/internal";
+import { toSafeEffectId } from "../helpers/effects";
 import { AllState, ItemType, StepName } from "../types";
 import { makeEffects } from "./effects";
 import { getPrevState, getState } from "./getSet";

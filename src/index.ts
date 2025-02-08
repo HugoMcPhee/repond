@@ -46,7 +46,6 @@ export {
 export {
   initEffectGroups,
   makeEffect,
-  makeItemEffect,
   makeEffects,
   runEffect,
   runEffectsGroup,
@@ -57,7 +56,6 @@ export {
   stopAllEffectsGroups as stopAllEffectGroups,
   stopEffect,
   stopEffectsGroup,
-  stopNewEffect,
 } from "./usable/effects";
 
 export {
