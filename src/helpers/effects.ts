@@ -1,7 +1,7 @@
 import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
-import { repondMeta as meta } from "repond/src/meta";
-import { whenDoingEffectsRunAtStart, whenStartingEffects, whenStoppingEffects } from "repond/src/helpers/runWhens";
-import { Effect, EffectPhase } from "repond/src/types";
+import { repondMeta as meta } from "../meta";
+import { whenDoingEffectsRunAtStart, whenStartingEffects, whenStoppingEffects } from "../helpers/runWhens";
+import { Effect, EffectPhase } from "../types";
 import { forEach } from "chootils/dist/loops";
 
 export function _startEffect(newEffect: Effect) {

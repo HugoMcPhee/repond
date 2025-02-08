@@ -1,11 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
-import {
-  _startEffect,
-  _stopEffect,
-  runEffectWithoutChange,
-  storeCachedValuesForEffect,
-} from "repond/src/helpers/effects";
+import { _startEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
 import { Effect, ItemType, PropName } from "../types";
 

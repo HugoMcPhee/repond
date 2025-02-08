@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { toSafeEffectId } from "repond/src/helpers/effects";
+import { toSafeEffectId } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
 import { AllState, Effect, ItemPropsByType, ItemType } from "../types";
 import { startNewEffect, stopEffect } from "./effects";

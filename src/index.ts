@@ -1,4 +1,4 @@
-export { whenSettingStates } from "repond/src/helpers/runWhens";
+export { whenSettingStates } from "./helpers/runWhens";
 import { AllState, ItemType } from "./types";
 
 export * from "./declarations";

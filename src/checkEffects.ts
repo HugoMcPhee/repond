@@ -1,4 +1,4 @@
-import { getState } from "repond/src/usable/getSet";
+import { getState } from "./usable/getSet";
 import { repondMeta as meta } from "./meta";
 import { Effect, EffectPhase } from "./types";
 
