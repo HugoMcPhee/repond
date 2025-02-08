@@ -6,6 +6,22 @@ TODO
 - add runOnNewItems option to effects, its like run at start, but only when an item is added
   - hopefully this means the effect will run when loading state from localstorage
 - look into addItem doing a setState if the item was already added
+- clean up the code a bit
+- maybe support starting param effects with group.name instead of seperate params
+
+v1.0.0
+
+- simpler everything version 1.0.0!
+- setState is now like setState("type.prop", itemId, value)
+  - probably faster since it doesn't need to loop through all types, ids and props for each setState
+- getState is now like getState("type", itemId?) , no itemId returns the first item
+- effects now use a "changes" option which is a list of ["type.prop"]
+- itemEffects and effects are now the same thing, with an extra isPerItem option (defaults to true)
+- the "run" function is the same for both, like run(itemId, diffInfo, frameDuration, ranWithoutChange)
+- itemId is blank if it's not a per item effect
+- defining items now takes two options newState and newRefs, startStates is replaced with adding items manually with addItem("type", itemId, newState, newRefs)
+  - itemIds are typed as strings now, which aligns more with being able to add and remove items at runTime ( simplifying types code, maybe Id types could be added later without inferring from startStates
+    )
 
 v0.17.5
 

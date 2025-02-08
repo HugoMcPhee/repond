@@ -1,5 +1,5 @@
-import { toSafeEffectId } from "../helpers/effects/internal";
-import { AllState, EasyEffect_Check, ItemType, StepName } from "../types";
+import { toSafeEffectId } from "../helpers/effects";
+import { AllState, ItemType, StepName } from "../types";
 import { makeEffects } from "./effects";
 import { getPrevState, getState } from "./getSet";
 
@@ -23,19 +23,23 @@ export function makeEffectsMaker<
   const mainEffectId = toSafeEffectId(`customEffectFor_${storeName}_${storyProperty}`);
 
   function newEffectMaker(callbacksMap: CallbacksMap) {
-    return makeEffects(({ effect }) => ({
-      whenPropertyChanges: effect({
-        run(_diffInfo) {
+    return makeEffects((makeEffect) => ({
+      whenPropertyChanges: makeEffect(
+        (_, _diffInfo) => {
           const usefulParams = getUsefulParams?.();
-          const latestValue = getState()[storeName][storeItemId][storyProperty] as PropertyValue;
+          const latestValue = getState(storeName, storeItemId)[storyProperty] as PropertyValue;
 
           callbacksMap[latestValue]?.(usefulParams!);
         },
-        check: { prop: [storyProperty], id: storeItemId, type: storeName } as unknown as EasyEffect_Check<T_StoreName>,
-        step: stepName ?? "default",
-        atStepEnd: true,
-        id: mainEffectId,
-      }),
+        {
+          changes: [`${storeName}.${storyProperty}`],
+          itemIds: [storeItemId],
+          step: stepName ?? "default",
+          atStepEnd: true,
+          id: mainEffectId,
+          isPerItem: false,
+        }
+      ),
     }));
   }
 
@@ -61,19 +65,23 @@ export function makeLeaveEffectsMaker<
   type RulesOptions = Partial<Record<PropertyValue, (usefulStuff: T_UsefulParams) => void>>;
   const mainEffectId = toSafeEffectId(`customEffectFor_${storeName}_${storyProperty}`);
   function newEffectsMaker(callBacksObject: RulesOptions) {
-    return makeEffects(({ effect }) => ({
-      whenPropertyChanges: effect({
-        run(_diffInfo) {
+    return makeEffects((makeEffect) => ({
+      whenPropertyChanges: makeEffect(
+        (_, _diffInfo) => {
           const usefulStoryStuff = getUsefulParams?.();
-          const prevValue = (getPrevState() as AllState)[storeName][storeItemId][storyProperty] as PropertyValue;
+          const prevValue = getPrevState(storeName, storeItemId)[storyProperty] as PropertyValue;
 
           callBacksObject[prevValue]?.(usefulStoryStuff!);
         },
-        check: { prop: [storyProperty], id: storeItemId, type: storeName } as unknown as EasyEffect_Check<T_StoreName>,
-        step: stepName ?? "default",
-        atStepEnd: true,
-        id: mainEffectId,
-      }),
+        {
+          changes: [`${storeName}.${storyProperty}`],
+          itemIds: [storeItemId],
+          step: stepName ?? "default",
+          atStepEnd: true,
+          id: mainEffectId,
+          isPerItem: false,
+        }
+      ),
     }));
   }
 
@@ -112,23 +120,28 @@ export function makeNestedEffectsMaker<
   >;
   const mainEffectId = toSafeEffectId(`customEffectFor_${storeName1}_${storyProp1}_${storeName2}_${storyProp2}`);
   function newEffectsMaker(callBacksObject: RulesOptions) {
-    return makeEffects(({ effect }) => ({
-      whenPropertyChanges: effect({
-        run(_diffInfo) {
+    return makeEffects((makeEffect) => ({
+      whenPropertyChanges: makeEffect(
+        (_, diffInfo) => {
           const usefulStoryStuff = getUsefulParams?.();
-          const latestValue1 = (getState() as AllState)[storeName1][storeItemId1][storyProp1] as PropValue1;
-          const latestValue2 = (getState() as AllState)[storeName2][storeItemId2][storyProp2] as PropValue2;
+          const latestValue1 = getState(storeName1, storeItemId1)?.[storyProp1] as PropValue1;
+          const latestValue2 = getState(storeName2, storeItemId2)?.[storyProp2] as PropValue2;
+
+          // Make sure value1 changed for itemType1 etc, since it listens for both itemIIds for both stores (might not be neccesary)
+          const didValue1Change = diffInfo.propsChangedBool[storeName1][storeItemId1][storyProp1];
+          const didValue2Change = diffInfo.propsChangedBool[storeName2][storeItemId2][storyProp2];
+          if (didValue1Change || didValue2Change) return;
 
           callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff!);
         },
-        check: [
-          { prop: [storyProp1], id: storeItemId1, type: storeName1 },
-          { prop: [storyProp2], id: storeItemId2, type: storeName2 },
-        ] as unknown as EasyEffect_Check<T_StoreName1 | T_StoreName2>,
-        step: stepName ?? "default",
-        atStepEnd: true,
-        id: mainEffectId,
-      }),
+        {
+          changes: [`${storeName1}.${storyProp1}`, `${storeName2}.${storyProp2}`],
+          itemIds: [storeItemId1, storeItemId2],
+          step: stepName ?? "default",
+          atStepEnd: true,
+          id: mainEffectId,
+        }
+      ),
     }));
   }
 
@@ -165,26 +178,32 @@ export function makeNestedLeaveEffectsMaker<
     `customLeaveEffectFor_${storeName1}_${storyProperty1}_${storeName2}_${storyProperty2}`
   );
   function newRuleMaker(callBacksObject: RulesOptions) {
-    return makeEffects(({ effect }) => ({
-      whenPropertyChanges: effect({
-        run(_diffInfo) {
+    return makeEffects((makeEffect) => ({
+      whenPropertyChanges: makeEffect(
+        (_, diffInfo) => {
           const usefulParams = getUsefulParams?.();
-          const latestValue1 = getState()[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
-          const latestValue2 = getState()[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
-          const prevValue1 = getPrevState()[storeName1][storeItemId1][storyProperty1] as PropertyValue1;
-          const prevValue2 = getPrevState()[storeName2][storeItemId2][storyProperty2] as PropertyValue2;
+          const latestValue1 = getState(storeName1, storeItemId1)?.[storyProperty1] as PropertyValue1;
+          const latestValue2 = getState(storeName2, storeItemId2)?.[storyProperty2] as PropertyValue2;
+          const prevValue1 = getPrevState(storeName1, storeItemId1)[storyProperty1] as PropertyValue1;
+          const prevValue2 = getPrevState(storeName2, storeItemId2)[storyProperty2] as PropertyValue2;
+
+          // Make sure value1 changed for itemType1 etc, since it listens for both itemIIds for both stores (might not be neccesary)
+          const didValue1Change = diffInfo.propsChangedBool[storeName1][storeItemId1][storyProperty1];
+          const didValue2Change = diffInfo.propsChangedBool[storeName2][storeItemId2][storyProperty2];
+          if (didValue1Change || didValue2Change) return;
 
           const callback = callBacksObject[prevValue1]?.[prevValue2];
           if (callback) callback(usefulParams!);
         },
-        check: [
-          { prop: [storyProperty1], id: storeItemId1, type: storeName1 },
-          { prop: [storyProperty2], id: storeItemId2, type: storeName2 },
-        ] as unknown as EasyEffect_Check<T_StoreName1 | T_StoreName2>,
-        step: stepName ?? "default",
-        atStepEnd: true,
-        id: mainEffectId,
-      }),
+        {
+          changes: [`${storeName1}.${storyProperty1}`, `${storeName2}.${storyProperty2}`],
+          itemIds: [storeItemId1, storeItemId2],
+          step: stepName ?? "default",
+          atStepEnd: true,
+          id: mainEffectId,
+          isPerItem: false,
+        }
+      ),
     }));
   }
 

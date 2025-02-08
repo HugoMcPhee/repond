@@ -1,10 +1,12 @@
-import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
-import { forEach } from "chootils/dist/loops";
+import { breakableForEach, forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
-import { EffectPhase } from "./types";
-import { runNextFrame } from "./helpers/frames";
-import { getStatesDiff } from "./getStatesDiff";
 import { copyItemIdsByItemType, copyStates } from "./copyStates";
+import { getStatesDiff } from "./getStatesDiff";
+import { updateRepondNextFrame } from "./helpers/frames";
+import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
+import { Effect, EffectPhase } from "./types";
+
+const MAX_STEP_ITERATIONS = 8;
 
 function updateDiffInfo(recordedChanges: RecordedChanges) {
   //  make a diff of the changes
@@ -20,14 +22,6 @@ function updateFrameTimes(animationFrameTime: number) {
   meta.latestFrameTime = animationFrameTime;
   if (meta.nextFrameIsFirst === false) {
     meta.latestFrameDuration = meta.latestFrameTime - meta.previousFrameTime;
-    // NOTE possibly stop this check if it's been done enough
-    // if (meta.frameRateTypeOption !== "full") {
-    //   if (meta.speedTestFramesRun < 15) {
-    //     if (meta.latestFrameDuration < meta.shortestFrameDuration) {
-    //       meta.shortestFrameDuration = meta.latestFrameDuration;
-    //     }
-    //   }
-    // }
   } else {
     meta.latestFrameDuration = 16.66667;
   }
@@ -36,24 +30,26 @@ function updateFrameTimes(animationFrameTime: number) {
 function runSetStates() {
   // merges all the states from setState()
 
-  for (let index = 0; index < meta.setStatesQue.length; index++) {
-    const loopedUpdateFunction = meta.setStatesQue[index];
+  meta.isRunningSetStates = true;
+  for (let index = 0; index < meta.setStatesQueue.length; index++) {
+    const loopedUpdateFunction = meta.setStatesQueue[index];
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   }
+  meta.isRunningSetStates = false;
 
-  meta.setStatesQue.length = 0;
+  meta.setStatesQueue.length = 0;
 }
 
 function runAddEffects() {
   // adding listeners (rules) are queued and happen here
   // removing listeners happens instantly
 
-  for (let index = 0; index < meta.startEffectsQue.length; index++) {
-    const loopedUpdateFunction = meta.startEffectsQue[index];
+  for (let index = 0; index < meta.startEffectsQueue.length; index++) {
+    const loopedUpdateFunction = meta.startEffectsQueue[index];
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   }
 
-  meta.startEffectsQue.length = 0;
+  meta.startEffectsQueue.length = 0;
 }
 
 function runEffectsWithRunAtStart() {
@@ -66,14 +62,63 @@ function runEffectsWithRunAtStart() {
 }
 
 function runAddAndRemove() {
-  for (let index = 0; index < meta.addAndRemoveItemsQue.length; index++) {
-    const loopedUpdateFunction = meta.addAndRemoveItemsQue[index];
+  for (let index = 0; index < meta.addAndRemoveItemsQueue.length; index++) {
+    const loopedUpdateFunction = meta.addAndRemoveItemsQueue[index];
     loopedUpdateFunction(meta.latestFrameDuration, meta.latestFrameTime);
   }
 
   meta.willAddItemsInfo = {};
   meta.willRemoveItemsInfo = {};
-  meta.addAndRemoveItemsQue.length = 0;
+  meta.addAndRemoveItemsQueue.length = 0;
+}
+
+function runEffectChangesPerItemForItemType(effect: Effect, type: string) {
+  const diffInfo = meta.diffInfo;
+  const allowedIdsMap = effect._allowedIdsMap;
+  const props = effect._propsByItemType?.[type];
+  const frameDuration = meta.latestFrameDuration;
+
+  const shouldCheckAdded = effect._checkAddedByItemType?.[type];
+  const shouldCheckRemoved = effect._checkRemovedByItemType?.[type];
+
+  let alreadyRanIdsMap = undefined as { [itemId: string]: boolean } | undefined;
+
+  if (shouldCheckAdded || shouldCheckRemoved) {
+    if (shouldCheckAdded) {
+      const itemsAddedIds = diffInfo.itemsAdded[type];
+      itemsAddedIds.forEach((itemId) => {
+        if (!allowedIdsMap || allowedIdsMap[itemId]) {
+          effect.run(itemId, meta.diffInfo, frameDuration, false);
+          alreadyRanIdsMap = alreadyRanIdsMap ?? {};
+          alreadyRanIdsMap[itemId] = true;
+        }
+      });
+    }
+    if (shouldCheckRemoved) {
+      const itemsRemovedIds = diffInfo.itemsRemoved[type];
+      itemsRemovedIds.forEach((itemId) => {
+        if (!allowedIdsMap || (allowedIdsMap[itemId] && !alreadyRanIdsMap?.[itemId])) {
+          effect.run(itemId, meta.diffInfo, frameDuration, false);
+          alreadyRanIdsMap = alreadyRanIdsMap ?? {};
+          alreadyRanIdsMap[itemId] = true;
+        }
+      });
+    }
+  }
+
+  // If there are no changes for this item type, return
+  if (!props?.length) return;
+
+  forEach(diffInfo.itemsChanged[type], (itemIdThatChanged) => {
+    if (!(!allowedIdsMap || (allowedIdsMap && allowedIdsMap[itemIdThatChanged as string]))) return;
+
+    breakableForEach(props, (propName) => {
+      if (!diffInfo.propsChangedBool[type][itemIdThatChanged][propName]) return;
+      if (alreadyRanIdsMap?.[itemIdThatChanged]) return;
+      effect.run(itemIdThatChanged, meta.diffInfo, frameDuration, false);
+      return true; // break out of the loop, so it only runs once
+    });
+  });
 }
 
 function runEffects(phase: EffectPhase, stepName: string) {
@@ -81,7 +126,19 @@ function runEffects(phase: EffectPhase, stepName: string) {
 
   for (let index = 0; index < effectNamesToRun.length; index++) {
     const name = effectNamesToRun[index];
-    if (meta.allEffects[name]) meta.allEffects[name].run(meta.diffInfo, meta.latestFrameDuration);
+    const effect = meta.liveEffectsMap[name];
+    if (!effect) return console.warn("no effect found for ", name);
+    if (effect.isPerItem) {
+      const itemTypes = effect._itemTypes;
+      if (!itemTypes) return console.warn("no item types found for ", name);
+      if (itemTypes?.length === 1) {
+        runEffectChangesPerItemForItemType(effect, itemTypes[0]);
+      } else {
+        forEach(itemTypes, (type) => runEffectChangesPerItemForItemType(effect, type));
+      }
+    } else {
+      effect.run("", meta.diffInfo, meta.latestFrameDuration, false);
+    }
   }
 }
 
@@ -94,12 +151,12 @@ function runCallbacks(callbacksToRun: any[]) {
 
 const copiedCallbacks: any[] = [];
 
-function runAllCallbacks() {
-  if (meta.callbacksQue.length > 0) {
-    for (let index = 0; index < meta.callbacksQue.length; index++) {
-      copiedCallbacks.push(meta.callbacksQue[index]);
+function runNextTickCallbacks() {
+  if (meta.nextTickQueue.length > 0) {
+    for (let index = 0; index < meta.nextTickQueue.length; index++) {
+      copiedCallbacks.push(meta.nextTickQueue[index]);
     }
-    meta.callbacksQue.length = 0;
+    meta.nextTickQueue.length = 0;
   }
   runCallbacks(copiedCallbacks);
   copiedCallbacks.length = 0;
@@ -109,6 +166,7 @@ export function createRecordedChanges(recordedChanges: RecordedChanges) {
   recordedChanges.itemTypesBool = {};
   recordedChanges.itemIdsBool = {};
   recordedChanges.itemPropsBool = {};
+  console.log("createRecordedChanges", meta.itemTypeNames);
 
   forEach(meta.itemTypeNames, (itemType) => {
     recordedChanges.itemTypesBool[itemType] = false;
@@ -186,48 +244,14 @@ function removeRemovedItemRefs() {
 
 function runSetOfStepEffects(stepName: string) {
   meta.nowMetaPhase = "runningEffects";
-
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-  runStepEffects(stepName);
-  if (!meta.recordedEffectChanges.somethingChanged) return;
-
-  console.warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
-
-  console.log("Step name: ", meta.nowStepName);
-  console.log("Effect ids:");
-  console.log(JSON.stringify(meta.effectIdsByPhaseByStep.duringStep?.[meta.nowStepName], null, 2));
-  console.log("Changes");
-  console.log(
-    JSON.stringify(
-      Object.entries(meta.recordedEffectChanges.itemTypesBool)
-        .filter((item) => item[1] === true)
-        .map((item) =>
-          Object.values(meta.recordedEffectChanges.itemPropsBool[item[0]]).map((value) =>
-            Object.entries(value)
-              .filter((propEntry) => propEntry[1] === true)
-              .map((propEntry) => propEntry[0])
-          )
-        ),
-      null,
-      2
-    )
-  );
+  for (let i = 0; i < MAX_STEP_ITERATIONS; i++) {
+    runStepEffects(stepName);
+    if (!meta.recordedEffectChanges.somethingChanged) return;
+  }
+  logTooManySetStatesMessage();
 }
 
-function runStepEndEffectsShortcut(stepName: string) {
+function runStepEndEffects(stepName: string) {
   meta.nowMetaPhase = "runningStepEndEffects"; // hm not checked anywhere, but checking metaPhase !== "runningEffects" (runnin derrivers) is
   updateDiffInfo(meta.recordedStepEndEffectChanges); // the diff for all the combined derriver changes
   runEffects("endOfStep", stepName); //  Then it runs the stepEnd effects based on the diff
@@ -235,7 +259,7 @@ function runStepEndEffectsShortcut(stepName: string) {
 
 function runAStep(stepName: string) {
   runSetOfStepEffects(stepName);
-  runStepEndEffectsShortcut(stepName);
+  runStepEndEffects(stepName);
 }
 
 function runAStepLoop() {
@@ -244,109 +268,65 @@ function runAStepLoop() {
   meta.nowStepName = meta.stepNames[meta.nowStepIndex];
 }
 
-function runSetOfStepsLoopShortcut() {
+function runSetOfStepsLoop() {
   meta.nowStepIndex = 0;
   meta.nowStepName = meta.stepNames[meta.nowStepIndex];
 
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-  runAStepLoop();
-  if (!meta.stepNames[meta.nowStepIndex]) return;
-
-  console.warn("tried to run a 30th step", meta.stepNames.length);
+  for (let i = 0; i < meta.stepNames.length; i++) {
+    runAStepLoop();
+    if (!meta.stepNames[meta.nowStepIndex]) return;
+  }
 }
 
 export function _updateRepond(animationFrameTime: number) {
+  meta.didStartFirstFrame = true;
   updateFrameTimes(animationFrameTime);
-  meta.latestUpdateTime = performance.now();
 
   setMetaPhase("runningUpdates");
-  // save previous state, ,
-  // this won't this discard all the setStates from the callbacks
-  // because all the setStates are delayed, and get added to meta.whatToRunWhenUpdating to run later
+  // Save previous state
+  // - this won't this discard all the setStates from the callbacks
+  //    because all the setStates are delayed, and get added to meta.setStatesQue to run later
   copyStates(meta.nowState, meta.prevState);
-  // copy the item ids into the previous item ids
+
+  // Copy the item ids into the previous item ids
   copyItemIdsByItemType(meta.itemIdsByItemType, meta.prevItemIdsByItemType);
 
-  runSetOfStepsLoopShortcut();
+  runSetOfStepsLoop();
   resetRecordedStepEndChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
 
   setMetaPhase("waitingForFirstUpdate");
-  runAllCallbacks();
+  runNextTickCallbacks();
   removeRemovedItemRefs();
 
   // if theres nothing running on next frame
-  meta.nextFrameIsFirst = meta.setStatesQue.length === 0;
-  meta.latestUpdateDuration = performance.now() - meta.latestUpdateTime;
+  meta.nextFrameIsFirst = meta.setStatesQueue.length === 0;
 
   if (meta.shouldRunUpdateAtEndOfUpdate) {
-    runNextFrame();
+    updateRepondNextFrame();
     meta.shouldRunUpdateAtEndOfUpdate = false;
   }
+}
+
+// ------------------------------
+// Debugging helpers
+
+function logTooManySetStatesMessage() {
+  console.warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
+  console.log("Step name: ", meta.nowStepName);
+  console.log("Effect ids:");
+  console.log(JSON.stringify(meta.effectIdsByPhaseByStep.duringStep?.[meta.nowStepName], null, 2));
+  console.log("Changes");
+  console.log(JSON.stringify(getDebugStepEffectsData(), null, 2));
+}
+
+function getDebugStepEffectsData() {
+  return Object.entries(meta.recordedEffectChanges.itemTypesBool)
+    .filter((item) => item[1] === true)
+    .map((item) =>
+      Object.values(meta.recordedEffectChanges.itemPropsBool[item[0]]).map((value) =>
+        Object.entries(value)
+          .filter((propEntry) => propEntry[1] === true)
+          .map((propEntry) => propEntry[0])
+      )
+    );
 }

@@ -1,23 +1,14 @@
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
-// export interface AllStoreInfoUntyped {
-//   [StoreName: string]: {
-//     state: (itemId: any) => any;
-//     refs: (itemId: any, type: any) => any;
-//     startStates?: Record<any, any>;
-//   };
-// }
-
-export type StoreInfoUntyped = {
-  getDefaultState: (itemId?: any) => any; // NOTE the itemId and type might not be realiably passed in
-  getDefaultRefs: (itemId?: any, type?: any) => any; // NOTE the itemId and type might not be realiably passed in
-  startStates?: Record<any, any>;
+export type ItemTypeDefUntyped = {
+  newState: (itemId?: any) => any; // NOTE the itemId and type might not be realiably passed in
+  newRefs: (itemId?: any, type?: any) => any; // NOTE the itemId and type might not be realiably passed in
 };
 
-export type AllStoreInfoUntyped = Record<string, StoreInfoUntyped>;
+export type ItemTypeDefs = Record<string, ItemTypeDefUntyped>;
 
 export interface RepondTypesUntyped {
-  AllStoreInfo: AllStoreInfoUntyped;
+  ItemTypeDefs: ItemTypeDefs;
   StepNames: string[] | readonly string[];
   EffectGroups: Record<string, Record<string, any>>; // TOTO maybe rename groupedEffects
   ParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;

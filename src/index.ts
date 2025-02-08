@@ -1,3 +1,4 @@
+export { whenSettingStates } from "./helpers/runWhens";
 import { AllState, ItemType } from "./types";
 
 export * from "./declarations";
@@ -23,28 +24,28 @@ export {
   removePartialPatch,
 } from "./usable/patchesAndDiffs";
 
-export { useStore, useStoreEffect, useStoreItem, useStoreItemEffect, useStoreItemPropsEffect } from "./usable/hooks";
+export { useStore, useStoreEffect, useStoreItem } from "./usable/hooks";
 export {
   addItem,
-  getItem,
   getPrevState,
   getRefs,
   getState,
   removeItem,
   setState,
+  setNestedState,
   onNextTick,
   getItemWillBeAdded,
   getItemWillBeRemoved,
   getItemWillExist,
   getPartialState,
   applyState,
-  getStateAtPath,
+  getItemTypes,
+  getItemIds,
 } from "./usable/getSet";
 
 export {
   initEffectGroups,
   makeEffect,
-  makeItemEffect,
   makeEffects,
   runEffect,
   runEffectsGroup,
@@ -52,11 +53,9 @@ export {
   startEffect,
   startEffectsGroup,
   startNewEffect,
-  startNewItemEffect,
   stopAllEffectsGroups as stopAllEffectGroups,
   stopEffect,
   stopEffectsGroup,
-  stopNewEffect,
 } from "./usable/effects";
 
 export {

@@ -1,11 +1,10 @@
 import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
-import { addItem, getDefaultStates, getItemTypes, removeItem, setState } from "./getSet";
+import { cloneObjectWithJson, copyStates } from "../copyStates";
 import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
-import { repondMeta as meta, UntypedDiffInfo, initialRecordedChanges } from "../meta";
-import { AllState, DiffInfo, GetPartialState, ItemIdsByType, ItemId, ItemType, PropName } from "../types";
-import { cloneObjectWithJson } from "../utils";
-import { copyStates } from "../copyStates";
+import { initialRecordedChanges, UntypedDiffInfo } from "../meta";
+import { AllState, DiffInfo, GetPartialState, ItemId, ItemIdsByType, ItemType, PropName } from "../types";
+import { addItem, getDefaultState, getItemTypes, removeItem, setNestedState } from "./getSet";
 
 type StatesPatch = {
   changed: GetPartialState<AllState>;
@@ -58,15 +57,14 @@ function makeEmptyDiffInfo() {
 export function applyPatch(patch: StatesPatch) {
   const itemTypes = getItemTypes();
   forEach(itemTypes, (type) => {
-    forEach(patch.removed[type] ?? [], (id) => removeItem({ type, id }));
-    forEach(patch.added[type] ?? [], (id) => addItem({ type, id, state: patch.changed?.[type]?.[id] }));
+    forEach(patch.removed[type] ?? [], (id) => removeItem(type, id));
+    forEach(patch.added[type] ?? [], (id) => addItem(type, id, patch.changed?.[type]?.[id]));
   });
-  setState(patch.changed);
+  setNestedState(patch.changed);
 }
 
 export function applyPatchHere(newStates: GetPartialState<AllState>, patch: StatesPatch) {
   const itemTypes = getItemTypes();
-  const defaultStates = getDefaultStates();
 
   forEach(itemTypes, (type) => {
     // Loop through each removed item, and delete it from newStates
@@ -85,7 +83,7 @@ export function applyPatchHere(newStates: GetPartialState<AllState>, patch: Stat
       const itemTypeState = newStates[type];
       if (itemTypeState) {
         if (itemTypeState[id] === undefined) {
-          itemTypeState[id] = defaultStates[type](id); // NOTE maybe no need to add it then delete it?
+          itemTypeState[id] = getDefaultState(type)(id); // NOTE maybe no need to add it then delete it?
         }
       }
       if (itemTypeState && itemTypeState[id]) {
@@ -137,7 +135,6 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
   patchOrDiff: T_PatchOrDiff
 ) {
   const itemTypes = getItemTypes();
-  const defaultStates = getDefaultStates();
 
   const newPatch = makeEmptyPatch();
   const tempDiffInfo = makeEmptyDiffInfo();
@@ -209,7 +206,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
       let propertyNamesForItemType = [] as PropName<typeof itemType>[];
       let propertyNamesHaveBeenFound = false;
       forEach(itemIdsAddedForType ?? [], (itemId) => {
-        const defaultItemState = defaultStates[itemType](itemId);
+        const defaultItemState = getDefaultState(itemType)(itemId);
         const addedItemState = newItemTypeState?.[itemId];
 
         if (!propertyNamesHaveBeenFound) {
@@ -275,7 +272,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
       let propertyNamesForItemType = [] as PropName<typeof itemType>[];
       let propertyNamesHaveBeenFound = false;
       forEach(itemIdsRemovedForType ?? [], (itemId) => {
-        const defaultItemState = defaultStates[itemType](itemId);
+        const defaultItemState = getDefaultState(itemType)(itemId);
         const removedItemState = prevItemTypeState?.[itemId];
 
         if (!propertyNamesHaveBeenFound) {
@@ -448,16 +445,15 @@ export function combinePatches(patchesArray: StatesPatch[]) {
 
 export function makeMinimalPatch(currentStates: GetPartialState<AllState>, thePatch: StatesPatch) {
   const itemTypes = getItemTypes();
-  const defaultStates = getDefaultStates();
 
   const minimalPatch = cloneObjectWithJson(thePatch) as StatesPatch;
   // Loop through the changed items, and each changed property
   forEach(itemTypes, (itemType) => {
-    const propertyNames = Object.keys(defaultStates[itemType]("anItemId")) as PropName<typeof itemType>[];
+    const propertyNames = Object.keys(getDefaultState(itemType)("anItemId")) as PropName<typeof itemType>[];
 
     const changedForType = minimalPatch.changed[itemType];
     if (changedForType) {
-      const changedItemIds = Object.keys(changedForType ?? {}) as ItemId<typeof itemType>[];
+      const changedItemIds = Object.keys(changedForType ?? {}) as ItemId[];
       forEach(changedItemIds, (itemId) => {
         const changedForItem = changedForType[itemId];
         const itemState = currentStates?.[itemType]?.[itemId];
