@@ -1,5 +1,5 @@
 import { toSafeEffectId } from "../helpers/effects";
-import { AllState, ItemType, PropName, PropValue, StepName } from "../types";
+import { ItemType, PropName, PropValue, StepName } from "../types";
 import { makeEffects } from "./effects";
 import { getPrevState, getState } from "./getSet";
 
@@ -26,7 +26,7 @@ export function makeEffectsMaker<
           const usefulParams = getUsefulParams?.();
           const latestValue = getState(storeName, storeItemId)[storyProperty] as T_PropValue;
 
-          callbacksMap[latestValue]?.(usefulParams!);
+          callbacksMap[latestValue as any]?.(usefulParams!);
         },
         {
           changes: [`${storeName}.${storyProperty}`],
@@ -65,7 +65,7 @@ export function makeLeaveEffectsMaker<
           const usefulStoryStuff = getUsefulParams?.();
           const prevValue = getPrevState(storeName, storeItemId)[storyProperty] as T_PropValue;
 
-          callBacksObject[prevValue]?.(usefulStoryStuff!);
+          callBacksObject[prevValue as any]?.(usefulStoryStuff!);
         },
         {
           changes: [`${storeName}.${storyProperty}`],
@@ -124,7 +124,7 @@ export function makeNestedEffectsMaker<
           const didValue2Change = diffInfo.propsChangedBool[storeName2][storeItemId2][storyProp2];
           if (didValue1Change || didValue2Change) return;
 
-          callBacksObject[latestValue1]?.[latestValue2]?.(usefulStoryStuff!);
+          callBacksObject[latestValue1 as any]?.[latestValue2 as any]?.(usefulStoryStuff!);
         },
         {
           changes: [`${storeName1}.${storyProp1}`, `${storeName2}.${storyProp2}`],
