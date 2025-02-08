@@ -1,19 +1,18 @@
 import { forEach } from "chootils/dist/loops";
+import { mergeToState } from "../copyStates";
+import { runWhenAddingAndRemovingItems, whenSettingStates } from "../helpers/runWhens";
 import { repondMeta as meta } from "../meta";
 import {
   AllRefs,
   AllState,
-  DeepReadonly,
   DefaultRefs,
   DefaultStates,
   ItemId,
   ItemPropsByType,
   ItemType,
-  RepondCallback,
+  RepondCallback
 } from "../types";
 import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
-import { runWhenAddingAndRemovingItems, whenSettingStates } from "../helpers/runWhens";
-import { mergeToState } from "../copyStates";
 
 export function setState(propPath: string, newValue: any, itemId?: string) {
   whenSettingStates(() => {
@@ -149,18 +148,19 @@ export const getRefs = <T_ItemType extends ItemType>(
 export function addItem<T_ItemType extends ItemType>(
   type: T_ItemType,
   id: string,
-  state?: Partial<AllState[T_ItemType][ItemId<T_ItemType>]>,
-  refs?: Partial<AllRefs[T_ItemType][ItemId<T_ItemType>]>
+  state?: Partial<AllState[T_ItemType][ItemId]>,
+  refs?: Partial<AllRefs[T_ItemType][ItemId]>
 ) {
   if (!meta.willAddItemsInfo[type]) meta.willAddItemsInfo[type] = {};
   meta.willAddItemsInfo[type][id] = true;
+
   runWhenAddingAndRemovingItems(() => {
     meta.nowState[type][id] = {
       ...meta.defaultStateByItemType[type](id),
       ...(state || {}),
     };
     meta.nowRefs[type][id] = {
-      ...meta.defaultRefsByItemType[type](id, meta.nowState[id]),
+      ...meta.defaultRefsByItemType[type](id, meta.nowState[type][id]),
       ...(refs || {}),
     };
     meta.itemIdsByItemType[type].push(id);

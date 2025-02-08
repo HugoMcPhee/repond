@@ -78,6 +78,7 @@ export const repondMeta = {
   willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
   isRunningSetStates: false,
   didInit: false,
+  didStartFirstFrame: false, // so we can add items instantly before the first frame
 
   // Recording changes -----------------------------------------------------
   diffInfo: initialDiffInfo as DiffInfo,

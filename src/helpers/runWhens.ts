@@ -26,6 +26,10 @@ export function whenDoingEffectsRunAtStart(callback: any) {
 }
 
 export function runWhenAddingAndRemovingItems(callback: any) {
-  meta.addAndRemoveItemsQueue.push(callback);
-  runNextFrameIfNeeded();
+  if (!meta.didStartFirstFrame) {
+    callback();
+  } else {
+    meta.addAndRemoveItemsQueue.push(callback);
+    runNextFrameIfNeeded();
+  }
 }

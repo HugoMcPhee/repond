@@ -279,6 +279,7 @@ function runSetOfStepsLoop() {
 }
 
 export function _updateRepond(animationFrameTime: number) {
+  meta.didStartFirstFrame = true;
   updateFrameTimes(animationFrameTime);
 
   setMetaPhase("runningUpdates");

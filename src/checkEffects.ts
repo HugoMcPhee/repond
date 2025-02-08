@@ -79,14 +79,14 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
         const propName = propsToCheck[propNameIndex];
         const propChangedForAnyItem = diffInfo.propsChangedBool[type].all__[propName];
         if (propChangedForAnyItem) {
-          if (shouldCheckAnyId) {
+          if (shouldCheckAnyId && !shouldCheckBecomes) {
             return true; // did change
           } else {
             for (let itemIdIndex = 0; itemIdIndex < diffInfo.itemsChanged[type].length; itemIdIndex++) {
               const itemId = diffInfo.itemsChanged[type][itemIdIndex];
 
               // forEach(diffInfo.itemsChanged[type], (itemId) => {
-              if (allowedIdsMap![itemId]) {
+              if (!allowedIdsMap || allowedIdsMap![itemId]) {
                 if (diffInfo.propsChangedBool[type][itemId][propName]) {
                   if (shouldCheckBecomes) {
                     if (getState(type, itemId)?.[propName] === effect.becomes) {
@@ -94,8 +94,9 @@ function checkEffectForChanges(effect: Effect, diffInfo: typeof meta.diffInfo) {
                     } else {
                       continue; // did not change
                     }
+                  } else {
+                    return true; // did change
                   }
-                  return true; // did change
                 }
               }
             }
