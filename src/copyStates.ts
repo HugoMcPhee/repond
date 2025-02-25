@@ -41,33 +41,6 @@ export function copyItemIdsByItemType(currentObject: any, saveToObject: any) {
   }
 }
 
-export function mergeToState(
-  storeType: string,
-  propKey: string,
-  newValue: string,
-  foundItemId: string,
-  saveToObject: any,
-  recordedChanges: RecordedChanges,
-  allRecordedChanges: RecordedChanges
-) {
-  // check if the item exists before copying
-  if (saveToObject?.[storeType]?.[foundItemId] === undefined) return;
-
-  // save the new state
-  saveToObject[storeType][foundItemId][propKey] = newValue;
-
-  recordedChanges.itemTypesBool[storeType] = true;
-  recordedChanges.itemIdsBool[storeType][foundItemId] = true;
-  recordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
-
-  allRecordedChanges.itemTypesBool[storeType] = true;
-  allRecordedChanges.itemIdsBool[storeType][foundItemId] = true;
-  allRecordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
-
-  recordedChanges.somethingChanged = true;
-  allRecordedChanges.somethingChanged = true;
-}
-
 export function cloneObjectWithJson(theObject: { [key: string]: any }) {
   return JSON.parse(JSON.stringify(theObject));
 }

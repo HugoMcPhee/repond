@@ -1,37 +1,43 @@
 import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
 import { repondMeta as meta } from "../meta";
 import { whenDoingEffectsRunAtStart, whenStartingEffects, whenStoppingEffects } from "../helpers/runWhens";
-import { Effect, EffectPhase } from "../types";
+import { EffectDef, EffectPhase } from "../types";
 import { forEach } from "chootils/dist/loops";
 
-export function _startEffect(newEffect: Effect) {
-  const phase: EffectPhase = newEffect.atStepEnd ? "endOfStep" : "duringStep";
-  const step = newEffect.step ?? "default";
-  const effectId = newEffect.id ?? toSafeEffectId();
+export function _addEffect(newEffectDef: EffectDef) {
+  const phase: EffectPhase = newEffectDef.atStepEnd ? "endOfStep" : "duringStep";
+  const step = newEffectDef.step ?? "default";
+  const effectId = newEffectDef.id ?? toSafeEffectId();
 
   // TODO setupEffect the frist time each time if the cache stuff isn't there
-  storeCachedValuesForEffect(newEffect);
+  storeCachedValuesForEffect(newEffectDef);
 
-  if (newEffect.runAtStart) {
-    whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffect));
+  if (newEffectDef.runAtStart) {
+    whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffectDef));
   }
 
   whenStartingEffects(() => {
-    meta.liveEffectsMap[effectId] = newEffect;
-    const idsByStep = meta.effectIdsByPhaseByStep[phase];
-    idsByStep[step] = idsByStep[step] || [];
-    if (!idsByStep[step].includes(effectId)) idsByStep[step].push(effectId);
+    meta.liveEffectsMap[effectId] = newEffectDef;
+    const idsByStep = meta.effectIdsByPhaseByStepByPropId[phase];
+    if (!idsByStep[step]) idsByStep[step] = {};
+    forEach(newEffectDef.changes, (change) => {
+      idsByStep[step][change] = idsByStep[step][change] || [];
+      if (!idsByStep[step][change].includes(effectId)) idsByStep[step][change].push(effectId);
+    });
+
+    // idsByStep[step] = idsByStep[step] || [];
+    // if (!idsByStep[step].includes(effectId)) idsByStep[step].push(effectId);
   });
 
   return effectId;
 }
 
-export function runEffectWithoutChangeForItems(effect: Effect) {
+export function runEffectWithoutChangeForItems(effect: EffectDef) {
   let itemIdsToRun = getItemIdsForEffect(effect);
   forEach(itemIdsToRun, (itemId) => effect.run(itemId, meta.diffInfo as any, 16.66666, true /* ranWithoutChange */));
 }
 
-export function runEffectWithoutChange(effect: Effect) {
+export function runEffectWithoutChange(effect: EffectDef) {
   if (effect.isPerItem) {
     runEffectWithoutChangeForItems(effect);
     return;
@@ -41,7 +47,7 @@ export function runEffectWithoutChange(effect: Effect) {
 }
 
 // Return or cache item types for an effect
-export function getItemTypesFromEffect(effect: Effect): string[] {
+export function getItemTypesFromEffect(effect: EffectDef): string[] {
   let itemIdsToRun: string[] = [];
 
   // if (effect._itemTypes) return effect._itemTypes;
@@ -78,7 +84,7 @@ export function getItemTypesFromEffect(effect: Effect): string[] {
   return itemTypes;
 }
 
-export function getItemIdsForEffect(effect: Effect): string[] {
+export function getItemIdsForEffect(effect: EffectDef): string[] {
   if (effect.itemIds) return effect.itemIds;
 
   let itemIdsToRun: string[] = [];
@@ -100,7 +106,7 @@ export function getItemIdsForEffect(effect: Effect): string[] {
   return itemIdsToRun;
 }
 
-export function storeCachedValuesForEffect(effect: Effect) {
+export function storeCachedValuesForEffect(effect: EffectDef) {
   if (effect.isPerItem === undefined) effect.isPerItem = true; // default to per item
 
   if (effect._allowedIdsMap && effect._itemTypes && effect._propsByItemType) return; // NOTE _allowedIdsMap can be undefined, so the check isn't that useful
@@ -147,7 +153,9 @@ export function _stopEffect(effectId: string) {
     const phase: EffectPhase = !!effect.atStepEnd ? "endOfStep" : "duringStep";
     const step = effect.step ?? "default";
 
-    removeItemFromArrayInPlace(meta.effectIdsByPhaseByStep[phase][step] ?? [], effect.id);
+    forEach(effect.changes, (propId) => {
+      removeItemFromArrayInPlace(meta.effectIdsByPhaseByStepByPropId[phase]?.[step]?.[propId] ?? [], effect.id);
+    });
 
     delete meta.liveEffectsMap[effectId];
   });

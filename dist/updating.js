@@ -5,6 +5,7 @@ import { getStatesDiff } from "./getStatesDiff";
 import { updateRepondNextFrame } from "./helpers/frames";
 import { repondMeta as meta } from "./meta";
 const MAX_STEP_ITERATIONS = 8;
+// NOTE maybe update to only check propIds and also itemIds by propId or something?
 function updateDiffInfo(recordedChanges) {
     //  make a diff of the changes
     getStatesDiff(meta.nowState, meta.prevState, meta.diffInfo, recordedChanges, false /* checkAllChanges */);
@@ -104,6 +105,7 @@ function runEffectChangesPerItemForItemType(effect, type) {
     });
 }
 function runEffects(phase, stepName) {
+    // NOTE Check effects doesnt use recorded changes! onyl the diff info?
     const effectNamesToRun = checkEffects(phase, stepName);
     for (let index = 0; index < effectNamesToRun.length; index++) {
         const name = effectNamesToRun[index];
@@ -162,6 +164,7 @@ export function createRecordedChanges(recordedChanges) {
     });
     recordedChanges.somethingChanged = false;
 }
+// Maybe this can be removed? and just the props chenge thing, and also maybe ids changed?
 function resetRecordedChanges(recordedChanges) {
     recordedChanges.somethingChanged = false;
     for (let typeIndex = 0; typeIndex < meta.itemTypeNames.length; typeIndex++) {
@@ -189,9 +192,12 @@ function resetRecordedStepChanges() {
 // BUT I think the first time it runs, it doesn't have any diff info, so it runs the effects first which maybe won't do anything, then the setStates
 // the setStates from clalbacks only get run here and not before
 function runStepEffects(stepName) {
+    // NOTE this runs based on the diff info of the PREVIOUS steps END changes, which is all colected changes so far
+    //
     resetRecordedStepChanges(); // NOTE recently added to prevent 'derive' changes being remembered each time it derives again
     runEffectsWithRunAtStart(); // run the runAtStart listeners
     runEffects("duringStep", stepName); //  a running derive-listener can add more to the setStates que (or others)
+    meta.recordedPropIdsChangedMap.duringStep = {};
     runAddEffects(); // add rules / effects
     runAddAndRemove(); // add and remove items
     runSetStates(); // run the qued setStates
@@ -211,8 +217,11 @@ function removeRemovedItemRefs() {
 }
 function runSetOfStepEffects(stepName) {
     meta.nowMetaPhase = "runningEffects";
+    meta.nowEffectPhase = "duringStep";
+    meta.isFirstDuringPhaseLoop = true;
     for (let i = 0; i < MAX_STEP_ITERATIONS; i++) {
         runStepEffects(stepName);
+        meta.isFirstDuringPhaseLoop = false;
         if (!meta.recordedEffectChanges.somethingChanged)
             return;
     }
@@ -220,6 +229,7 @@ function runSetOfStepEffects(stepName) {
 }
 function runStepEndEffects(stepName) {
     meta.nowMetaPhase = "runningStepEndEffects"; // hm not checked anywhere, but checking metaPhase !== "runningEffects" (runnin derrivers) is
+    meta.nowEffectPhase = "endOfStep";
     updateDiffInfo(meta.recordedStepEndEffectChanges); // the diff for all the combined derriver changes
     runEffects("endOfStep", stepName); //  Then it runs the stepEnd effects based on the diff
 }
@@ -253,6 +263,7 @@ export function _updateRepond(animationFrameTime) {
     copyItemIdsByItemType(meta.itemIdsByItemType, meta.prevItemIdsByItemType);
     runSetOfStepsLoop();
     resetRecordedStepEndChanges(); // maybe resetting recorded changes here is better, before the callbacks run? maybe it doesnt matter?
+    meta.recordedPropIdsChangedMap.endOfStep = {};
     setMetaPhase("waitingForFirstUpdate");
     runNextTickCallbacks();
     removeRemovedItemRefs();
@@ -269,7 +280,7 @@ function logTooManySetStatesMessage() {
     console.warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
     console.log("Step name: ", meta.nowStepName);
     console.log("Effect ids:");
-    console.log(JSON.stringify(meta.effectIdsByPhaseByStep.duringStep?.[meta.nowStepName], null, 2));
+    console.log(JSON.stringify(meta.effectIdsByPhaseByStepByPropId.duringStep?.[meta.nowStepName], null, 2));
     console.log("Changes");
     console.log(JSON.stringify(getDebugStepEffectsData(), null, 2));
 }

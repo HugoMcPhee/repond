@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase } from "./types";
+import { DiffInfo, EffectDef, EffectPhase } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 export type RecordedChanges = {
     itemTypesBool: {
@@ -86,6 +86,8 @@ export declare const repondMeta: {
     stepNames: readonly string[];
     nowStepName: string;
     nowStepIndex: number;
+    nowEffectPhase: EffectPhase;
+    isFirstDuringPhaseLoop: boolean;
     nowMetaPhase: RepondMetaPhase;
     willAddItemsInfo: {
         [itemTypeName: string]: {
@@ -103,6 +105,7 @@ export declare const repondMeta: {
     diffInfo: DiffInfo;
     recordedEffectChanges: RecordedChanges;
     recordedStepEndEffectChanges: RecordedChanges;
+    recordedPropIdsChangedMap: Record<EffectPhase, Record<string, boolean>>;
     nextFrameIsFirst: boolean;
     previousFrameTime: number;
     latestFrameTime: number;
@@ -114,9 +117,9 @@ export declare const repondMeta: {
     setStatesQueue: AFunction[];
     nextTickQueue: AFunction[];
     autoEffectIdCounter: number;
-    liveEffectsMap: Record<string, Effect>;
-    effectIdsByPhaseByStep: Record<EffectPhase, Record<string, string[]>>;
-    storedEffectsMap: Record<string, Effect>;
+    liveEffectsMap: Record<string, EffectDef>;
+    effectIdsByPhaseByStepByPropId: Record<EffectPhase, Record<string, Record<string, string[]>>>;
+    storedEffectsMap: Record<string, EffectDef>;
     effectIdsByGroup: Record<string, string[]>;
     allParamEffectGroups: Record<string, ParamEffectsGroup<any, any>>;
     paramEffectIdsByGroupPlusParamKey: Record<string, string[]>;

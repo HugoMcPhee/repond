@@ -1,5 +1,4 @@
 import { forEach } from "chootils/dist/loops";
-import { mergeToState } from "../copyStates";
 import { runWhenAddingAndRemovingItems, whenSettingStates } from "../helpers/runWhens";
 import { repondMeta as meta } from "../meta";
 import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
@@ -16,6 +15,12 @@ export function setState(propPath, newValue, itemId) {
             console.log("propPath", propPath);
             return;
         }
+        meta.recordedPropIdsChangedMap[meta.nowEffectPhase][propPath] = true;
+        meta.recordedPropIdsChangedMap.endOfStep[propPath] = true;
+        // if (meta.nowEffectPhase === "duringStep") {
+        // console.log("meta.nowEffectPhase", meta.nowEffectPhase);
+        // console.log(meta.recordedPropIdsChangedMap.duringStep?.[propPath]);
+        // }
         const storeType = meta.itemTypeByPropPathId[propPath];
         const propKey = meta.propKeyByPropPathId[propPath];
         let foundItemId = itemId || meta.itemIdsByItemType[storeType]?.[0];
@@ -23,7 +28,21 @@ export function setState(propPath, newValue, itemId) {
             foundItemId = Object.keys(meta.nowState[storeType] ?? {})[0];
             console.warn(`${propPath}No itemId found for setState ${storeType}, using first found itemId: ${foundItemId} from Object keys`);
         }
-        mergeToState(storeType, propKey, newValue, foundItemId, meta.nowState, meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges, meta.recordedStepEndEffectChanges);
+        const recordedChanges = meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges;
+        const allRecordedChanges = meta.recordedStepEndEffectChanges;
+        // check if the item exists before copying
+        if (meta.nowState?.[storeType]?.[foundItemId] === undefined)
+            return;
+        // save the new state
+        meta.nowState[storeType][foundItemId][propKey] = newValue;
+        recordedChanges.itemTypesBool[storeType] = true;
+        recordedChanges.itemIdsBool[storeType][foundItemId] = true;
+        recordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
+        allRecordedChanges.itemTypesBool[storeType] = true;
+        allRecordedChanges.itemIdsBool[storeType][foundItemId] = true;
+        allRecordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
+        recordedChanges.somethingChanged = true;
+        allRecordedChanges.somethingChanged = true;
     });
 }
 export function setNestedState(newState) {
@@ -105,6 +124,7 @@ export function addItem(type, id, state, refs) {
     if (!meta.willAddItemsInfo[type])
         meta.willAddItemsInfo[type] = {};
     meta.willAddItemsInfo[type][id] = true;
+    const propPath = `${type}.__added`;
     runWhenAddingAndRemovingItems(() => {
         meta.nowState[type][id] = {
             ...meta.defaultStateByItemType[type](id),
@@ -126,6 +146,8 @@ export function addItem(type, id, state, refs) {
         meta.recordedEffectChanges.itemTypesBool[type] = true;
         meta.recordedEffectChanges.itemIdsBool[type][id] = true;
         meta.recordedEffectChanges.somethingChanged = true;
+        meta.recordedPropIdsChangedMap[meta.nowEffectPhase][propPath] = true;
+        meta.recordedPropIdsChangedMap.endOfStep[propPath] = true;
         // NOTE new items with props different to the defaults props are recorded as changed
         const itemPropNames = meta.propNamesByItemType[type];
         forEach(itemPropNames, (propName) => {
@@ -141,6 +163,7 @@ export function removeItem(type, id) {
     if (!meta.willRemoveItemsInfo[type])
         meta.willRemoveItemsInfo[type] = {};
     meta.willRemoveItemsInfo[type][id] = true;
+    const propPath = `${type}.__added`;
     runWhenAddingAndRemovingItems(() => {
         // removing itemId
         delete meta.nowState[type][id];
@@ -150,6 +173,8 @@ export function removeItem(type, id) {
         meta.recordedStepEndEffectChanges.somethingChanged = true;
         meta.recordedEffectChanges.itemTypesBool[type] = true;
         meta.recordedEffectChanges.somethingChanged = true;
+        meta.recordedPropIdsChangedMap[meta.nowEffectPhase][propPath] = true;
+        meta.recordedPropIdsChangedMap.endOfStep[propPath] = true;
     });
 }
 export function getItemWillBeAdded(type, id) {

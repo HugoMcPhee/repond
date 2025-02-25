@@ -1,8 +1,8 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
-import { _startEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
+import { _addEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
-import { Effect, ItemType, PropName } from "../types";
+import { EffectDef, ItemType, PropName } from "../types";
 
 // Helper type to strip "Effects" suffix from group names
 type RemoveEffectsSuffix<T extends string> = (T extends `${infer Prefix}Effects` ? Prefix : T) & string;
@@ -10,8 +10,8 @@ export type RefinedEffectGroups = {
   [K in keyof RepondTypes["EffectGroups"] as RemoveEffectsSuffix<K>]: RepondTypes["EffectGroups"][K];
 };
 
-export function startNewEffect(theEffect: Effect) {
-  return _startEffect(theEffect);
+export function startNewEffect(theEffect: EffectDef) {
+  return _addEffect(theEffect);
 }
 
 // This is really startGroupedEffect
@@ -21,7 +21,7 @@ export function startEffect<
 >(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
   const theEffect = meta.storedEffectsMap[effectId];
   if (!theEffect) return console.warn("no effect found for ", effectId);
-  _startEffect(theEffect);
+  _addEffect(theEffect);
 }
 
 export function stopEffect<
@@ -66,20 +66,20 @@ export function runEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>
 }
 
 export type MakeEffect = <K_Type extends ItemType>(
-  effectRun: Effect["run"],
-  effectOptions: Omit<Effect, "run">
-) => Effect;
+  effectRun: EffectDef["run"],
+  effectOptions: Omit<EffectDef, "run">
+) => EffectDef;
 
 export function makeEffect<K_Type extends ItemType>(
-  effectRun: Effect["run"],
-  effectOptions: Omit<Effect, "run">
-): Effect {
-  (effectOptions as Effect).run = effectRun;
-  return effectOptions as Effect;
+  effectRun: EffectDef["run"],
+  effectOptions: Omit<EffectDef, "run">
+): EffectDef {
+  (effectOptions as EffectDef).run = effectRun;
+  return effectOptions as EffectDef;
 }
 
 export function makeEffects<K_EffectName extends string>(
-  getEffectsToAddCallback: (makeEffect: MakeEffect) => Record<K_EffectName, Effect>
+  getEffectsToAddCallback: (makeEffect: MakeEffect) => Record<K_EffectName, EffectDef>
 ) {
   return getEffectsToAddCallback(makeEffect);
 }

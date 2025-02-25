@@ -11,6 +11,12 @@ TODO
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
+v1.1.0
+
+- Better battery life!
+- WIP Check way less Effects per frame
+  - it used to check all effects every frame, but now it stores which effects to run based on what props were set in setState
+
 v1.0.0
 
 - simpler everything version 1.0.0!

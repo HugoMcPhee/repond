@@ -141,6 +141,7 @@ export function getStatesDiff(nowState, prevState, diffInfo, recordedChanges, ch
                         // console.log("propChanged", itemType, itemId, itemPropName);
                     }
                     else {
+                        // This compares the current state to the previous state
                         propChanged = nowState[itemType][itemId][itemPropName] !== prevState[itemType][itemId][itemPropName];
                     }
                     if (propChanged) {

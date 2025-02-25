@@ -1,11 +1,11 @@
 import { RepondTypes } from "../declarations";
-import { Effect } from "../types";
+import { EffectDef } from "../types";
 import { MakeEffect } from "./effects";
 export type ParamEffectsGroup<K_EffectName extends string, T_Params extends any> = {
     defaultParams: T_Params;
-    makeEffects: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>;
+    makeEffects: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, EffectDef>;
 };
-export declare function makeParamEffects<K_EffectName extends string, T_ParamKey extends string, T_Params extends Record<T_ParamKey, any>>(defaultParams: T_Params, effectsToAdd: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>): ParamEffectsGroup<K_EffectName, T_Params>;
+export declare function makeParamEffects<K_EffectName extends string, T_ParamKey extends string, T_Params extends Record<T_ParamKey, any>>(defaultParams: T_Params, effectsToAdd: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, EffectDef>): ParamEffectsGroup<K_EffectName, T_Params>;
 export declare function initParamEffectGroups<T extends Record<string, ParamEffectsGroup<any, any>>>(groups: T): T;
 type RemoveParamEffectsSuffix<T extends string> = T extends `${infer Prefix}ParamEffects` ? Prefix : T;
 export type RefinedParamEffectGroups = {

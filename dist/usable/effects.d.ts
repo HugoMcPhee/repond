@@ -1,10 +1,10 @@
 import { RepondTypes } from "../declarations";
-import { Effect, ItemType } from "../types";
+import { EffectDef, ItemType } from "../types";
 type RemoveEffectsSuffix<T extends string> = (T extends `${infer Prefix}Effects` ? Prefix : T) & string;
 export type RefinedEffectGroups = {
     [K in keyof RepondTypes["EffectGroups"] as RemoveEffectsSuffix<K>]: RepondTypes["EffectGroups"][K];
 };
-export declare function startNewEffect(theEffect: Effect): string;
+export declare function startNewEffect(theEffect: EffectDef): string;
 export declare function startEffect<K_EffectGroup extends keyof RefinedEffectGroups, K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string>(effectId: `${K_EffectGroup}.${K_EffectName}` | string): void;
 export declare function stopEffect<K_EffectGroup extends keyof RefinedEffectGroups, K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string>(effectId: `${K_EffectGroup}.${K_EffectName}` | string): void;
 export declare function startEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup & string): void;
@@ -13,8 +13,8 @@ export declare function startAllEffectsGroups(): void;
 export declare function stopAllEffectsGroups(): void;
 export declare function runEffect<K_EffectGroup extends keyof RefinedEffectGroups, K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string>(effectId: `${K_EffectGroup}.${K_EffectName}` | string): void;
 export declare function runEffectsGroup<K_EffectGroup extends keyof RefinedEffectGroups>(groupName: K_EffectGroup & string): void;
-export type MakeEffect = <K_Type extends ItemType>(effectRun: Effect["run"], effectOptions: Omit<Effect, "run">) => Effect;
-export declare function makeEffect<K_Type extends ItemType>(effectRun: Effect["run"], effectOptions: Omit<Effect, "run">): Effect;
-export declare function makeEffects<K_EffectName extends string>(getEffectsToAddCallback: (makeEffect: MakeEffect) => Record<K_EffectName, Effect>): Record<K_EffectName, Effect>;
+export type MakeEffect = <K_Type extends ItemType>(effectRun: EffectDef["run"], effectOptions: Omit<EffectDef, "run">) => EffectDef;
+export declare function makeEffect<K_Type extends ItemType>(effectRun: EffectDef["run"], effectOptions: Omit<EffectDef, "run">): EffectDef;
+export declare function makeEffects<K_EffectName extends string>(getEffectsToAddCallback: (makeEffect: MakeEffect) => Record<K_EffectName, EffectDef>): Record<K_EffectName, EffectDef>;
 export declare function initEffectGroups<T extends Record<string, ReturnType<typeof makeEffects>>>(groups: T): T;
 export {};

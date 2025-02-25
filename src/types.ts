@@ -56,14 +56,19 @@ export type DiffInfo = {
 };
 
 // Effects
-export type Effect_Run_Params = [itemId: string, diffInfo: DiffInfo, frameDuration: number, ranWithoutChange?: boolean];
-export type Effect_Run = (...params: Effect_Run_Params) => void;
+export type EffectDef_Run_Params = [
+  itemId: string,
+  diffInfo: DiffInfo,
+  frameDuration: number,
+  ranWithoutChange?: boolean
+];
+export type EffectDef_Run = (...params: EffectDef_Run_Params) => void;
 
-export type Effect = {
+export type EffectDef = {
   id?: string; // required, but optional when making an effect, a default id will be generated, for saved group effects, the id will be "groupName.effectName"
   changes: string[];
   itemIds?: string[];
-  run: Effect_Run;
+  run: EffectDef_Run;
   isPerItem?: boolean;
   atStepEnd?: boolean;
   step?: StepName;

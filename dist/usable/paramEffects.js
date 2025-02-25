@@ -1,5 +1,5 @@
 import { forEach } from "chootils/dist/loops";
-import { _startEffect, _stopEffect } from "../helpers/effects";
+import { _addEffect, _stopEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
 import { makeEffect } from "./effects";
 export function makeParamEffects(defaultParams, effectsToAdd) {
@@ -79,7 +79,7 @@ export function startParamEffect(groupName, effectName, params) {
     const effect = findOrMakeParamEffect(groupName, effectName, params);
     if (!effect)
         return console.warn("no effect found for ", groupName, effectName, params);
-    _startEffect(effect);
+    _addEffect(effect);
 }
 // NOTE this wont update paramEffectIdsByGroupPlusParamKey is all are stopped in a group, if it's a good idea, it could remove its own id from that list
 // unless it's a good to keep that list for startParamEffectsGroup
@@ -101,7 +101,7 @@ export function startParamEffectsGroup(groupName, params) {
         const effect = meta.liveEffectsMap[effectId];
         if (!effect)
             return console.warn("no effect found for ", groupName, effectId);
-        _startEffect(effect);
+        _addEffect(effect);
     });
 }
 export function stopParamEffectsGroup(groupName, params) {

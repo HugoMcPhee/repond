@@ -1,17 +1,52 @@
 import { getState } from "./usable/getSet";
 import { repondMeta as meta } from "./meta";
+let didLogEffectIds = false;
 const NO_EFFECT_NAMES = []; // created once to avoidmaking many news arrays
+const EMPTY_ARRAY = [];
 // created once and cleared to avoid making many new arrays each time, to save memory
 const changedEffectIds = [];
+let alreadyCheckedEffectIdsMap = {};
 export default function checkEffects(phase = "endOfStep", stepName = "default") {
     changedEffectIds.length = 0;
-    let effectIds = meta.effectIdsByPhaseByStep[phase][stepName] ?? NO_EFFECT_NAMES;
-    for (let idIndex = 0; idIndex < effectIds.length; idIndex++) {
-        const effectId = effectIds[idIndex];
-        const effect = meta.liveEffectsMap[effectId];
-        if (checkEffectForChanges(effect, meta.diffInfo))
-            changedEffectIds.push(effectId);
+    let effectIdsByPropId = meta.effectIdsByPhaseByStepByPropId[phase][stepName] ?? {};
+    const phaseToCheck = meta.isFirstDuringPhaseLoop ? "endOfStep" : phase;
+    const propsChanged = Object.keys(meta.recordedPropIdsChangedMap[phaseToCheck]);
+    // if (phase !== "endOfStep" && propsChanged.length) {
+    //   console.log("phase", phase, propsChanged.length);
+    // }
+    // if (propsChanged.length) {
+    //   console.log("propsChanged", propsChanged);
+    // }
+    // alreadyCheckedEffectIdsMap
+    // const effectIds = [] as string[];
+    for (let i = 0; i < propsChanged.length; i++) {
+        const propId = propsChanged[i];
+        const effectIdsForProp = effectIdsByPropId[propId] ?? EMPTY_ARRAY;
+        if (!effectIdsForProp.length)
+            continue;
+        for (let idIndex = 0; idIndex < effectIdsForProp.length; idIndex++) {
+            const effectId = effectIdsForProp[idIndex];
+            if (alreadyCheckedEffectIdsMap[effectId])
+                continue;
+            alreadyCheckedEffectIdsMap[effectId] = true;
+            const effect = meta.liveEffectsMap[effectId];
+            if (checkEffectForChanges(effect, meta.diffInfo))
+                changedEffectIds.push(effectId);
+        }
     }
+    // meta.propsChangedThisEffectCheckLoopMap = {};
+    alreadyCheckedEffectIdsMap = {};
+    // const effectIds = meta.propsChangedThisEffectCheckLoopMap[]
+    // if (effectIds.length > 100 && !didLogEffectIds) {
+    //   didLogEffectIds = true;
+    //   console.log("effectIds length > 100", effectIds.length);
+    //   console.log("effectIds", effectIds);
+    // }
+    // for (let idIndex = 0; idIndex < effectIds.length; idIndex++) {
+    //   const effectId = effectIds[idIndex];
+    //   const effect = meta.liveEffectsMap[effectId];
+    //   if (checkEffectForChanges(effect, meta.diffInfo)) changedEffectIds.push(effectId!);
+    // }
     // if (changedEffectIds.length) {
     //   console.log(`Effects changed in ${phase} ${stepName}:`, changedEffectIds);
     // }

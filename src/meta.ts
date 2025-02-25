@@ -1,4 +1,4 @@
-import { DiffInfo, Effect, EffectPhase } from "./types";
+import { DiffInfo, EffectDef, EffectPhase } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
 // This is changes recorded from setStates, and addItem and removeItem
@@ -73,6 +73,8 @@ export const repondMeta = {
   // Live info -----------------------------------------------------
   nowStepName: "default" as Readonly<string>,
   nowStepIndex: 0,
+  nowEffectPhase: "duringStep" as EffectPhase,
+  isFirstDuringPhaseLoop: true,
   nowMetaPhase: "waitingForFirstUpdate" as RepondMetaPhase,
   willAddItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
   willRemoveItemsInfo: {} as { [itemTypeName: string]: { [itemId: string]: any } },
@@ -86,6 +88,11 @@ export const repondMeta = {
   recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
   // this gets reset at the start of a frame, and kept added to throughout the frame
   recordedStepEndEffectChanges: initialRecordedChanges(),
+
+  //
+  // recordedPropIdsChanged_duringStep: {},
+  // recordedPropIdsChanged_endOfStep: {},
+  recordedPropIdsChangedMap: { duringStep: {}, endOfStep: {} } as Record<EffectPhase, Record<string, boolean>>,
 
   // Frames -----------------------------------------------------
   nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
@@ -104,16 +111,25 @@ export const repondMeta = {
   // Effects -----------------------------------------------------
   autoEffectIdCounter: 1,
   // Normal effects
-  liveEffectsMap: {} as Record<string, Effect>,
-  effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+  liveEffectsMap: {} as Record<string, EffectDef>,
+  // effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+  //   EffectPhase,
+  //   Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
+  // >,
+  effectIdsByPhaseByStepByPropId: { duringStep: {}, endOfStep: {} } as Record<
     EffectPhase,
-    Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
+    Record<string, Record<string, string[]>> //  phase : stepName : : propPathId : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
   >,
-  storedEffectsMap: {} as Record<string, Effect>,
+  storedEffectsMap: {} as Record<string, EffectDef>,
   effectIdsByGroup: {} as Record<string, string[]>, // effectGroup: [effectId]
   // Param effects
   allParamEffectGroups: {} as Record<string, ParamEffectsGroup<any, any>>,
   paramEffectIdsByGroupPlusParamKey: {} as Record<string, string[]>, // effectGroup: {paramKey: [effectId]}
+  //
+  // propIdsChangedInSetStateByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+  //   EffectPhase,
+  //   Record<string, string[]>
+  // >, // phase: stepName: propPathId[]
 
   // Cached info -----------------------------------------------------
   itemTypeNames: [] as string[],

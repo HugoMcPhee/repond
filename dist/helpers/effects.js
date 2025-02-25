@@ -2,21 +2,27 @@ import { removeItemFromArrayInPlace } from "chootils/dist/arrays";
 import { repondMeta as meta } from "../meta";
 import { whenDoingEffectsRunAtStart, whenStartingEffects, whenStoppingEffects } from "../helpers/runWhens";
 import { forEach } from "chootils/dist/loops";
-export function _startEffect(newEffect) {
-    const phase = newEffect.atStepEnd ? "endOfStep" : "duringStep";
-    const step = newEffect.step ?? "default";
-    const effectId = newEffect.id ?? toSafeEffectId();
+export function _addEffect(newEffectDef) {
+    const phase = newEffectDef.atStepEnd ? "endOfStep" : "duringStep";
+    const step = newEffectDef.step ?? "default";
+    const effectId = newEffectDef.id ?? toSafeEffectId();
     // TODO setupEffect the frist time each time if the cache stuff isn't there
-    storeCachedValuesForEffect(newEffect);
-    if (newEffect.runAtStart) {
-        whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffect));
+    storeCachedValuesForEffect(newEffectDef);
+    if (newEffectDef.runAtStart) {
+        whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffectDef));
     }
     whenStartingEffects(() => {
-        meta.liveEffectsMap[effectId] = newEffect;
-        const idsByStep = meta.effectIdsByPhaseByStep[phase];
-        idsByStep[step] = idsByStep[step] || [];
-        if (!idsByStep[step].includes(effectId))
-            idsByStep[step].push(effectId);
+        meta.liveEffectsMap[effectId] = newEffectDef;
+        const idsByStep = meta.effectIdsByPhaseByStepByPropId[phase];
+        if (!idsByStep[step])
+            idsByStep[step] = {};
+        forEach(newEffectDef.changes, (change) => {
+            idsByStep[step][change] = idsByStep[step][change] || [];
+            if (!idsByStep[step][change].includes(effectId))
+                idsByStep[step][change].push(effectId);
+        });
+        // idsByStep[step] = idsByStep[step] || [];
+        // if (!idsByStep[step].includes(effectId)) idsByStep[step].push(effectId);
     });
     return effectId;
 }
@@ -130,7 +136,9 @@ export function _stopEffect(effectId) {
             return;
         const phase = !!effect.atStepEnd ? "endOfStep" : "duringStep";
         const step = effect.step ?? "default";
-        removeItemFromArrayInPlace(meta.effectIdsByPhaseByStep[phase][step] ?? [], effect.id);
+        forEach(effect.changes, (propId) => {
+            removeItemFromArrayInPlace(meta.effectIdsByPhaseByStepByPropId[phase]?.[step]?.[propId] ?? [], effect.id);
+        });
         delete meta.liveEffectsMap[effectId];
     });
 }

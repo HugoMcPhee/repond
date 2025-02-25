@@ -25,6 +25,8 @@ export const repondMeta = {
     // Live info -----------------------------------------------------
     nowStepName: "default",
     nowStepIndex: 0,
+    nowEffectPhase: "duringStep",
+    isFirstDuringPhaseLoop: true,
     nowMetaPhase: "waitingForFirstUpdate",
     willAddItemsInfo: {},
     willRemoveItemsInfo: {},
@@ -37,6 +39,10 @@ export const repondMeta = {
     recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
     // this gets reset at the start of a frame, and kept added to throughout the frame
     recordedStepEndEffectChanges: initialRecordedChanges(),
+    //
+    // recordedPropIdsChanged_duringStep: {},
+    // recordedPropIdsChanged_endOfStep: {},
+    recordedPropIdsChangedMap: { duringStep: {}, endOfStep: {} },
     // Frames -----------------------------------------------------
     nextFrameIsFirst: true, // when the next frame is the first in a chain of frames
     previousFrameTime: 0,
@@ -53,12 +59,21 @@ export const repondMeta = {
     autoEffectIdCounter: 1,
     // Normal effects
     liveEffectsMap: {},
-    effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} },
+    // effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+    //   EffectPhase,
+    //   Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']
+    // >,
+    effectIdsByPhaseByStepByPropId: { duringStep: {}, endOfStep: {} },
     storedEffectsMap: {},
     effectIdsByGroup: {}, // effectGroup: [effectId]
     // Param effects
     allParamEffectGroups: {},
     paramEffectIdsByGroupPlusParamKey: {}, // effectGroup: {paramKey: [effectId]}
+    //
+    // propIdsChangedInSetStateByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
+    //   EffectPhase,
+    //   Record<string, string[]>
+    // >, // phase: stepName: propPathId[]
     // Cached info -----------------------------------------------------
     itemTypeNames: [],
     propNamesByItemType: {},

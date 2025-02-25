@@ -1,15 +1,15 @@
 import { forEach } from "chootils/dist/loops";
-import { _startEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
+import { _addEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
 export function startNewEffect(theEffect) {
-    return _startEffect(theEffect);
+    return _addEffect(theEffect);
 }
 // This is really startGroupedEffect
 export function startEffect(effectId) {
     const theEffect = meta.storedEffectsMap[effectId];
     if (!theEffect)
         return console.warn("no effect found for ", effectId);
-    _startEffect(theEffect);
+    _addEffect(theEffect);
 }
 export function stopEffect(effectId) {
     const theEffect = meta.liveEffectsMap[effectId];

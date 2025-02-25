@@ -60,13 +60,18 @@ export type DiffInfo = {
     itemsAddedBool: DiffInfo_ItemsChangedBool;
     itemsRemovedBool: DiffInfo_ItemsChangedBool;
 };
-export type Effect_Run_Params = [itemId: string, diffInfo: DiffInfo, frameDuration: number, ranWithoutChange?: boolean];
-export type Effect_Run = (...params: Effect_Run_Params) => void;
-export type Effect = {
+export type EffectDef_Run_Params = [
+    itemId: string,
+    diffInfo: DiffInfo,
+    frameDuration: number,
+    ranWithoutChange?: boolean
+];
+export type EffectDef_Run = (...params: EffectDef_Run_Params) => void;
+export type EffectDef = {
     id?: string;
     changes: string[];
     itemIds?: string[];
-    run: Effect_Run;
+    run: EffectDef_Run;
     isPerItem?: boolean;
     atStepEnd?: boolean;
     step?: StepName;

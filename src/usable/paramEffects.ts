@@ -1,15 +1,15 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
-import { _startEffect, _stopEffect } from "../helpers/effects";
+import { _addEffect, _stopEffect } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
-import { Effect } from "../types";
+import { EffectDef } from "../types";
 import { MakeEffect, makeEffect } from "./effects";
 
 // Make effects based on params
 
 export type ParamEffectsGroup<K_EffectName extends string, T_Params extends any> = {
   defaultParams: T_Params;
-  makeEffects: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>;
+  makeEffects: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, EffectDef>;
 };
 
 export function makeParamEffects<
@@ -18,7 +18,7 @@ export function makeParamEffects<
   T_Params extends Record<T_ParamKey, any>
 >(
   defaultParams: T_Params,
-  effectsToAdd: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, Effect>
+  effectsToAdd: (makeEffect: MakeEffect, params: T_Params) => Record<K_EffectName, EffectDef>
 ): ParamEffectsGroup<K_EffectName, T_Params> {
   return {
     defaultParams,
@@ -149,7 +149,7 @@ export function startParamEffect<
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findOrMakeParamEffect(groupName, effectName, params);
   if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
-  _startEffect(effect);
+  _addEffect(effect);
 }
 
 // NOTE this wont update paramEffectIdsByGroupPlusParamKey is all are stopped in a group, if it's a good idea, it could remove its own id from that list
@@ -177,7 +177,7 @@ export function startParamEffectsGroup<
   forEach(effectIds, (effectId) => {
     const effect = meta.liveEffectsMap[effectId];
     if (!effect) return console.warn("no effect found for ", groupName, effectId);
-    _startEffect(effect);
+    _addEffect(effect);
   });
 }
 
