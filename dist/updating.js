@@ -1,6 +1,6 @@
 import { breakableForEach, forEach } from "chootils/dist/loops";
 import checkEffects from "./checkEffects";
-import { copyItemIdsByItemType, copyStates } from "./copyStates";
+import { copyChangedStates, copyItemIdsByItemType } from "./copyStates";
 import { getStatesDiff } from "./getStatesDiff";
 import { updateRepondNextFrame } from "./helpers/frames";
 import { repondMeta as meta } from "./meta";
@@ -170,14 +170,16 @@ function resetRecordedChanges(recordedChanges) {
     for (let typeIndex = 0; typeIndex < meta.itemTypeNames.length; typeIndex++) {
         const itemType = meta.itemTypeNames[typeIndex];
         recordedChanges.itemTypesBool[itemType] = false;
-        for (let nameIndex = 0; nameIndex < meta.itemIdsByItemType[itemType].length; nameIndex++) {
-            const itemId = meta.itemIdsByItemType[itemType][nameIndex];
-            recordedChanges.itemIdsBool[itemType][itemId] = false;
-            for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
-                const propName = meta.propNamesByItemType[itemType][propIndex];
-                recordedChanges.itemPropsBool[itemType][itemId][propName] = false;
-            }
-        }
+        recordedChanges.itemIdsBool[itemType] = {};
+        recordedChanges.itemPropsBool[itemType] = {};
+        // for (let nameIndex = 0; nameIndex < meta.itemIdsByItemType[itemType].length; nameIndex++) {
+        //   const itemId = meta.itemIdsByItemType[itemType][nameIndex];
+        //   recordedChanges.itemIdsBool[itemType][itemId] = false;
+        //   for (let propIndex = 0; propIndex < meta.propNamesByItemType[itemType].length; propIndex++) {
+        //     const propName = meta.propNamesByItemType[itemType][propIndex];
+        //     recordedChanges.itemPropsBool[itemType][itemId][propName] = false;
+        //   }
+        // }
     }
 }
 function resetRecordedStepEndChanges() {
@@ -258,7 +260,8 @@ export function _updateRepond(animationFrameTime) {
     // Save previous state
     // - this won't this discard all the setStates from the callbacks
     //    because all the setStates are delayed, and get added to meta.setStatesQue to run later
-    copyStates(meta.nowState, meta.prevState);
+    // copyStates(meta.nowState, meta.prevState);
+    copyChangedStates(meta.nowState, meta.prevState);
     // Copy the item ids into the previous item ids
     copyItemIdsByItemType(meta.itemIdsByItemType, meta.prevItemIdsByItemType);
     runSetOfStepsLoop();

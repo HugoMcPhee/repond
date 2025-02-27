@@ -2,7 +2,7 @@ import { getUniqueArrayItems } from "chootils/dist/arrays";
 import { forEach } from "chootils/dist/loops";
 import { cloneObjectWithJson, copyStates } from "../copyStates";
 import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
-import { initialRecordedChanges, UntypedDiffInfo } from "../meta";
+import { EMPTY_RECORDED_CHANGES, initialRecordedChanges, UntypedDiffInfo } from "../meta";
 import { AllState, DiffInfo, GetPartialState, ItemId, ItemIdsByType, ItemType, PropName } from "../types";
 import { addItem, getDefaultState, getItemTypes, removeItem, setNestedState } from "./getSet";
 
@@ -38,11 +38,15 @@ export function makeEmptyDiff() {
 function makeEmptyDiffInfo() {
   const emptyDiffInfo: UntypedDiffInfo = {
     itemTypesChanged: [],
+    itemTypesWithAdded: [],
+    itemTypesWithRemoved: [],
     itemsChanged: { __all: [] },
     propsChanged: {},
     itemsAdded: { __all: [] },
     itemsRemoved: { __all: [] },
     itemTypesChangedBool: {},
+    itemTypesWithAddedBool: {},
+    itemTypesWithRemovedBool: {},
     itemsChangedBool: {},
     propsChangedBool: {},
     itemsAddedBool: {},
@@ -138,14 +142,13 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
 
   const newPatch = makeEmptyPatch();
   const tempDiffInfo = makeEmptyDiffInfo();
-  const tempManualUpdateChanges = initialRecordedChanges();
 
   try {
     getStatesDiff(
       newState, // currentState
       prevState, // previousState
       tempDiffInfo,
-      tempManualUpdateChanges, // manualUpdateChanges
+      EMPTY_RECORDED_CHANGES, // manualUpdateChanges
       true // checkAllChanges
     );
   } catch (error: any) {

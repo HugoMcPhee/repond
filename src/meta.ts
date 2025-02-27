@@ -16,13 +16,19 @@ export const initialRecordedChanges: () => RecordedChanges = () => ({
   somethingChanged: false,
 });
 
+export const EMPTY_RECORDED_CHANGES = initialRecordedChanges();
+
 export const initialDiffInfo: UntypedDiffInfo = {
   itemTypesChanged: [],
+  itemTypesWithAdded: [],
+  itemTypesWithRemoved: [],
   itemsChanged: {},
   propsChanged: {},
   itemsAdded: {},
   itemsRemoved: {},
   itemTypesChangedBool: {},
+  itemTypesWithAddedBool: {},
+  itemTypesWithRemovedBool: {},
   itemsChangedBool: {},
   propsChangedBool: {},
   itemsAddedBool: {},
@@ -42,11 +48,15 @@ type DiffInfo_PropsChangedBool<T = any> = {
 
 export type UntypedDiffInfo = {
   itemTypesChanged: [];
+  itemTypesWithAdded: [];
+  itemTypesWithRemoved: [];
   itemsChanged: { [type: string]: string[] };
   itemsAdded: { [type: string]: string[] };
   itemsRemoved: { [type: string]: string[] };
   propsChanged: DiffInfo_PropsChanged;
   itemTypesChangedBool: { [type: string]: boolean };
+  itemTypesWithAddedBool: { [type: string]: boolean };
+  itemTypesWithRemovedBool: { [type: string]: boolean };
   itemsChangedBool: { [type: string]: { [itemId: string]: boolean } };
   propsChangedBool: DiffInfo_PropsChangedBool;
   itemsAddedBool: { [type: string]: { [itemId: string]: boolean } };

@@ -11,6 +11,12 @@ TODO
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
+v1.2.0
+Huge performance improvements!
+it only loops changed items/things in most places now
+for copying state to prevState, updating diffInfo, and clearing recordedChanges
+This means that even with many items, it wont increase cpu usage! (battery was still draining after 1.1.0 )
+
 v1.1.0
 
 - Better battery life!

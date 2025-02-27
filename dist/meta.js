@@ -4,13 +4,18 @@ export const initialRecordedChanges = () => ({
     itemPropsBool: {},
     somethingChanged: false,
 });
+export const EMPTY_RECORDED_CHANGES = initialRecordedChanges();
 export const initialDiffInfo = {
     itemTypesChanged: [],
+    itemTypesWithAdded: [],
+    itemTypesWithRemoved: [],
     itemsChanged: {},
     propsChanged: {},
     itemsAdded: {},
     itemsRemoved: {},
     itemTypesChangedBool: {},
+    itemTypesWithAddedBool: {},
+    itemTypesWithRemovedBool: {},
     itemsChangedBool: {},
     propsChangedBool: {},
     itemsAddedBool: {},

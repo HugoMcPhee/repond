@@ -25,6 +25,79 @@ export function copyStates(currentObject: any, saveToObject: any) {
   }
 }
 
+export function copyChangedStates(nowState: any, prevState: any /* saveToObject */) {
+  const { itemTypeNames, propNamesByItemType, itemIdsByItemType, recordedStepEndEffectChanges, diffInfo } = meta;
+
+  const recordedChanges = recordedStepEndEffectChanges;
+
+  const itemTypesChanged = diffInfo.itemTypesChanged;
+  const itemTypesWithAdded = diffInfo.itemTypesWithAdded;
+  const itemTypesWithRemoved = diffInfo.itemTypesWithRemoved;
+
+  // Check deleted items here
+  for (let typeIndex = 0; typeIndex < itemTypesWithRemoved.length; typeIndex++) {
+    const itemType = itemTypesWithRemoved[typeIndex];
+
+    const itemIds = diffInfo.itemsRemoved[itemType];
+    if (!itemIds) continue;
+    if (!itemIds.length) continue;
+
+    for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
+      const itemId = itemIds[idIndex];
+
+      delete prevState[itemType][itemId];
+    }
+  }
+
+  // Check added items here
+  for (let typeIndex = 0; typeIndex < itemTypesWithAdded.length; typeIndex++) {
+    const itemType = itemTypesWithRemoved[typeIndex];
+
+    const itemIds = diffInfo.itemsAdded[itemType];
+    if (!itemIds) continue;
+    if (!itemIds.length) continue;
+
+    for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
+      const itemId = itemIds[idIndex];
+
+      if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
+
+      for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
+        const itemProp = propNamesByItemType[itemType][propIndex];
+        prevState[itemType][itemId][itemProp] = nowState[itemType][itemId][itemProp];
+      }
+    }
+  }
+  // Check changes here
+  for (let typeIndex = 0; typeIndex < itemTypesChanged.length; typeIndex++) {
+    const itemType = itemTypesChanged[typeIndex];
+
+    // saveToObject[itemType] = {};
+
+    if (nowState[itemType]) {
+      // const itemIds = itemIdsByItemType[itemType];
+      const itemIds = diffInfo.itemsChanged[itemType];
+      if (!itemIds) continue;
+      if (!itemIds.length) continue;
+
+      // const latestItemIds = nowState[itemType];
+      for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
+        const itemId = itemIds[idIndex];
+
+        // if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
+
+        for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
+          const itemProp = propNamesByItemType[itemType][propIndex];
+
+          if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
+
+          prevState[itemType][itemId][itemProp] = nowState[itemType][itemId][itemProp];
+        }
+      }
+    }
+  }
+}
+
 function fastCloneArray<T_ArrayItem extends any>(arr: T_ArrayItem[]) {
   const newArray: T_ArrayItem[] = [];
   for (let i = 0; i < arr.length; i++) {

@@ -19,6 +19,7 @@ export type RecordedChanges = {
     somethingChanged: boolean;
 };
 export declare const initialRecordedChanges: () => RecordedChanges;
+export declare const EMPTY_RECORDED_CHANGES: RecordedChanges;
 export declare const initialDiffInfo: UntypedDiffInfo;
 type PropsByItemType<T, K extends keyof T> = keyof NonNullable<T[K]>[keyof T[keyof T]];
 type DiffInfo_PropsChanged<T = any> = {
@@ -47,6 +48,8 @@ type DiffInfo_PropsChangedBool<T = any> = {
 };
 export type UntypedDiffInfo = {
     itemTypesChanged: [];
+    itemTypesWithAdded: [];
+    itemTypesWithRemoved: [];
     itemsChanged: {
         [type: string]: string[];
     };
@@ -58,6 +61,12 @@ export type UntypedDiffInfo = {
     };
     propsChanged: DiffInfo_PropsChanged;
     itemTypesChangedBool: {
+        [type: string]: boolean;
+    };
+    itemTypesWithAddedBool: {
+        [type: string]: boolean;
+    };
+    itemTypesWithRemovedBool: {
         [type: string]: boolean;
     };
     itemsChangedBool: {

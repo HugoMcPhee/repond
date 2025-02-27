@@ -50,11 +50,15 @@ type DiffInfo_ItemsChanged = Record<ItemType | "__all", ItemId[]>;
 type DiffInfo_ItemsChangedBool = Record<ItemType | "__all", Record<ItemId, boolean>>;
 export type DiffInfo = {
     itemTypesChanged: ItemType[];
+    itemTypesWithAdded: ItemType[];
+    itemTypesWithRemoved: ItemType[];
     itemsChanged: DiffInfo_ItemsChanged;
     propsChanged: DiffInfo_PropsChanged;
     itemsAdded: DiffInfo_ItemsChanged;
     itemsRemoved: DiffInfo_ItemsChanged;
     itemTypesChangedBool: Record<ItemType | "__all", boolean>;
+    itemTypesWithAddedBool: Record<ItemType, boolean>;
+    itemTypesWithRemovedBool: Record<ItemType, boolean>;
     itemsChangedBool: DiffInfo_ItemsChangedBool;
     propsChangedBool: DiffInfo_PropsChangedBool;
     itemsAddedBool: DiffInfo_ItemsChangedBool;

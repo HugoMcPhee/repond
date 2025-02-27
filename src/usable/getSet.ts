@@ -47,7 +47,7 @@ export function setState(propPath: string, newValue: any, itemId?: string) {
     }
 
     const recordedChanges =
-      meta.nowMetaPhase === "runningEffects" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges;
+      meta.nowEffectPhase === "duringStep" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges;
     const allRecordedChanges = meta.recordedStepEndEffectChanges;
 
     // check if the item exists before copying
@@ -56,15 +56,29 @@ export function setState(propPath: string, newValue: any, itemId?: string) {
     // save the new state
     meta.nowState[storeType][foundItemId][propKey] = newValue;
 
-    recordedChanges.itemTypesBool[storeType] = true;
-    recordedChanges.itemIdsBool[storeType][foundItemId] = true;
-    recordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
+    if (meta.nowEffectPhase === "duringStep") {
+      recordedChanges.itemTypesBool[storeType] = true;
+      if (!recordedChanges.itemIdsBool[storeType]) {
+        recordedChanges.itemIdsBool[storeType] = {};
+      }
+      recordedChanges.itemIdsBool[storeType][foundItemId] = true;
+      if (!recordedChanges.itemPropsBool[storeType][foundItemId]) {
+        recordedChanges.itemPropsBool[storeType][foundItemId] = {};
+      }
+      recordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
+      recordedChanges.somethingChanged = true;
+    }
 
     allRecordedChanges.itemTypesBool[storeType] = true;
+    if (!allRecordedChanges.itemIdsBool[storeType]) {
+      allRecordedChanges.itemIdsBool[storeType] = {};
+    }
     allRecordedChanges.itemIdsBool[storeType][foundItemId] = true;
+    if (!allRecordedChanges.itemPropsBool[storeType][foundItemId]) {
+      allRecordedChanges.itemPropsBool[storeType][foundItemId] = {};
+    }
     allRecordedChanges.itemPropsBool[storeType][foundItemId][propKey] = true;
 
-    recordedChanges.somethingChanged = true;
     allRecordedChanges.somethingChanged = true;
   });
 }
