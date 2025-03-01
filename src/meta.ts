@@ -1,4 +1,4 @@
-import { DiffInfo, EffectDef, EffectPhase } from "./types";
+import { DiffInfo, EffectDef, EffectPhase, ItemType, PropName, PropValue, RefPropName, RefPropValue } from "./types";
 import { ParamEffectsGroup } from "./usable/paramEffects";
 
 // This is changes recorded from setStates, and addItem and removeItem
@@ -93,7 +93,7 @@ export const repondMeta = {
   didStartFirstFrame: false, // so we can add items instantly before the first frame
 
   // Recording changes -----------------------------------------------------
-  diffInfo: initialDiffInfo as DiffInfo,
+  diffInfo: initialDiffInfo as unknown as DiffInfo,
   // this gets reset for each step (might not still be true)
   recordedEffectChanges: initialRecordedChanges(), // resets every time a steps derive listeners run, only records changes made while deriving?
   // this gets reset at the start of a frame, and kept added to throughout the frame
@@ -142,18 +142,16 @@ export const repondMeta = {
   // >, // phase: stepName: propPathId[]
 
   // Cached info -----------------------------------------------------
-  itemTypeNames: [] as string[],
+  itemTypeNames: [] as ItemType[],
   propNamesByItemType: {} as { [itemTypeName: string]: string[] },
   itemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // current item names only, not previous..
   prevItemIdsByItemType: {} as { [itemTypeName: string]: string[] }, // this should be manually copied when the prevState is copied
-  defaultRefsByItemType: {} as {
-    [itemTypeName: string]: (itemId?: string, itemState?: any) => { [itemPropertyName: string]: any };
+  newRefsByItemType: {} as {[T in ItemType]?: (itemId?: string, itemState?: any) => { [K in RefPropName<T>]: RefPropValue<T, K> };
   },
-  defaultStateByItemType: {} as {
-    [itemTypeName: string]: (itemId?: string) => { [itemPropertyName: string]: any };
+  newStateByItemType: {} as {[T in ItemType]: (itemId?: string) => { [K in PropName<T>]: PropValue<T, K> };
   },
   // PropPathId info
-  itemTypeByPropPathId: {} as Record<string, string>, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
+  itemTypeByPropPathId: {} as Record<string, ItemType>, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
   propKeyByPropPathId: {} as Record<string, string>, // To get "piecePropertyA" from "pieces.piecePropertyA" quickly ( in O(1) time )
   specialKeyByPropPathId: {} as Record<string, string>, // For special keys like __added, __removed
 };

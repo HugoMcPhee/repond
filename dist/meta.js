@@ -84,8 +84,8 @@ export const repondMeta = {
     propNamesByItemType: {},
     itemIdsByItemType: {}, // current item names only, not previous..
     prevItemIdsByItemType: {}, // this should be manually copied when the prevState is copied
-    defaultRefsByItemType: {},
-    defaultStateByItemType: {},
+    newRefsByItemType: {},
+    newStateByItemType: {},
     // PropPathId info
     itemTypeByPropPathId: {}, // For propPathId like pieces.piecePropertyA and alsp pieces.__added
     propKeyByPropPathId: {}, // To get "piecePropertyA" from "pieces.piecePropertyA" quickly ( in O(1) time )

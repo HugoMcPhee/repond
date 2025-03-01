@@ -208,7 +208,7 @@ export function getStatesDiff(
 
           if (wasJustAdded) {
             propChanged =
-              nowState[itemType][itemId][itemPropName] !== meta.defaultStateByItemType[itemType](itemId)[itemPropName];
+              nowState[itemType][itemId][itemPropName] !== meta.newStateByItemType[itemType](itemId)[itemPropName];
             // console.log("propChanged", itemType, itemId, itemPropName);
           } else {
             // This compares the current state to the previous state

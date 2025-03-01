@@ -1,4 +1,5 @@
 import { repondMeta as meta } from "./meta";
+const EMPTY_ARRAY = [];
 export function copyStates(currentObject, saveToObject) {
     const { itemTypeNames, propNamesByItemType, itemIdsByItemType } = meta;
     for (let typeIndex = 0; typeIndex < itemTypeNames.length; typeIndex++) {
@@ -70,8 +71,13 @@ export function copyChangedStates(nowState, prevState /* saveToObject */) {
             for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
                 const itemId = itemIds[idIndex];
                 // if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
-                for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
-                    const itemProp = propNamesByItemType[itemType][propIndex];
+                const propsChanged = diffInfo.propsChanged[itemType][itemId];
+                if (!propsChanged)
+                    continue;
+                if (!propsChanged.length)
+                    continue;
+                for (let propIndex = 0; propIndex < propsChanged.length; propIndex++) {
+                    const itemProp = propsChanged[propIndex];
                     if (!prevState[itemType][itemId])
                         prevState[itemType][itemId] = {};
                     prevState[itemType][itemId][itemProp] = nowState[itemType][itemId][itemProp];

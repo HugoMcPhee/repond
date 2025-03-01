@@ -29,11 +29,11 @@ export function initRepond<T_ItemTypeDefs extends ItemTypeDefsUntyped, T_StepNam
     meta.nowState[type] = {};
     meta.prevState[type] = {};
     meta.nowRefs[type] = {};
-    meta.defaultStateByItemType[type] = renamedItemTypeDefs[type].newState;
-    meta.defaultRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
+    meta.newStateByItemType[type] = renamedItemTypeDefs[type].newState;
+    meta.newRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
     meta.itemIdsByItemType[type] = [];
 
-    const propNames = Object.keys(meta.defaultStateByItemType[type]?.("anyItemId"));
+    const propNames = Object.keys(meta.newStateByItemType[type]?.("anyItemId"));
 
     meta.propNamesByItemType[type] = propNames;
 

@@ -76,18 +76,17 @@ export function setNestedState(newState) {
         });
     });
 }
-export const getDefaultState = (kind) => meta.defaultStateByItemType[kind];
-export const getDefaultRefs = (kind) => meta.defaultRefsByItemType[kind];
+export const getNewState = (itemType) => meta.newStateByItemType[itemType];
+export const getNewRefs = (itemType) => meta.newRefsByItemType[itemType];
 export const getItemTypes = () => meta.itemTypeNames;
-export const getItemIds = (kind) => meta.itemIdsByItemType[kind];
+export const getItemIds = (itemType) => meta.itemIdsByItemType[itemType];
 const _getNestedState = () => meta.nowState;
-export const getState = (kind, itemId) => {
+export const getState = (itemType, itemId) => {
     if (!itemId) {
-        const foundItemId = meta.itemIdsByItemType?.[kind]?.[0];
-        if (!foundItemId) {
-            console.warn(`(getState) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
-        }
-        return meta.nowState[kind][foundItemId];
+        const foundItemId = meta.itemIdsByItemType?.[itemType]?.[0];
+        if (!foundItemId)
+            console.warn(`(getState) No itemId provided for ${itemType}, using first found itemId: ${foundItemId}`);
+        return meta.nowState[itemType][foundItemId];
     }
     // const allItemTypeState = meta.nowState[kind];
     // if (allItemTypeState === undefined) {
@@ -98,7 +97,7 @@ export const getState = (kind, itemId) => {
     //   console.warn(`(getState) No state found for ${kind} with id ${itemId}`);
     // }
     // return foundState;
-    return meta.nowState[kind]?.[itemId];
+    return meta.nowState[itemType]?.[itemId];
 };
 // Good for running things to be sure the state change is seen
 export function onNextTick(callback) {
@@ -141,11 +140,11 @@ export function addItem(type, id, state, refs) {
     const propPath = `${type}.__added`;
     runWhenAddingAndRemovingItems(() => {
         meta.nowState[type][id] = {
-            ...meta.defaultStateByItemType[type](id),
+            ...meta.newStateByItemType[type](id),
             ...(state || {}),
         };
         meta.nowRefs[type][id] = {
-            ...meta.defaultRefsByItemType[type](id, meta.nowState[type][id]),
+            ...meta.newRefsByItemType[type]?.(id, meta.nowState[type][id]),
             ...(refs || {}),
         };
         meta.itemIdsByItemType[type].push(id);
@@ -165,7 +164,7 @@ export function addItem(type, id, state, refs) {
         // NOTE new items with props different to the defaults props are recorded as changed
         const itemPropNames = meta.propNamesByItemType[type];
         forEach(itemPropNames, (propName) => {
-            const propChangedFromDefault = meta.nowState[type][id][propName] !== meta.defaultStateByItemType[type](id)[propName];
+            const propChangedFromDefault = meta.nowState[type][id][propName] !== meta.newStateByItemType[type](id)[propName];
             if (propChangedFromDefault) {
                 meta.recordedStepEndEffectChanges.itemPropsBool[type][id][propName] = true;
                 meta.recordedEffectChanges.itemPropsBool[type][id][propName] = true;
@@ -202,7 +201,7 @@ export function getItemWillExist(type, id) {
 }
 // For saving and loading
 // Function to selectively get data with only specific props from the repond store, can be used for save data
-export function getPartialState(propsToGet) {
+export function getPartialState_OLD(propsToGet) {
     const itemTypes = Object.keys(propsToGet);
     if (!meta.didInit) {
         console.warn("getPartialState called before repond was initialized");
@@ -219,6 +218,28 @@ export function getPartialState(propsToGet) {
             for (const propName of itemPropNames) {
                 partialItem[propName] = item[propName];
             }
+            partialItems[itemId] = partialItem;
+        }
+        partialState[itemType] = partialItems;
+    }
+    return partialState;
+}
+export function getPartialState(propsToGet) {
+    const itemType = meta.itemTypeByPropPathId;
+    if (!meta.didInit) {
+        console.warn("getPartialState called before repond was initialized");
+        return {};
+    }
+    const partialState = {};
+    for (const propId of propsToGet) {
+        const itemType = meta.itemTypeByPropPathId[propId];
+        const propName = meta.propKeyByPropPathId[propId];
+        const itemIds = meta.itemIdsByItemType[itemType];
+        const partialItems = {};
+        for (const itemId of itemIds) {
+            const item = getState(itemType, itemId);
+            const partialItem = {};
+            partialItem[propName] = item[propName];
             partialItems[itemId] = partialItem;
         }
         partialState[itemType] = partialItems;

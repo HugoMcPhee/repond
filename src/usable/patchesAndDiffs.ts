@@ -4,7 +4,7 @@ import { cloneObjectWithJson, copyStates } from "../copyStates";
 import { createDiffInfo, getStatesDiff } from "../getStatesDiff";
 import { EMPTY_RECORDED_CHANGES, initialRecordedChanges, UntypedDiffInfo } from "../meta";
 import { AllState, DiffInfo, GetPartialState, ItemId, ItemIdsByType, ItemType, PropName } from "../types";
-import { addItem, getDefaultState, getItemTypes, removeItem, setNestedState } from "./getSet";
+import { addItem, getNewState, getItemTypes, removeItem, setNestedState } from "./getSet";
 
 type StatesPatch = {
   changed: GetPartialState<AllState>;
@@ -87,7 +87,7 @@ export function applyPatchHere(newStates: GetPartialState<AllState>, patch: Stat
       const itemTypeState = newStates[type];
       if (itemTypeState) {
         if (itemTypeState[id] === undefined) {
-          itemTypeState[id] = getDefaultState(type)(id); // NOTE maybe no need to add it then delete it?
+          itemTypeState[id] = getNewState(type)(id); // NOTE maybe no need to add it then delete it?
         }
       }
       if (itemTypeState && itemTypeState[id]) {
@@ -209,7 +209,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
       let propertyNamesForItemType = [] as PropName<typeof itemType>[];
       let propertyNamesHaveBeenFound = false;
       forEach(itemIdsAddedForType ?? [], (itemId) => {
-        const defaultItemState = getDefaultState(itemType)(itemId);
+        const defaultItemState = getNewState(itemType)(itemId);
         const addedItemState = newItemTypeState?.[itemId];
 
         if (!propertyNamesHaveBeenFound) {
@@ -275,7 +275,7 @@ function getPatchOrDiff<T_PatchOrDiff extends "patch" | "diff">(
       let propertyNamesForItemType = [] as PropName<typeof itemType>[];
       let propertyNamesHaveBeenFound = false;
       forEach(itemIdsRemovedForType ?? [], (itemId) => {
-        const defaultItemState = getDefaultState(itemType)(itemId);
+        const defaultItemState = getNewState(itemType)(itemId);
         const removedItemState = prevItemTypeState?.[itemId];
 
         if (!propertyNamesHaveBeenFound) {
@@ -452,7 +452,7 @@ export function makeMinimalPatch(currentStates: GetPartialState<AllState>, thePa
   const minimalPatch = cloneObjectWithJson(thePatch) as StatesPatch;
   // Loop through the changed items, and each changed property
   forEach(itemTypes, (itemType) => {
-    const propertyNames = Object.keys(getDefaultState(itemType)("anItemId")) as PropName<typeof itemType>[];
+    const propertyNames = Object.keys(getNewState(itemType)("anItemId")) as PropName<typeof itemType>[];
 
     const changedForType = minimalPatch.changed[itemType];
     if (changedForType) {

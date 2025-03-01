@@ -170,7 +170,7 @@ export function getStatesDiff(nowState, prevState, diffInfo, recordedChanges, ch
                     const wasJustAdded = diffInfo.itemsAddedBool.__all[itemId];
                     if (wasJustAdded) {
                         propChanged =
-                            nowState[itemType][itemId][itemPropName] !== meta.defaultStateByItemType[itemType](itemId)[itemPropName];
+                            nowState[itemType][itemId][itemPropName] !== meta.newStateByItemType[itemType](itemId)[itemPropName];
                         // console.log("propChanged", itemType, itemId, itemPropName);
                     }
                     else {

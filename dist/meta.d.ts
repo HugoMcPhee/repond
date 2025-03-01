@@ -142,14 +142,14 @@ export declare const repondMeta: {
     prevItemIdsByItemType: {
         [itemTypeName: string]: string[];
     };
-    defaultRefsByItemType: {
-        [itemTypeName: string]: (itemId?: string, itemState?: any) => {
-            [itemPropertyName: string]: any;
-        };
+    newRefsByItemType: {
+        [x: string]: ((itemId?: string, itemState?: any) => {
+            [x: string]: any;
+        }) | undefined;
     };
-    defaultStateByItemType: {
-        [itemTypeName: string]: (itemId?: string) => {
-            [itemPropertyName: string]: any;
+    newStateByItemType: {
+        [x: string]: (itemId?: string) => {
+            [x: string]: any;
         };
     };
     itemTypeByPropPathId: Record<string, string>;

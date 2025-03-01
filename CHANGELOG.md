@@ -11,6 +11,11 @@ TODO
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
+v1.2.1
+
+- Fix types
+- Only copy properties that were changed when copying to prevState
+
 v1.2.0
 Huge performance improvements!
 it only loops changed items/things in most places now

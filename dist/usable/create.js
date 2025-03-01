@@ -19,10 +19,10 @@ export function initRepond(itemTypeDefs, stepNames) {
         meta.nowState[type] = {};
         meta.prevState[type] = {};
         meta.nowRefs[type] = {};
-        meta.defaultStateByItemType[type] = renamedItemTypeDefs[type].newState;
-        meta.defaultRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
+        meta.newStateByItemType[type] = renamedItemTypeDefs[type].newState;
+        meta.newRefsByItemType[type] = renamedItemTypeDefs[type].newRefs;
         meta.itemIdsByItemType[type] = [];
-        const propNames = Object.keys(meta.defaultStateByItemType[type]?.("anyItemId"));
+        const propNames = Object.keys(meta.newStateByItemType[type]?.("anyItemId"));
         meta.propNamesByItemType[type] = propNames;
         SPECIAL_CHANGE_KEYS.forEach((key) => {
             meta.specialKeyByPropPathId[`${type}.${key}`] = key;

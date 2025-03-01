@@ -149,7 +149,6 @@ export function createRecordedChanges(recordedChanges) {
     recordedChanges.itemTypesBool = {};
     recordedChanges.itemIdsBool = {};
     recordedChanges.itemPropsBool = {};
-    console.log("createRecordedChanges", meta.itemTypeNames);
     forEach(meta.itemTypeNames, (itemType) => {
         recordedChanges.itemTypesBool[itemType] = false;
         recordedChanges.itemIdsBool[itemType] = {};

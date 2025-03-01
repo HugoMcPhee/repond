@@ -24,8 +24,8 @@ export type GetNewStateByType = {
 export type GetNewRefsByType = {
     [K in ItemType]: ItemTypeDefs[K]["newRefs"];
 };
-export type ItemDefaultState<K extends ItemType> = ReturnType<ReturnType<GetNewState<K>>>;
-export type ItemDefaultRefs<K extends ItemType> = ReturnType<ReturnType<GetNewRefs<K>>>;
+export type ItemDefaultState<K extends ItemType> = ReturnType<GetNewState<K>>;
+export type ItemDefaultRefs<K extends ItemType> = ReturnType<GetNewRefs<K>>;
 export type AllState = {
     [K in ItemType]: Record<string, ItemDefaultState<K>>;
 };
@@ -33,6 +33,8 @@ export type AllRefs = {
     [K in ItemType]: Record<string, ItemDefaultRefs<K>>;
 };
 export type ItemId = string;
+export type RefPropName<K extends ItemType> = keyof ItemDefaultRefs<K> & string;
+export type RefPropValue<K extends ItemType, P extends RefPropName<K>> = ItemDefaultRefs<K>[P];
 export type PropName<K extends ItemType> = keyof ItemDefaultState<K> & string;
 export type AllProps = {
     [K in ItemType]: PropName<K>;
@@ -41,6 +43,11 @@ export type PropValue<K extends ItemType, P extends PropName<K>> = ItemDefaultSt
 export type ItemPropsByType = {
     [K in ItemType]: PropName<K>[];
 };
+export type PropIdFor<T extends ItemType> = `${T}.${PropName<T>}`;
+export type PropId = {
+    [K in ItemType]: PropIdFor<K>;
+}[ItemType];
+export type PropValueFromPropId<T extends PropId> = T extends `${infer K}.${infer P}` ? PropValue<K, P> : never;
 type DiffRecord<K extends ItemType, T> = Record<K, Record<ItemId, T>> & {
     __all: T;
 };
