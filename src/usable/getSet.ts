@@ -302,16 +302,32 @@ export function getPartialState(propsToGet: PropId[]) {
 
   const partialState: Partial<AllState> = {};
 
+  const propsByItemType = {} as Record<ItemType, PropName<ItemType>[]>;
+
   for (const propId of propsToGet) {
     const itemType = meta.itemTypeByPropPathId[propId];
+    if (!itemType) {
+      console.log("propId has no item type", propId);
+      continue;
+    }
     const propName = meta.propKeyByPropPathId[propId] as PropName<ItemType>;
+    if (!propsByItemType[itemType]) propsByItemType[itemType] = [];
+    propsByItemType[itemType].push(propName);
+  }
 
+  const itemTypes = Object.keys(propsByItemType) as ItemType[];
+
+  for (const itemType of itemTypes) {
     const itemIds = meta.itemIdsByItemType[itemType];
+
     const partialItems: Record<string, any> = {};
+    const itemPropNames = propsByItemType[itemType];
     for (const itemId of itemIds) {
       const item = getState(itemType, itemId);
       const partialItem: Record<string, any> = {};
-      partialItem[propName] = item[propName];
+      for (const propName of itemPropNames) {
+        partialItem[propName] = item[propName];
+      }
       partialItems[itemId] = partialItem;
     }
     partialState[itemType] = partialItems as any;

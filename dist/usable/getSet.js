@@ -231,15 +231,29 @@ export function getPartialState(propsToGet) {
         return {};
     }
     const partialState = {};
+    const propsByItemType = {};
     for (const propId of propsToGet) {
         const itemType = meta.itemTypeByPropPathId[propId];
+        if (!itemType) {
+            console.log("propId has no item type", propId);
+            continue;
+        }
         const propName = meta.propKeyByPropPathId[propId];
+        if (!propsByItemType[itemType])
+            propsByItemType[itemType] = [];
+        propsByItemType[itemType].push(propName);
+    }
+    const itemTypes = Object.keys(propsByItemType);
+    for (const itemType of itemTypes) {
         const itemIds = meta.itemIdsByItemType[itemType];
         const partialItems = {};
+        const itemPropNames = propsByItemType[itemType];
         for (const itemId of itemIds) {
             const item = getState(itemType, itemId);
             const partialItem = {};
-            partialItem[propName] = item[propName];
+            for (const propName of itemPropNames) {
+                partialItem[propName] = item[propName];
+            }
             partialItems[itemId] = partialItem;
         }
         partialState[itemType] = partialItems;
