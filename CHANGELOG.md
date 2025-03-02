@@ -11,6 +11,10 @@ TODO
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
+v1.2.3
+
+- Add prevState in addItem
+
 v1.2.2
 
 - fix getPartialState and avoid errors when getting a propId that doesn't exist
