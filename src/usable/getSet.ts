@@ -190,12 +190,10 @@ export function addItem<T_ItemType extends ItemType>(
   const propPath = `${type}.__added`;
 
   runWhenAddingAndRemovingItems(() => {
-    const newState = {
+    meta.nowState[type][id] = {
       ...meta.newStateByItemType[type](id),
       ...(state || {}),
     };
-    meta.nowState[type][id] = newState;
-    meta.prevState[type][id] = { ...newState };
     meta.nowRefs[type][id] = {
       ...meta.newRefsByItemType[type]?.(id, meta.nowState[type][id]),
       ...(refs || {}),

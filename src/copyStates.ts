@@ -53,7 +53,7 @@ export function copyChangedStates(nowState: any, prevState: any /* saveToObject 
 
   // Check added items here
   for (let typeIndex = 0; typeIndex < itemTypesWithAdded.length; typeIndex++) {
-    const itemType = itemTypesWithRemoved[typeIndex];
+    const itemType = itemTypesWithAdded[typeIndex];
 
     const itemIds = diffInfo.itemsAdded[itemType];
     if (!itemIds) continue;
@@ -62,31 +62,20 @@ export function copyChangedStates(nowState: any, prevState: any /* saveToObject 
     for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
       const itemId = itemIds[idIndex];
 
-      if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
-
-      for (let propIndex = 0; propIndex < propNamesByItemType[itemType].length; propIndex++) {
-        const itemProp = propNamesByItemType[itemType][propIndex];
-        prevState[itemType][itemId][itemProp] = nowState[itemType][itemId][itemProp];
-      }
+      if (!prevState[itemType][itemId]) prevState[itemType][itemId] = meta.newStateByItemType[itemType](itemId);
     }
   }
   // Check changes here
   for (let typeIndex = 0; typeIndex < itemTypesChanged.length; typeIndex++) {
     const itemType = itemTypesChanged[typeIndex];
 
-    // saveToObject[itemType] = {};
-
     if (nowState[itemType]) {
-      // const itemIds = itemIdsByItemType[itemType];
       const itemIds = diffInfo.itemsChanged[itemType];
       if (!itemIds) continue;
       if (!itemIds.length) continue;
 
-      // const latestItemIds = nowState[itemType];
       for (let idIndex = 0; idIndex < itemIds.length; ++idIndex) {
         const itemId = itemIds[idIndex];
-
-        // if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
 
         const propsChanged = diffInfo.propsChanged[itemType][itemId];
         if (!propsChanged) continue;
@@ -94,9 +83,6 @@ export function copyChangedStates(nowState: any, prevState: any /* saveToObject 
 
         for (let propIndex = 0; propIndex < propsChanged.length; propIndex++) {
           const itemProp = propsChanged[propIndex];
-
-          if (!prevState[itemType][itemId]) prevState[itemType][itemId] = {};
-
           prevState[itemType][itemId][itemProp] = nowState[itemType][itemId][itemProp];
         }
       }
