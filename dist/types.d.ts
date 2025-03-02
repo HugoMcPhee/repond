@@ -80,7 +80,7 @@ export type EffectDef_Run_Params = [
 export type EffectDef_Run = (...params: EffectDef_Run_Params) => void;
 export type EffectDef = {
     id?: string;
-    changes: string[];
+    changes: PropId[];
     itemIds?: string[];
     run: EffectDef_Run;
     isPerItem?: boolean;

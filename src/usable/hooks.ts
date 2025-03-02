@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toSafeEffectId } from "../helpers/effects";
 import { repondMeta as meta } from "../meta";
-import { AllState, EffectDef, ItemPropsByType, ItemType } from "../types";
+import { AllState, EffectDef, ItemPropsByType, ItemType, PropId } from "../types";
 import { startNewEffect, stopEffect } from "./effects";
 import { getState } from "./getSet";
 
@@ -93,7 +93,7 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
           rerender();
         },
         atStepEnd: true,
-        changes: props.map((prop) => `${type}.${prop}`),
+        changes: props.map((prop) => `${type}.${prop}`) as PropId[],
         itemIds: [id],
         runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
         isPerItem: true,

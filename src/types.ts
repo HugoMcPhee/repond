@@ -79,7 +79,7 @@ export type EffectDef_Run = (...params: EffectDef_Run_Params) => void;
 
 export type EffectDef = {
   id?: string; // required, but optional when making an effect, a default id will be generated, for saved group effects, the id will be "groupName.effectName"
-  changes: string[];
+  changes: PropId[];
   itemIds?: string[];
   run: EffectDef_Run;
   isPerItem?: boolean;

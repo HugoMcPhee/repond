@@ -11,6 +11,10 @@ TODO
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
 
+v1.2.5
+
+- Fix type for effect changes
+
 v1.2.4
 
 - Don't add prevState in addItem, but fix issue with prevState not being set for added items (in copyChangedState)
