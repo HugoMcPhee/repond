@@ -2,6 +2,7 @@ export { whenSettingStates } from "./helpers/runWhens";
 import { AllState, ItemType } from "./types";
 export * from "./declarations";
 export * from "./types";
+export type { RepondConfig } from "./meta";
 export { initRepond } from "./usable/create";
 export { applyPatch, applyPatchHere, combineDiffs, combinePatches, combineTwoDiffs, combineTwoPatches, getDiff, getDiffFromPatches, getPatch, getPatchAndReversed, getPatchesFromDiff, getReversePatch, makeEmptyDiff, makeEmptyPatch, makeMinimalPatch, removePartialPatch, } from "./usable/patchesAndDiffs";
 export { useStore, useStoreEffect, useStoreItem } from "./usable/hooks";

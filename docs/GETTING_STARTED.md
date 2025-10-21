@@ -45,10 +45,10 @@ import { initRepond } from "repond";
 import { todoStore } from "./todo";
 
 // Initialize Repond with your stores
-initRepond({
-  storeNames: ["todo"] as const,
-  itemStores: { todo: todoStore },
-});
+initRepond(
+  { todo: todoStore },
+  ["default"] // Step names - "default" is used when no step is specified
+);
 ```
 
 ### Step 3: Set Up TypeScript Types
@@ -60,13 +60,10 @@ import { todoStore } from "../stores/todo";
 
 declare module "repond/declarations" {
   interface CustomRepondTypes {
-    ItemTypeKeys: "todo";
-    AllState: {
-      todo: ReturnType<typeof todoStore.newState>;
+    ItemTypeDefs: {
+      todo: typeof todoStore;
     };
-    AllRefs: {
-      todo: ReturnType<typeof todoStore.newRefs>;
-    };
+    StepNames: ["default"];
   }
 }
 ```
@@ -77,13 +74,21 @@ This gives you full autocomplete and type safety!
 
 ```typescript
 import { useState } from "react";
-import { addItem, setState, removeItem, useStore } from "repond";
+import { addItem, setState, removeItem, useStoreEffect } from "repond";
 
 function TodoList() {
   const [inputValue, setInputValue] = useState("");
+  const [todoIds, setTodoIds] = useState<string[]>([]);
 
-  // Get all todos - re-renders when todos change
-  const todoIds = useStore("todo", undefined, []);
+  // Track all todo IDs - re-renders when todos are added/removed
+  useStoreEffect({
+    changes: ["todo.__added", "todo.__removed"],
+    run: () => {
+      // Get current todo IDs (using internal meta)
+      const { meta } = require("repond/meta");
+      setTodoIds([...meta.itemIdsByItemType["todo"]]);
+    },
+  });
 
   const handleAdd = () => {
     if (!inputValue.trim()) return;
@@ -109,7 +114,7 @@ function TodoList() {
       </div>
 
       <ul>
-        {Object.keys(todoIds).map((todoId) => (
+        {todoIds.map((todoId) => (
           <TodoItem key={todoId} todoId={todoId} />
         ))}
       </ul>
@@ -245,6 +250,78 @@ Now that you understand the basics, explore:
 
 ---
 
+## Effect Function Parameters
+
+Effects receive three parameters that provide context about what changed:
+
+```typescript
+makeEffect(
+  (itemId: string, diffInfo: DiffInfo, frameDuration: number) => {
+    // itemId: The ID of the item that changed
+    // diffInfo: Details about what changed this frame
+    // frameDuration: Milliseconds since last frame (for animations)
+  },
+  { changes: ["player.position"] }
+)
+```
+
+### Using `itemId`
+
+The item ID tells you which specific item triggered the effect:
+
+```typescript
+makeEffect(
+  (playerId) => {
+    const player = getState("player", playerId);
+    console.log(`Player ${playerId} moved to`, player.position);
+  },
+  { changes: ["player.position"] }
+)
+```
+
+### Using `diffInfo`
+
+Access detailed information about what changed:
+
+```typescript
+makeEffect(
+  (playerId, diffInfo) => {
+    // Get which properties changed for this item
+    const changedProps = diffInfo.propsChanged["player"]?.[playerId] || [];
+
+    if (changedProps.includes("health")) {
+      console.log("Health changed!");
+    }
+
+    // Check if item was just added
+    const wasAdded = diffInfo.itemsAdded["player"]?.includes(playerId);
+  },
+  { changes: ["player.health", "player.position"] }
+)
+```
+
+### Using `frameDuration`
+
+Useful for time-based animations and physics:
+
+```typescript
+makeEffect(
+  (itemId, diffInfo, frameDuration) => {
+    const item = getState("item", itemId);
+
+    // Calculate velocity (distance per second)
+    const velocity = item.deltaPosition / frameDuration * 1000;
+
+    // Apply time-scaled movement
+    const newPosition = item.position + item.velocity * (frameDuration / 1000);
+    setState("item", { position: newPosition }, itemId);
+  },
+  { changes: ["item.velocity"], step: "physics" }
+)
+```
+
+---
+
 ## Common Patterns
 
 ### Derived State with Effects
@@ -267,19 +344,24 @@ makeEffect(
   (enemyId) => {
     console.log("New enemy spawned:", enemyId);
   },
-  { changes: ["enemy.*.added"] } // Special syntax for additions
+  { changes: ["enemy.__added"] } // Special __added key
 );
 ```
 
 ### Global Effects (Not Per-Item)
 
 ```typescript
+import { getState } from "repond";
+
 makeEffect(
   () => {
-    const allPlayers = getAllState("player");
-    console.log("Total players:", Object.keys(allPlayers).length);
+    // Get all player state by accessing the state for the item type
+    const allPlayers = getState("player"); // Returns first player
+    // To count all players, use Object.keys on the internal structure
+    // Note: A getAllState() helper may be added in a future version
+    console.log("Player state changed");
   },
-  { changes: ["player.*.added", "player.*.removed"], isPerItem: false }
+  { changes: ["player.__added", "player.__removed"], isPerItem: false }
 );
 ```
 
@@ -304,6 +386,109 @@ makeEffect(
 1. Use selective props in `useStore()`: `["prop1", "prop2"]`
 2. Check for effect infinite loops (effect modifying what it watches)
 3. Use `step` system to control effect execution order
+
+---
+
+## Accessing All Item IDs
+
+A common need is getting all item IDs for a specific item type. Here are the recommended patterns:
+
+### Pattern 1: Using React State with Effects
+
+For React components, track item IDs with state:
+
+```typescript
+import { useState } from "react";
+import { useStoreEffect } from "repond";
+
+function TodoList() {
+  const [todoIds, setTodoIds] = useState<string[]>([]);
+
+  // Update IDs whenever items are added or removed
+  useStoreEffect({
+    changes: ["todo.__added", "todo.__removed"],
+    run: () => {
+      // Access internal meta to get current IDs
+      // Note: This uses internal API that may change
+      const { meta } = require("repond/meta");
+      setTodoIds([...meta.itemIdsByItemType["todo"]]);
+    },
+  });
+
+  return (
+    <ul>
+      {todoIds.map((todoId) => (
+        <TodoItem key={todoId} todoId={todoId} />
+      ))}
+    </ul>
+  );
+}
+```
+
+### Pattern 2: Manual Tracking
+
+Keep your own list of IDs:
+
+```typescript
+// Store all todo IDs yourself
+const todoIdsList: string[] = [];
+
+function addTodo(text: string) {
+  const todoId = `todo-${Date.now()}`;
+  todoIdsList.push(todoId);
+
+  addItem("todo", todoId);
+  setState("todo", { text }, todoId);
+}
+
+function removeTodo(todoId: string) {
+  const index = todoIdsList.indexOf(todoId);
+  if (index > -1) {
+    todoIdsList.splice(index, 1);
+  }
+
+  removeItem("todo", todoId);
+}
+```
+
+### Pattern 3: Using a Dedicated "Manager" Item
+
+Create a special item that tracks IDs:
+
+```typescript
+const todoManagerStore = {
+  newState: () => ({
+    allTodoIds: [] as string[],
+  }),
+  newRefs: () => ({}),
+};
+
+// Initialize with one manager
+addItem("todoManager", "main");
+
+// When adding todos
+function addTodo(text: string) {
+  const todoId = `todo-${Date.now()}`;
+  const manager = getState("todoManager", "main");
+
+  addItem("todo", todoId);
+  setState("todo", { text }, todoId);
+  setState("todoManager", { allTodoIds: [...manager.allTodoIds, todoId] }, "main");
+}
+
+// In components
+const manager = useStore("todoManager", "main", ["allTodoIds"]);
+manager.allTodoIds.map(id => /* ... */);
+```
+
+### Future API
+
+A `getItemIds(itemType)` helper function may be added in a future version to simplify this pattern:
+
+```typescript
+// Potential future API (not yet implemented)
+const todoIds = getItemIds("todo");
+```
 
 ---
 

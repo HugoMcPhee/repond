@@ -1,6 +1,7 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
 import { _addEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
+import { warn } from "../helpers/logging";
 import { repondMeta as meta } from "../meta";
 import { EffectDef, ItemType, PropName } from "../types";
 
@@ -20,7 +21,7 @@ export function startEffect<
   K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string
 >(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
   const theEffect = meta.storedEffectsMap[effectId];
-  if (!theEffect) return console.warn("no effect found for ", effectId);
+  if (!theEffect) return warn("no effect found for ", effectId);
   _addEffect(theEffect);
 }
 
@@ -56,7 +57,7 @@ export function runEffect<
   K_EffectName extends keyof RefinedEffectGroups[K_EffectGroup] & string
 >(effectId: `${K_EffectGroup}.${K_EffectName}` | string) {
   const theEffect = meta.liveEffectsMap[effectId];
-  if (!theEffect) return console.warn("(run) no effect found for ", effectId);
+  if (!theEffect) return warn("(run) no effect found for ", effectId);
 
   runEffectWithoutChange(theEffect);
 }

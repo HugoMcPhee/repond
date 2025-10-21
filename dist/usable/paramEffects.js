@@ -1,5 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import { _addEffect, _stopEffect } from "../helpers/effects";
+import { warn } from "../helpers/logging";
 import { repondMeta as meta } from "../meta";
 import { makeEffect } from "./effects";
 export function makeParamEffects(defaultParams, effectsToAdd) {
@@ -38,7 +39,7 @@ function findParamEffect(groupName, effectName, params) {
 function makeAndStoreParamEffectsForGroup(groupName, params) {
     const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects(makeEffect, params);
     if (!madeParamEffects)
-        return console.warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
+        return warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
     const effectIds = [];
     // paramEffectIdsByGroupPlusParamKey
     // Rename the effects to include the group name and params
@@ -78,7 +79,7 @@ function findOrMakeParamEffect(groupName, effectName, params) {
 export function startParamEffect(groupName, effectName, params) {
     const effect = findOrMakeParamEffect(groupName, effectName, params);
     if (!effect)
-        return console.warn("no effect found for ", groupName, effectName, params);
+        return warn("no effect found for ", groupName, effectName, params);
     _addEffect(effect);
 }
 // NOTE this wont update paramEffectIdsByGroupPlusParamKey is all are stopped in a group, if it's a good idea, it could remove its own id from that list
@@ -86,7 +87,7 @@ export function startParamEffect(groupName, effectName, params) {
 export function stopParamEffect(groupName, effectName, params) {
     const effect = findParamEffect(groupName, effectName, params);
     // console.log("stop param effect", effect);
-    // if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+    // if (!effect) return warn("no effect found for ", groupName, effectName, params);
     // FIXME repond events is stopping effects that are not found
     if (!effect)
         return;
@@ -96,35 +97,35 @@ export function stopParamEffect(groupName, effectName, params) {
 export function startParamEffectsGroup(groupName, params) {
     const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
     if (!effectIds?.length)
-        return console.warn("no effectIds found for ", groupName);
+        return warn("no effectIds found for ", groupName);
     forEach(effectIds, (effectId) => {
         const effect = meta.liveEffectsMap[effectId];
         if (!effect)
-            return console.warn("no effect found for ", groupName, effectId);
+            return warn("no effect found for ", groupName, effectId);
         _addEffect(effect);
     });
 }
 export function stopParamEffectsGroup(groupName, params) {
     const effectIds = getEffectIdsForGroupPlusParam(groupName, params);
     if (!effectIds)
-        return console.warn("no effectIds found for ", groupName, params);
+        return warn("no effectIds found for ", groupName, params);
     forEach(effectIds, (effectId) => _stopEffect(effectId));
     deleteEffectIdsForGroupPlusParam(groupName, params);
 }
 export function runParamEffect(groupName, effectName, params) {
     const effect = findOrMakeParamEffect(groupName, effectName, params);
     if (!effect)
-        return console.warn("no effect found for ", groupName, effectName);
+        return warn("no effect found for ", groupName, effectName);
     effect.run("", meta.diffInfo, 16.66666, true /* ranWithoutChange */);
 }
 export function runParamEffectsGroup(groupName, params) {
     const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
     if (!effectIds?.length)
-        return console.warn("no effectIds made for ", groupName, params);
+        return warn("no effectIds made for ", groupName, params);
     forEach(effectIds, (effectId) => {
         const effect = meta.liveEffectsMap[effectId];
         if (!effect)
-            return console.warn("no effect found for ", groupName, effectId);
+            return warn("no effect found for ", groupName, effectId);
         effect.run("", meta.diffInfo, 16.66666, true /* ranWithoutChange */);
     });
 }

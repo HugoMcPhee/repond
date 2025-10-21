@@ -65,6 +65,10 @@ export type UntypedDiffInfo = {
 
 type AFunction = (...args: any[]) => void;
 
+export type RepondConfig = {
+  enableWarnings?: boolean;
+};
+
 export type RepondMetaPhase =
   | "waitingForFirstUpdate"
   | "waitingForMoreUpdates"
@@ -74,6 +78,11 @@ export type RepondMetaPhase =
   | "runningCallbacks"; // might need more metaPhases for the different types of callbacks
 
 export const repondMeta = {
+  // Configuration -----------------------------------------------------
+  config: {
+    enableWarnings: false, // Default: silent
+  } as RepondConfig,
+
   // Items -----------------------------------------------------
   prevState: {} as any,
   nowState: {} as any,
@@ -122,6 +131,7 @@ export const repondMeta = {
   autoEffectIdCounter: 1,
   // Normal effects
   liveEffectsMap: {} as Record<string, EffectDef>,
+  pendingEffectIndexIds: new Set<string>(), // Track effects stored in liveEffectsMap but not yet indexed
   // effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
   //   EffectPhase,
   //   Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']

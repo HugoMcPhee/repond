@@ -3,6 +3,7 @@ import checkEffects from "./checkEffects";
 import { copyChangedStates, copyItemIdsByItemType, copyStates } from "./copyStates";
 import { getStatesDiff } from "./getStatesDiff";
 import { updateRepondNextFrame } from "./helpers/frames";
+import { warn } from "./helpers/logging";
 import { repondMeta as meta, RecordedChanges, RepondMetaPhase } from "./meta";
 import { EffectDef, EffectPhase } from "./types";
 
@@ -202,12 +203,12 @@ function runEffects(phase: EffectPhase, stepName: string) {
   for (let index = 0; index < effectNamesToRun.length; index++) {
     const name = effectNamesToRun[index];
     const effect = meta.liveEffectsMap[name];
-    if (!effect) return console.warn("no effect found for ", name);
+    if (!effect) return warn("no effect found for ", name);
 
     if (effect.isPerItem) {
       // Per-item effect: run for each changed item
       const itemTypes = effect._itemTypes;
-      if (!itemTypes) return console.warn("no item types found for ", name);
+      if (!itemTypes) return warn("no item types found for ", name);
 
       if (itemTypes?.length === 1) {
         // Optimization: if only one item type, skip forEach
@@ -517,7 +518,7 @@ export function _updateRepond(animationFrameTime: number) {
  * Provides debugging info: step name, effect IDs, and what changed.
  */
 function logTooManySetStatesMessage() {
-  console.warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
+  warn("WARNING: running step effects a lot, there may be an infinite setState inside an effect");
   console.log("Step name: ", meta.nowStepName);
   console.log("Effect ids:");
   console.log(JSON.stringify(meta.effectIdsByPhaseByStepByPropId.duringStep?.[meta.nowStepName], null, 2));

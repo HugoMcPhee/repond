@@ -13,18 +13,23 @@ export function useStore<K_Type extends ItemType, T_ReturnedRepondProps>(
   const [, setTick] = useState(0);
   const rerender = useCallback(() => setTick((tick) => tick + 1), []);
 
+  // Generate stable effect ID
+  const effectIdRef = useRef<string>();
+  if (!effectIdRef.current) {
+    effectIdRef.current = options.id ?? toSafeEffectId("reactComponent");
+  }
+
   useEffect(() => {
-    const effectId = toSafeEffectId("reactComponent");
     startNewEffect({
       isPerItem: false, // isPerItem false since it's not an item effect, and it can only return one value
       atStepEnd: true,
-      id: effectId,
+      id: effectIdRef.current,
       run: rerender,
       runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
       ...options,
     } as any);
 
-    return () => stopEffect(effectId);
+    return () => stopEffect(effectIdRef.current!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, hookDeps);
 
@@ -36,17 +41,27 @@ export function useStoreEffect<K_Type extends ItemType>(
   options: Omit<EffectDef, "run">,
   hookDeps: any[] | undefined = undefined
 ) {
-  // const stringifiedCheck = JSON.stringify(check); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
-  const stringifiedCheck = JSON.stringify(options?.itemIds); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
+  // Generate stable ID using useRef (persists across strict mode re-renders)
+  const effectIdRef = useRef<string>();
+  if (!effectIdRef.current) {
+    effectIdRef.current = options.id ?? toSafeEffectId("useStoreEffect_" + JSON.stringify(options.changes));
+  }
+
+  const stringifiedCheck = JSON.stringify(options?.itemIds);
+
   useLayoutEffect(
     () => {
-      const effectId = toSafeEffectId("useStoreEffect_" + JSON.stringify(options.changes));
-      startNewEffect({ id: effectId, atStepEnd: true, run, runAtStart: true, ...options } as any); // runAtStart true so it works like useEffect
-      return () => stopEffect(effectId);
+      startNewEffect({
+        id: effectIdRef.current,
+        atStepEnd: true,
+        run,
+        runAtStart: true,
+        ...options,
+      } as any);
+
+      return () => stopEffect(effectIdRef.current!);
     },
     hookDeps ? [...hookDeps, stringifiedCheck] : [stringifiedCheck]
-    // hookDeps.length > 0 ? [...hookDeps, ...(options?.itemIds ?? [])] : options?.itemIds
-    // hookDeps ? hookDeps : []
   );
 }
 
@@ -77,15 +92,19 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
     setTick((tick) => tick + 1);
   };
 
+  // Generate stable effect ID
+  const effectIdRef = useRef<string>();
+  if (!effectIdRef.current) {
+    effectIdRef.current = toSafeEffectId("useStoreItem_" + id);
+  }
+
   useLayoutEffect(
     () => {
       // if (didRender.current) setReturnedState(getState(type, id));
       if (didRender.current) rerender();
 
-      const effectId = toSafeEffectId("useStoreItem" + id); // note could add JSON.stringify(check) for useful effect name
-
       startNewEffect({
-        id: effectId,
+        id: effectIdRef.current,
         // run: (itemId) => rerender(),
         run() {
           // returnedStateRef.current = getState(type, id);
@@ -100,7 +119,7 @@ export function useStoreItem<K_Type extends ItemType, T_ReturnType>(
       });
       didRender.current = true;
 
-      return () => stopEffect(effectId);
+      return () => stopEffect(effectIdRef.current!);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     hookDeps && hookDeps?.length > 0 ? [...hookDeps, ...props, id] : [...props, id] // NOTE maybe need to change this to be stringified

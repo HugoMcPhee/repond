@@ -16,7 +16,7 @@ Repond solves a specific problem: **managing state for entity-heavy applications
 - **Real-time performance** without Redux's spread overhead
 - **Built-in entity handling** without custom Zustand patterns
 - **Declarative effects** that automatically respond to state changes
-- **O(1) performance** regardless of item count (only processes what changed)
+- **Scales independently of total item count** (only processes what changed)
 - **Type-safe state access** without importing stores
 
 **Perfect for:**
@@ -51,10 +51,11 @@ const playerStore = {
 };
 
 // 2. Initialize Repond
-initRepond({
-  storeNames: ["player"] as const,
-  itemStores: { player: playerStore },
-});
+initRepond(
+  { player: playerStore },
+  ["default"], // Step names - "default" is used when no step is specified in effects
+  { enableWarnings: false } // Optional config (default: warnings disabled)
+);
 
 // 3. Create declarative effects
 const gameEffects = makeEffects((makeEffect) => ({
@@ -223,6 +224,25 @@ makeEffect(renderScene, {
 
 ## API Reference
 
+### Configuration
+
+```typescript
+// Initialize with optional config
+initRepond(
+  { player: playerStore, enemy: enemyStore },
+  ["default", "physics", "rendering"],
+  {
+    enableWarnings: true, // Show internal warnings (default: false)
+  }
+);
+```
+
+**Config Options:**
+- `enableWarnings` (boolean, default: `false`): Enable internal warnings for debugging
+  - Warnings include: duplicate effect IDs, missing item types, effect replacement notifications
+  - Disable by default to keep console clean during development
+  - Enable when debugging effect registration or state issues
+
 ### State Management
 
 ```typescript
@@ -302,15 +322,11 @@ export const playerStore = {
 // types.ts
 declare module "repond/declarations" {
   interface CustomRepondTypes {
-    ItemTypeKeys: "player" | "enemy";
-    AllState: {
-      player: ReturnType<typeof playerStore.newState>;
-      enemy: ReturnType<typeof enemyStore.newState>;
+    ItemTypeDefs: {
+      player: typeof playerStore;
+      enemy: typeof enemyStore;
     };
-    AllRefs: {
-      player: ReturnType<typeof playerStore.newRefs>;
-      enemy: ReturnType<typeof enemyStore.newRefs>;
-    };
+    StepNames: ["default", "physics", "gameLogic", "rendering"];
   }
 }
 ```
@@ -328,12 +344,17 @@ getState("player").health; // .health autocompleted
 
 ### Key Characteristics
 
-- **O(1) complexity**: Performance independent of total item count
-- **Selective processing**: Only processes items that changed
+- **O(changed items) complexity**: Performance scales with what changed, not total item count
+- **Selective processing**: Only processes items that actually changed
 - **Automatic batching**: All setState calls batched per frame
 - **Scale**: Handles 1,000s to 10,000s+ items efficiently
 
 **Example**: In a game with 10,000 entities, if only 5 move per frame, Repond only processes those 5.
+
+**Performance breakdown:**
+- `setState()`: O(1) - direct property assignment
+- Diff calculation: O(changed items × changed properties)
+- Effect execution: O(changed items × effects watching those properties)
 
 ### Benchmarks
 
@@ -475,13 +496,15 @@ newState: () => ({
 | Feature | Repond | Redux | Zustand | MobX |
 |---------|--------|-------|---------|------|
 | **Entity optimization** | Built-in | Manual | Manual | Manual |
-| **Performance (1000+ items)** | O(1) | O(n) | O(n) | O(n) |
+| **Performance scaling** | O(changed items)* | O(subscribers) | O(subscribers) | O(observables) |
 | **Declarative effects** | Yes | Middleware | Manual | Reactions |
 | **Type-safe string access** | Yes | No | No | No |
 | **Framework agnostic** | Yes | Yes | Yes | Yes |
 | **React hooks** | Included | External | Built-in | Built-in |
 | **Serializable state** | Required | Yes | Yes | No |
 | **Learning curve** | Medium | High | Low | Medium |
+
+\* Repond processes only items that changed, regardless of total count. Redux and Zustand can achieve similar performance with proper selector memoization, but Repond makes this optimization automatic for entity-based state.
 
 ---
 

@@ -1,15 +1,22 @@
 import { forEach } from "chootils/dist/loops";
 import { ItemTypeDefsUntyped } from "../declarations";
 import { createDiffInfo } from "../getStatesDiff";
-import { repondMeta as meta, UntypedDiffInfo } from "../meta";
+import { repondMeta as meta, RepondConfig, UntypedDiffInfo } from "../meta";
 import { createRecordedChanges } from "../updating";
 
 const SPECIAL_CHANGE_KEYS = ["__added", "__removed"];
 
 export function initRepond<T_ItemTypeDefs extends ItemTypeDefsUntyped, T_StepNamesParam extends Readonly<string[]>>(
   itemTypeDefs: T_ItemTypeDefs,
-  stepNames: T_StepNamesParam
+  stepNames: T_StepNamesParam,
+  config?: RepondConfig
 ) {
+  // Set config with defaults
+  meta.config = {
+    enableWarnings: false, // Default: silent
+    ...config,
+  };
+
   const renamedItemTypeDefs: ItemTypeDefsUntyped = {};
 
   Object.entries(itemTypeDefs).forEach(([type, definition]) => {

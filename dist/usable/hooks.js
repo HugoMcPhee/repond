@@ -6,32 +6,42 @@ import { getState } from "./getSet";
 export function useStore(whatToReturn, options, hookDeps = []) {
     const [, setTick] = useState(0);
     const rerender = useCallback(() => setTick((tick) => tick + 1), []);
+    // Generate stable effect ID
+    const effectIdRef = useRef();
+    if (!effectIdRef.current) {
+        effectIdRef.current = options.id ?? toSafeEffectId("reactComponent");
+    }
     useEffect(() => {
-        const effectId = toSafeEffectId("reactComponent");
         startNewEffect({
             isPerItem: false, // isPerItem false since it's not an item effect, and it can only return one value
             atStepEnd: true,
-            id: effectId,
+            id: effectIdRef.current,
             run: rerender,
             runAtStart: false, // runAtStart false since it's returning the initial state already, no need to set state
             ...options,
         });
-        return () => stopEffect(effectId);
+        return () => stopEffect(effectIdRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, hookDeps);
     return whatToReturn(meta.diffInfo);
 }
 export function useStoreEffect(run, options, hookDeps = undefined) {
-    // const stringifiedCheck = JSON.stringify(check); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
-    const stringifiedCheck = JSON.stringify(options?.itemIds); // NOTE this may be bad for memory and performance, and might be better for people to have to manually update deps
+    // Generate stable ID using useRef (persists across strict mode re-renders)
+    const effectIdRef = useRef();
+    if (!effectIdRef.current) {
+        effectIdRef.current = options.id ?? toSafeEffectId("useStoreEffect_" + JSON.stringify(options.changes));
+    }
+    const stringifiedCheck = JSON.stringify(options?.itemIds);
     useLayoutEffect(() => {
-        const effectId = toSafeEffectId("useStoreEffect_" + JSON.stringify(options.changes));
-        startNewEffect({ id: effectId, atStepEnd: true, run, runAtStart: true, ...options }); // runAtStart true so it works like useEffect
-        return () => stopEffect(effectId);
-    }, hookDeps ? [...hookDeps, stringifiedCheck] : [stringifiedCheck]
-    // hookDeps.length > 0 ? [...hookDeps, ...(options?.itemIds ?? [])] : options?.itemIds
-    // hookDeps ? hookDeps : []
-    );
+        startNewEffect({
+            id: effectIdRef.current,
+            atStepEnd: true,
+            run,
+            runAtStart: true,
+            ...options,
+        });
+        return () => stopEffect(effectIdRef.current);
+    }, hookDeps ? [...hookDeps, stringifiedCheck] : [stringifiedCheck]);
 }
 // NOTE types might be hard here, since it checks the first "changes" path to get the item type
 export function useStoreItem(itemEffectCallback, options, hookDeps) {
@@ -48,13 +58,17 @@ export function useStoreItem(itemEffectCallback, options, hookDeps) {
         returnedStateRef.current = getState(type, id);
         setTick((tick) => tick + 1);
     };
+    // Generate stable effect ID
+    const effectIdRef = useRef();
+    if (!effectIdRef.current) {
+        effectIdRef.current = toSafeEffectId("useStoreItem_" + id);
+    }
     useLayoutEffect(() => {
         // if (didRender.current) setReturnedState(getState(type, id));
         if (didRender.current)
             rerender();
-        const effectId = toSafeEffectId("useStoreItem" + id); // note could add JSON.stringify(check) for useful effect name
         startNewEffect({
-            id: effectId,
+            id: effectIdRef.current,
             // run: (itemId) => rerender(),
             run() {
                 // returnedStateRef.current = getState(type, id);
@@ -68,7 +82,7 @@ export function useStoreItem(itemEffectCallback, options, hookDeps) {
             isPerItem: true,
         });
         didRender.current = true;
-        return () => stopEffect(effectId);
+        return () => stopEffect(effectIdRef.current);
     }, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     hookDeps && hookDeps?.length > 0 ? [...hookDeps, ...props, id] : [...props, id] // NOTE maybe need to change this to be stringified

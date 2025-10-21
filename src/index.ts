@@ -3,6 +3,7 @@ import { AllState, ItemType } from "./types";
 
 export * from "./declarations";
 export * from "./types";
+export type { RepondConfig } from "./meta";
 
 export { initRepond } from "./usable/create";
 export {

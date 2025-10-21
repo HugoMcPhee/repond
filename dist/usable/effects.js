@@ -1,5 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import { _addEffect, _stopEffect, runEffectWithoutChange, storeCachedValuesForEffect } from "../helpers/effects";
+import { warn } from "../helpers/logging";
 import { repondMeta as meta } from "../meta";
 export function startNewEffect(theEffect) {
     return _addEffect(theEffect);
@@ -8,7 +9,7 @@ export function startNewEffect(theEffect) {
 export function startEffect(effectId) {
     const theEffect = meta.storedEffectsMap[effectId];
     if (!theEffect)
-        return console.warn("no effect found for ", effectId);
+        return warn("no effect found for ", effectId);
     _addEffect(theEffect);
 }
 export function stopEffect(effectId) {
@@ -34,7 +35,7 @@ export function stopAllEffectsGroups() {
 export function runEffect(effectId) {
     const theEffect = meta.liveEffectsMap[effectId];
     if (!theEffect)
-        return console.warn("(run) no effect found for ", effectId);
+        return warn("(run) no effect found for ", effectId);
     runEffectWithoutChange(theEffect);
 }
 export function runEffectsGroup(groupName) {

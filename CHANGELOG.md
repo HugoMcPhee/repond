@@ -1,5 +1,6 @@
 TODO
 
+- **BUG**: Investigate applyPatchHere in src/usable/patchesAndDiffs.ts:94 - appears to add item then immediately delete it
 - support nullable types with strictNullchecks
 - type "becomes" to the property value
 - maybe a way to type effect objects without starting (exporting makeEffect)
@@ -10,6 +11,54 @@ TODO
 - maybe support starting param effects with group.name instead of seperate params
 - maybe remove "getUsefulParams" from prendy effect makers
 - maybe use "group.name" to reference param effects, although it usually also stores group with params, so might be difficult
+- consider adding getItemIds(itemType) helper function to public API
+- consider adding getAllState(itemType) helper function to public API
+
+## Unreleased
+
+v1.2.6
+
+### Added
+
+- **Configuration**: Added optional `config` parameter to `initRepond()`
+  - `enableWarnings: boolean` - Controls whether internal warnings are displayed (default: `false`)
+  - Warnings are now silent by default to avoid console clutter during development
+  - Example: `initRepond(stores, steps, { enableWarnings: true })`
+
+### Fixed
+
+- **React Hooks**: Fixed duplicate effect registration in React Strict Mode
+  - `useStoreEffect`, `useStoreItem`, and `useStore` now use stable effect IDs via `useRef`
+  - Prevents double-registration when React intentionally double-invokes effects in strict mode
+  - Effects are now stored immediately in `liveEffectsMap` with pending indexing tracked separately
+  - Fixes race condition where `stopEffect()` was called before effect registration completed
+- **Effect System**: Added support for effect replacement with duplicate IDs
+  - Pending effects: Updates definition in place, existing callback uses new version
+  - Indexed effects: Properly stops and restarts to reindex with new properties
+  - Development warnings help identify unintentional duplicate effect IDs (when `enableWarnings: true`)
+
+### Internal
+
+- Added `pendingEffectIndexIds` Set to meta for tracking effects pending indexing
+- Modified `_addEffect` to store effects immediately and queue only the indexing step
+- Modified `_stopEffect` to check pending state before attempting removal
+- Effect callbacks are now stateless (look up from `liveEffectsMap` instead of closure)
+- Added `RepondConfig` type and `config` object to `repondMeta`
+- Created `warn()` helper in `src/helpers/logging.ts` that respects `enableWarnings` config
+- Replaced all `console.warn()` calls with configurable `warn()` helper throughout codebase
+
+### Documentation
+
+- **BREAKING CLARITY**: Corrected performance claims from "O(1)" to "O(changed items)" throughout documentation
+  - Performance scales with number of changed items, not total item count
+  - Still excellent performance characteristics, just more technically accurate
+- Fixed special keys pattern: `enemy.*.added` → `enemy.__added` and `enemy.__removed`
+- Removed references to non-existent `getAllState()` function
+- Added comprehensive guide for accessing item IDs in React components
+- Added documentation for effect function parameters (itemId, diffInfo, frameDuration)
+- Clarified state mutability: externally immutable, internally mutable for performance
+- Improved TypeScript inference documentation - clarified when `as` casts are needed
+- Updated comparison table to be more nuanced about performance characteristics
 
 v1.2.5
 

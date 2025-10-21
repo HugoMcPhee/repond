@@ -1,6 +1,7 @@
 import { forEach } from "chootils/dist/loops";
 import { RepondTypes } from "../declarations";
 import { _addEffect, _stopEffect } from "../helpers/effects";
+import { warn } from "../helpers/logging";
 import { repondMeta as meta } from "../meta";
 import { EffectDef } from "../types";
 import { MakeEffect, makeEffect } from "./effects";
@@ -83,7 +84,7 @@ function makeAndStoreParamEffectsForGroup<
 >(groupName: K_GroupName, params: T_Params) {
   const madeParamEffects = meta.allParamEffectGroups?.[groupName]?.makeEffects(makeEffect, params);
 
-  if (!madeParamEffects) return console.warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
+  if (!madeParamEffects) return warn("no param effects stored for ", groupName), undefined; // returns undefined instead of void from console.warn
 
   const effectIds: string[] = [];
   // paramEffectIdsByGroupPlusParamKey
@@ -148,7 +149,7 @@ export function startParamEffect<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findOrMakeParamEffect(groupName, effectName, params);
-  if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+  if (!effect) return warn("no effect found for ", groupName, effectName, params);
   _addEffect(effect);
 }
 
@@ -161,7 +162,7 @@ export function stopParamEffect<
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findParamEffect(groupName, effectName, params);
   // console.log("stop param effect", effect);
-  // if (!effect) return console.warn("no effect found for ", groupName, effectName, params);
+  // if (!effect) return warn("no effect found for ", groupName, effectName, params);
   // FIXME repond events is stopping effects that are not found
   if (!effect) return;
   const effectId = getParamEffectId(groupName, effectName, params);
@@ -173,10 +174,10 @@ export function startParamEffectsGroup<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, params: T_Params) {
   const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
-  if (!effectIds?.length) return console.warn("no effectIds found for ", groupName);
+  if (!effectIds?.length) return warn("no effectIds found for ", groupName);
   forEach(effectIds, (effectId) => {
     const effect = meta.liveEffectsMap[effectId];
-    if (!effect) return console.warn("no effect found for ", groupName, effectId);
+    if (!effect) return warn("no effect found for ", groupName, effectId);
     _addEffect(effect);
   });
 }
@@ -186,7 +187,7 @@ export function stopParamEffectsGroup<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, params: T_Params) {
   const effectIds = getEffectIdsForGroupPlusParam(groupName, params);
-  if (!effectIds) return console.warn("no effectIds found for ", groupName, params);
+  if (!effectIds) return warn("no effectIds found for ", groupName, params);
   forEach(effectIds, (effectId) => _stopEffect(effectId));
   deleteEffectIdsForGroupPlusParam(groupName, params);
 }
@@ -197,7 +198,7 @@ export function runParamEffect<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, effectName: K_EffectName, params: T_Params) {
   const effect = findOrMakeParamEffect(groupName, effectName, params);
-  if (!effect) return console.warn("no effect found for ", groupName, effectName);
+  if (!effect) return warn("no effect found for ", groupName, effectName);
   effect.run("", meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
 }
 
@@ -206,10 +207,10 @@ export function runParamEffectsGroup<
   T_Params extends RefinedParamEffectGroups[K_GroupName]["defaultParams"]
 >(groupName: K_GroupName, params: T_Params) {
   const effectIds = getOrMakeEffectIdsForGroupPlusParam(groupName, params);
-  if (!effectIds?.length) return console.warn("no effectIds made for ", groupName, params);
+  if (!effectIds?.length) return warn("no effectIds made for ", groupName, params);
   forEach(effectIds, (effectId) => {
     const effect = meta.liveEffectsMap[effectId];
-    if (!effect) return console.warn("no effect found for ", groupName, effectId);
+    if (!effect) return warn("no effect found for ", groupName, effectId);
     effect.run("", meta.diffInfo as any, 16.66666, true /* ranWithoutChange */);
   });
 }

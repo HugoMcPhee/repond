@@ -22,6 +22,10 @@ export const initialDiffInfo = {
     itemsRemovedBool: {},
 };
 export const repondMeta = {
+    // Configuration -----------------------------------------------------
+    config: {
+        enableWarnings: false, // Default: silent
+    },
     // Items -----------------------------------------------------
     prevState: {},
     nowState: {},
@@ -64,6 +68,7 @@ export const repondMeta = {
     autoEffectIdCounter: 1,
     // Normal effects
     liveEffectsMap: {},
+    pendingEffectIndexIds: new Set(), // Track effects stored in liveEffectsMap but not yet indexed
     // effectIdsByPhaseByStep: { duringStep: {}, endOfStep: {} } as Record<
     //   EffectPhase,
     //   Record<string, string[]> //  phase : stepName : listenerNames[]  // derive: checkInput: ['whenKeyboardPressed']

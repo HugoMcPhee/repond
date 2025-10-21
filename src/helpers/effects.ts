@@ -3,42 +3,99 @@ import { repondMeta as meta } from "../meta";
 import { whenDoingEffectsRunAtStart, whenStartingEffects, whenStoppingEffects } from "../helpers/runWhens";
 import { EffectDef, EffectPhase } from "../types";
 import { forEach } from "chootils/dist/loops";
+import { warn } from "./logging";
 
 /**
  * Registers a new effect in the Repond system.
  *
  * Process:
- * 1. Determine phase (duringStep or endOfStep) and step name
- * 2. Generate effect ID if not provided
- * 3. Cache metadata about effect (item types, properties to watch, etc.)
- * 4. If runAtStart, queue to run immediately
- * 5. Register effect in liveEffectsMap and index by propId for fast lookup
+ * 1. Generate effect ID if not provided
+ * 2. Check for existing effect with same ID (pending or indexed)
+ * 3. If pending: update effect definition, existing callback will use new version
+ * 4. If indexed: stop and restart to reindex with new properties
+ * 5. Store effect in liveEffectsMap immediately
+ * 6. Mark as pending indexing
+ * 7. Queue indexing callback (stateless, looks up from liveEffectsMap)
  *
  * @param newEffectDef - The effect definition
  * @returns The effect ID
  */
 export function _addEffect(newEffectDef: EffectDef) {
-  const phase: EffectPhase = newEffectDef.atStepEnd ? "endOfStep" : "duringStep";
-  const step = newEffectDef.step ?? "default";
   const effectId = newEffectDef.id ?? toSafeEffectId();
 
   // Cache metadata for performance (item types, props to watch, etc.)
   storeCachedValuesForEffect(newEffectDef);
 
-  // If runAtStart: true, queue effect to run on next frame without waiting for changes
-  if (newEffectDef.runAtStart) {
-    whenDoingEffectsRunAtStart(() => runEffectWithoutChange(newEffectDef));
+  // Check if effect already exists
+  const isPending = meta.pendingEffectIndexIds.has(effectId);
+  const alreadyInMap = !!meta.liveEffectsMap[effectId];
+  const isIndexed = alreadyInMap && !isPending;
+
+  if (isPending) {
+    // Effect is pending (not yet indexed)
+    // Update the map, existing callbacks will use the updated version
+    meta.liveEffectsMap[effectId] = newEffectDef;
+
+    warn(
+      `Effect "${effectId}" is already pending indexing. ` +
+        `Updating to new definition (existing queued callback will use updated version).`
+    );
+
+    // Don't queue new callbacks
+    return effectId;
   }
 
-  // Register effect in live effects map and index by property for fast lookup
+  if (isIndexed) {
+    // Effect is already indexed (active)
+    // Need to fully stop and restart to reindex
+    warn(`Effect "${effectId}" is already active. ` + `Replacing with new definition (will be reindexed).`);
+
+    _stopEffect(effectId); // Synchronous removal
+    // Fall through to normal add
+  }
+
+  // Store effect immediately in liveEffectsMap
+  meta.liveEffectsMap[effectId] = newEffectDef;
+
+  // Mark as pending indexing
+  meta.pendingEffectIndexIds.add(effectId);
+
+  // If runAtStart: true, queue effect to run (callback looks up from map)
+  if (newEffectDef.runAtStart) {
+    whenDoingEffectsRunAtStart(() => {
+      const effectDef = meta.liveEffectsMap[effectId];
+      if (!effectDef) return; // Cancelled
+      runEffectWithoutChange(effectDef);
+    });
+  }
+
+  // Queue the indexing (callback looks up from map, not closure)
   whenStartingEffects(() => {
-    meta.liveEffectsMap[effectId] = newEffectDef;
+    // Check if effect was cancelled
+    if (!meta.pendingEffectIndexIds.has(effectId)) {
+      return; // Cancelled, skip indexing
+    }
+
+    // Look up current effect from map
+    const effectDef = meta.liveEffectsMap[effectId];
+    if (!effectDef) {
+      // Effect was removed, clean up pending flag
+      meta.pendingEffectIndexIds.delete(effectId);
+      return;
+    }
+
+    // Remove from pending
+    meta.pendingEffectIndexIds.delete(effectId);
+
+    // Calculate phase/step from current effect (not closure)
+    const phase: EffectPhase = effectDef.atStepEnd ? "endOfStep" : "duringStep";
+    const step = effectDef.step ?? "default";
 
     // Index effect by phase → step → propId for fast lookup in checkEffects
     const idsByStep = meta.effectIdsByPhaseByStepByPropId[phase];
     if (!idsByStep[step]) idsByStep[step] = {};
 
-    forEach(newEffectDef.changes, (change) => {
+    forEach(effectDef.changes, (change) => {
       idsByStep[step][change] = idsByStep[step][change] || [];
       if (!idsByStep[step][change].includes(effectId)) {
         idsByStep[step][change].push(effectId);
@@ -96,9 +153,9 @@ export function getItemTypesFromEffect(effect: EffectDef): string[] {
   if (changes.length === 1) {
     const itemType = meta.itemTypeByPropPathId[changes[0]];
     if (!itemType) {
-      console.warn(`(one change) Effect ${effect.id} has no item types`);
-      console.log("effect", effect.changes[0]);
-      console.log(JSON.stringify(meta.itemTypeByPropPathId, null, 2));
+      warn(`(one change) Effect ${effect.id} has no item types`);
+      warn("effect", effect.changes[0]);
+      warn(JSON.stringify(meta.itemTypeByPropPathId, null, 2));
       return [];
     }
     return [itemType];
@@ -115,9 +172,9 @@ export function getItemTypesFromEffect(effect: EffectDef): string[] {
 
   const itemTypes = Object.keys(itemTypeMap);
   if (!itemTypes.length) {
-    console.warn(`Effect ${effect.id} has no item types`);
-    console.warn(effect.changes);
-    console.log("effect", effect);
+    warn(`Effect ${effect.id} has no item types`);
+    warn(effect.changes);
+    warn("effect", effect);
   }
 
   return itemTypes;
@@ -185,7 +242,7 @@ export function storeCachedValuesForEffect(effect: EffectDef) {
   // Cache item types
   const itemTypes = getItemTypesFromEffect(effect);
   if (!itemTypes?.length) {
-    console.log(`Effect ${effect.id} has no item types`);
+    warn(`Effect ${effect.id} has no item types`);
   }
   effect._itemTypes = itemTypes;
 
@@ -226,16 +283,34 @@ export function storeCachedValuesForEffect(effect: EffectDef) {
 /**
  * Unregisters an effect from the Repond system.
  *
+ * Process:
+ * 1. Check if effect is pending (not yet indexed)
+ * 2. If pending: remove from pending set and liveEffectsMap, queued callback will skip
+ * 3. If indexed: normal removal from index and liveEffectsMap
+ *
  * Removes effect from:
+ * - pendingEffectIndexIds (if pending)
  * - liveEffectsMap
- * - effectIdsByPhaseByStepByPropId index
+ * - effectIdsByPhaseByStepByPropId index (if indexed)
  *
  * @param effectId - The ID of the effect to stop
  */
 export function _stopEffect(effectId: string) {
+  // Check if effect is pending indexing
+  if (meta.pendingEffectIndexIds.has(effectId)) {
+    // Effect exists in liveEffectsMap but not indexed yet
+    // Cancel the pending indexing and remove from map
+    meta.pendingEffectIndexIds.delete(effectId);
+    delete meta.liveEffectsMap[effectId];
+
+    // The queued indexing callback will see it's not pending and skip
+    return;
+  }
+
+  // Effect is already indexed, use normal removal path
   whenStoppingEffects(() => {
     const effect = meta.liveEffectsMap[effectId];
-    if (!effect) return;
+    if (!effect) return; // Already removed or never existed
 
     const phase: EffectPhase = !!effect.atStepEnd ? "endOfStep" : "duringStep";
     const step = effect.step ?? "default";

@@ -1,5 +1,6 @@
 import { forEach } from "chootils/dist/loops";
 import { runWhenAddingAndRemovingItems, whenSettingStates } from "../helpers/runWhens";
+import { warn } from "../helpers/logging";
 import { repondMeta as meta } from "../meta";
 import { applyPatch, getPatch } from "../usable/patchesAndDiffs";
 export function setState(propPath, newValue, itemId) {
@@ -26,7 +27,7 @@ export function setState(propPath, newValue, itemId) {
         let foundItemId = itemId || meta.itemIdsByItemType[storeType]?.[0];
         if (!foundItemId) {
             foundItemId = Object.keys(meta.nowState[storeType] ?? {})[0];
-            console.warn(`${propPath}No itemId found for setState ${storeType}, using first found itemId: ${foundItemId} from Object keys`);
+            warn(`${propPath}No itemId found for setState ${storeType}, using first found itemId: ${foundItemId} from Object keys`);
         }
         const recordedChanges = meta.nowEffectPhase === "duringStep" ? meta.recordedEffectChanges : meta.recordedStepEndEffectChanges;
         const allRecordedChanges = meta.recordedStepEndEffectChanges;
@@ -85,16 +86,16 @@ export const getState = (itemType, itemId) => {
     if (!itemId) {
         const foundItemId = meta.itemIdsByItemType?.[itemType]?.[0];
         if (!foundItemId)
-            console.warn(`(getState) No itemId provided for ${itemType}, using first found itemId: ${foundItemId}`);
+            warn(`(getState) No itemId provided for ${itemType}, using first found itemId: ${foundItemId}`);
         return meta.nowState[itemType][foundItemId];
     }
     // const allItemTypeState = meta.nowState[kind];
     // if (allItemTypeState === undefined) {
-    //   console.warn(`(getState) No state found for ${kind}`);
+    //   warn(`(getState) No state found for ${kind}`);
     // }
     // const foundState = allItemTypeState?.[itemId];
     // if (foundState === undefined) {
-    //   console.warn(`(getState) No state found for ${kind} with id ${itemId}`);
+    //   warn(`(getState) No state found for ${kind} with id ${itemId}`);
     // }
     // return foundState;
     return meta.nowState[itemType]?.[itemId];
@@ -109,12 +110,12 @@ export const getPrevState = (itemType, itemId) => {
         // const foundItemId = meta.prevItemIdsByItemType?.[kind]?.[0];
         const foundItemId = Object.keys(meta.prevState?.[itemType] ?? {})?.[0] ?? meta.itemIdsByItemType?.[itemType]?.[0];
         if (!foundItemId) {
-            // console.warn(`(getPrevState) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
+            // warn(`(getPrevState) No itemId provided for ${kind}, using first found itemId: ${foundItemId}`);
         }
         return meta.prevState?.[itemType]?.[foundItemId] ?? meta.nowState[itemType][foundItemId];
     }
     if (!meta.prevState[itemType]?.[itemId]) {
-        // console.warn(`(getPrevState) No prevState found for ${kind} with id ${itemId} (using nowState instead)`);
+        // warn(`(getPrevState) No prevState found for ${kind} with id ${itemId} (using nowState instead)`);
         return meta.nowState[itemType][itemId];
     }
     return meta.prevState[itemType][itemId];
@@ -123,12 +124,12 @@ export const getRefs = (itemType, itemId) => {
     if (!itemId) {
         const foundItemId = meta.itemIdsByItemType?.[itemType]?.[0];
         if (!foundItemId) {
-            console.warn(`(getRefs) No itemId provided for ${itemType}, using first found itemId: ${foundItemId}`);
+            warn(`(getRefs) No itemId provided for ${itemType}, using first found itemId: ${foundItemId}`);
         }
         return meta.nowRefs[itemType][foundItemId];
     }
     if (meta.nowRefs?.[itemType]?.[itemId] === undefined) {
-        console.warn(`(getRefs) No refs found for ${itemType} with id ${itemId}`);
+        warn(`(getRefs) No refs found for ${itemType} with id ${itemId}`);
     }
     return meta.nowRefs[itemType][itemId];
 };
@@ -204,7 +205,7 @@ export function getItemWillExist(type, id) {
 export function getPartialState_OLD(propsToGet) {
     const itemTypes = Object.keys(propsToGet);
     if (!meta.didInit) {
-        console.warn("getPartialState called before repond was initialized");
+        warn("getPartialState called before repond was initialized");
         return {};
     }
     const partialState = {};
@@ -227,7 +228,7 @@ export function getPartialState_OLD(propsToGet) {
 export function getPartialState(propsToGet) {
     const itemType = meta.itemTypeByPropPathId;
     if (!meta.didInit) {
-        console.warn("getPartialState called before repond was initialized");
+        warn("getPartialState called before repond was initialized");
         return {};
     }
     const partialState = {};

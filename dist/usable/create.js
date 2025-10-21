@@ -3,7 +3,12 @@ import { createDiffInfo } from "../getStatesDiff";
 import { repondMeta as meta } from "../meta";
 import { createRecordedChanges } from "../updating";
 const SPECIAL_CHANGE_KEYS = ["__added", "__removed"];
-export function initRepond(itemTypeDefs, stepNames) {
+export function initRepond(itemTypeDefs, stepNames, config) {
+    // Set config with defaults
+    meta.config = {
+        enableWarnings: false, // Default: silent
+        ...config,
+    };
     const renamedItemTypeDefs = {};
     Object.entries(itemTypeDefs).forEach(([type, definition]) => {
         renamedItemTypeDefs[type.replace(/Store$/, "")] = definition; // Remove "Store" from the end of the key, if present

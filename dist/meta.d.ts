@@ -87,8 +87,12 @@ export type UntypedDiffInfo = {
     };
 };
 type AFunction = (...args: any[]) => void;
+export type RepondConfig = {
+    enableWarnings?: boolean;
+};
 export type RepondMetaPhase = "waitingForFirstUpdate" | "waitingForMoreUpdates" | "runningUpdates" | "runningEffects" | "runningStepEndEffects" | "runningCallbacks";
 export declare const repondMeta: {
+    config: RepondConfig;
     prevState: any;
     nowState: any;
     nowRefs: any;
@@ -127,6 +131,7 @@ export declare const repondMeta: {
     nextTickQueue: AFunction[];
     autoEffectIdCounter: number;
     liveEffectsMap: Record<string, EffectDef>;
+    pendingEffectIndexIds: Set<string>;
     effectIdsByPhaseByStepByPropId: Record<EffectPhase, Record<string, Record<string, string[]>>>;
     storedEffectsMap: Record<string, EffectDef>;
     effectIdsByGroup: Record<string, string[]>;

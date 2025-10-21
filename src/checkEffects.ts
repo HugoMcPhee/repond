@@ -1,3 +1,4 @@
+import { warn } from "./helpers/logging";
 import { repondMeta as meta } from "./meta";
 import { EffectDef, EffectPhase } from "./types";
 import { getState } from "./usable/getSet";
@@ -106,12 +107,12 @@ function checkEffectForChanges(effect: EffectDef, diffInfo: typeof meta.diffInfo
 
   // Validation: ensure cached data exists
   if (!itemTypes || !checkAddedByItemType || !checkRemovedByItemType) {
-    console.warn(`Effect ${effect.id} has no cached data, skipping check`);
+    warn(`Effect ${effect.id} has no cached data, skipping check`);
     return false;
   }
 
   if (!itemTypes.length) {
-    console.warn(`Effect ${effect.id} has no item types, skipping check`);
+    warn(`Effect ${effect.id} has no item types, skipping check`);
     console.log(effect);
     return false;
   }

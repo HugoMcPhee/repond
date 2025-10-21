@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**Repond** is a high-performance, entity-optimized state management library for JavaScript/TypeScript applications. It provides declarative reactive effects that automatically respond to state changes with O(1) complexity regardless of item count.
+**Repond** is a high-performance, entity-optimized state management library for JavaScript/TypeScript applications. It provides declarative reactive effects that automatically respond to state changes with O(changed items) complexity.
 
-**Key Insight**: Repond only processes what changed, making it ideal for real-time applications with hundreds or thousands of entities.
+**Key Insight**: Repond only processes what changed, making it ideal for real-time applications with hundreds or thousands of entities. Performance scales with the number of items that change per frame, not the total item count.
 
 ---
 
@@ -116,7 +116,10 @@ makeEffect(renderScene, {
 ## Performance Characteristics
 
 ### Key Performance Features
-- **O(1) complexity** for state updates (independent of total item count)
+- **O(changed items) complexity**: Performance scales with what changed, not total item count
+  - `setState()`: O(1) - direct property assignment
+  - Diff calculation: O(changed items × changed properties)
+  - Effect execution: O(changed items × effects watching those properties)
 - **Automatic batching**: All setState calls batched until next frame
 - **Selective updates**: Only processes changed items
 - **Efficient diffing**: Tracks exactly what changed per frame
@@ -150,10 +153,36 @@ export const playerStore = {
 };
 
 // Then register with Repond
-initRepond({
-  storeNames: ["player", "enemy", "item"] as const,
-  itemStores: { player: playerStore, enemy: enemyStore, item: itemStore },
+initRepond(
+  { player: playerStore, enemy: enemyStore, item: itemStore },
+  ["default", "physics", "gameLogic", "rendering"], // Step names
+  { enableWarnings: false } // Optional config (default: warnings disabled)
+);
+```
+
+### Configuration
+
+The optional third parameter to `initRepond()` allows you to configure Repond's behavior:
+
+```typescript
+initRepond(stores, stepNames, {
+  enableWarnings: false, // Default: false
 });
+```
+
+**Config Options:**
+- `enableWarnings` (boolean, default: `false`): Controls whether internal warnings are displayed
+  - When `false` (default): Suppresses all internal warnings for clean console output
+  - When `true`: Shows warnings for debugging (duplicate effect IDs, missing item types, etc.)
+  - Recommended: Keep disabled during normal development, enable when debugging effect issues
+
+**Example:**
+```typescript
+// Development: warnings disabled (default)
+initRepond(stores, steps);
+
+// Debugging: enable warnings to diagnose issues
+initRepond(stores, steps, { enableWarnings: true });
 ```
 
 ### TypeScript Type Extension
@@ -163,17 +192,12 @@ Extend `CustomRepondTypes` for type safety:
 ```typescript
 declare module "repond/declarations" {
   interface CustomRepondTypes {
-    ItemTypeKeys: "player" | "enemy" | "item";
-    AllState: {
-      player: ReturnType<typeof playerStore.newState>;
-      enemy: ReturnType<typeof enemyStore.newState>;
-      item: ReturnType<typeof itemStore.newState>;
+    ItemTypeDefs: {
+      player: typeof playerStore;
+      enemy: typeof enemyStore;
+      item: typeof itemStore;
     };
-    AllRefs: {
-      player: ReturnType<typeof playerStore.newRefs>;
-      enemy: ReturnType<typeof enemyStore.newRefs>;
-      item: ReturnType<typeof itemStore.newRefs>;
-    };
+    StepNames: ["default", "physics", "gameLogic", "rendering"];
   }
 }
 ```
@@ -378,21 +402,30 @@ makeEffect(
 
 ### 2. TypeScript Type Inference
 
-Store definitions need explicit `as` casts for type inference:
+Store definitions need explicit `as` casts for type inference in specific cases:
 
 ```typescript
-// ✅ Good: Types inferred correctly
+// ✅ Good: Proper type inference
 newState: () => ({
-  name: "" as string,
-  count: 0 as number,
+  name: "" as string,        // NEEDED - avoids literal "" type
+  count: 100,                // OK - infers as number (not literal)
+  position: { x: 0, y: 0 } as Position, // NEEDED - for custom types
+  isActive: true,            // OK - infers as boolean
 })
 
 // ❌ Bad: Types inferred as literal values
 newState: () => ({
-  name: "",  // Type: ""
-  count: 0,  // Type: 0
+  name: "",                  // Type: "" (literal string, too narrow!)
+  count: 0,                  // Type: 0 (literal, but usually works)
 })
 ```
+
+**Rule of thumb**: Use `as` for:
+- Empty strings (to avoid `""` literal type)
+- Custom types/interfaces
+- Union types
+
+Numbers and booleans with non-zero/non-false values typically infer correctly without `as`.
 
 ### 3. Frame Timing
 
@@ -402,13 +435,23 @@ State updates are batched per frame. For time-sensitive operations, understand t
 setState() called → Batched → Next frame → Effects run → React re-renders
 ```
 
+### 4. React Hooks and Strict Mode
+
+React hooks (`useStoreEffect`, `useStoreItem`, `useStore`) work correctly in React Strict Mode:
+
+- ✅ Each hook uses stable effect IDs via `useRef` to prevent duplicate effects
+- ✅ Effects are properly cleaned up when components unmount
+- ✅ No special handling needed - just use the hooks normally
+
+**Note for contributors**: The effect system handles React Strict Mode's double-invocation pattern internally by tracking pending effects in `meta.pendingEffectIndexIds`. See `docs/investigations/strict-mode-fix-summary.md` for implementation details.
+
 ---
 
 ## Development Guidelines
 
 ### When Adding Features
 1. **Maintain serialization**: State must always be JSON-serializable
-2. **Performance first**: Ensure O(1) complexity for item operations
+2. **Performance first**: Ensure operations scale with changed items, not total items
 3. **Type safety**: Leverage TypeScript's inference, avoid `any`
 4. **Test with scale**: Verify performance with 1000+ items
 
@@ -420,7 +463,7 @@ setState() called → Batched → Next frame → Effects run → React re-render
 
 ### Code Style
 - **Functional**: Prefer pure functions
-- **Immutable**: State is immutable; use `setState()` for changes
+- **Externally immutable**: Treat state as immutable from external code; use `setState()` for changes. (Internally, Repond mutates state for performance.)
 - **Typed strings**: Use autocompleted prop paths (e.g., `"player.health"`)
 
 ---
@@ -433,7 +476,7 @@ import { initRepond, addItem, setState, getState } from "repond";
 
 describe("playerStore", () => {
   beforeEach(() => {
-    initRepond({ storeNames: ["player"], itemStores: { player: playerStore } });
+    initRepond({ player: playerStore }, ["default"]);
   });
 
   it("should initialize with default values", () => {
@@ -479,7 +522,7 @@ it("should trigger effect on state change", (done) => {
 
 ```typescript
 // Initialize
-initRepond({ storeNames, itemStores });
+initRepond(itemTypeDefs, stepNames, config?);
 
 // State operations
 getState(itemType, itemId?);
@@ -521,7 +564,7 @@ Repond's design philosophy:
 3. **Type-safe simplicity**: No store imports, just typed strings
 4. **Framework agnostic**: Core is independent, React hooks are optional
 5. **Serialization first**: State is always persistable
-6. **Performance by default**: O(1) updates regardless of scale
+6. **Performance by default**: Scales with changes, not total item count
 
 ---
 
